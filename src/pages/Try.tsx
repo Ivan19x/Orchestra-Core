@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 import { Send, Sparkles } from 'lucide-react';
 
 const samples: Record<string, { you: string; coach: string }> = {
-  'Why did the market drop today?': {
-    you: 'Why did the market drop today?',
-    coach: 'Markets move on three things: rates, earnings, and risk appetite. Today the Fed minutes hinted rates may stay higher for longer, a major retailer missed earnings, and oil ticked up on supply concerns. Each is mild alone — stacked, they shifted sentiment. Want me to break down which one matters most for long-term investors?',
+  'Why do markets drop?': {
+    you: 'Why do markets drop?',
+    coach: "Markets typically fall for a handful of reasons: central banks signal higher rates for longer (which makes future earnings worth less today), a major company misses earnings expectations and drags sentiment down, geopolitical news spooks investors, or a broader shift in risk appetite causes a sell-off. These things often stack — one trigger is mild, three at once can move markets significantly. I don't have live data, so I can't tell you what's happening right now, but I can explain any of these mechanisms in detail.",
   },
   "What's a 13F filing?": {
     you: "What's a 13F filing?",
