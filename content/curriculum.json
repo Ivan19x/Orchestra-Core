@@ -1,0 +1,196 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-06-16",
+  "total_lessons": 75,
+  "free_lessons": 11,
+  "series": [
+    {
+      "id": 1,
+      "slug": "series-1-money-basics",
+      "name": "Money basics",
+      "tagline": "The foundation. Free to everyone.",
+      "icon": "ti-books",
+      "color": "#7A2330",
+      "bg": "#FBF1EE",
+      "lesson_count": 8,
+      "estimated_minutes": 47,
+      "lessons": [
+        {
+          "id": "1-1",
+          "title": "What money actually is",
+          "slug": "1-1-what-money-actually-is",
+          "free": true,
+          "estimated_minutes": 5,
+          "tags": ["foundation", "money", "beginners"],
+          "summary": "Money isn't what most people think it is — and understanding the truth changes how you use it."
+        },
+        {
+          "id": "1-2",
+          "title": "How banks create money",
+          "slug": "1-2-how-banks-create-money",
+          "free": true,
+          "estimated_minutes": 6,
+          "tags": ["banks", "money creation", "beginners"],
+          "summary": "Banks don't just store your money — they multiply it. Here's the mechanism that runs the entire financial world."
+        },
+        {
+          "id": "1-3",
+          "title": "The 50/30/20 rule",
+          "slug": "1-3-the-50-30-20-rule",
+          "free": true,
+          "estimated_minutes": 5,
+          "tags": ["budgeting", "practical", "beginners"],
+          "summary": "The simplest budgeting framework in existence — and how to adapt it to a Kenyan salary."
+        },
+        {
+          "id": "1-4",
+          "title": "Compound interest — the eighth wonder",
+          "slug": "1-4-compound-interest-the-eighth-wonder",
+          "free": true,
+          "estimated_minutes": 7,
+          "tags": ["compound interest", "saving", "investing", "beginners"],
+          "summary": "The one concept that makes the difference between being comfortable at 50 and struggling — and why starting today matters more than starting with more."
+        },
+        {
+          "id": "1-5",
+          "title": "Good debt vs bad debt",
+          "slug": "1-5-good-debt-vs-bad-debt",
+          "free": false,
+          "estimated_minutes": 6,
+          "tags": ["debt", "loans", "credit"],
+          "summary": "Not all debt is the enemy. The difference between debt that builds wealth and debt that destroys it."
+        },
+        {
+          "id": "1-6",
+          "title": "Inflation — why your KES 1,000 shrinks",
+          "slug": "1-6-inflation-why-your-kes-shrinks",
+          "free": false,
+          "estimated_minutes": 6,
+          "tags": ["inflation", "macro", "purchasing power"],
+          "summary": "Inflation is the invisible tax on your savings. Understanding it changes how you think about holding cash forever."
+        },
+        {
+          "id": "1-7",
+          "title": "The emergency fund — the boring secret",
+          "slug": "1-7-emergency-fund-the-boring-secret",
+          "free": false,
+          "estimated_minutes": 5,
+          "tags": ["emergency fund", "saving", "financial security"],
+          "summary": "The most unsexy financial move that protects every other financial decision you'll ever make."
+        },
+        {
+          "id": "1-8",
+          "title": "Net worth — how to measure yourself",
+          "slug": "1-8-net-worth-how-to-measure-yourself",
+          "free": false,
+          "estimated_minutes": 6,
+          "tags": ["net worth", "assets", "liabilities"],
+          "summary": "Your salary tells you what you earn. Your net worth tells you where you actually stand."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "slug": "series-2-adult-life-money",
+      "name": "Adult life money",
+      "tagline": "Everything you'll pay for that nobody told you about.",
+      "icon": "ti-home",
+      "color": "#185FA5",
+      "bg": "#F0F7FF",
+      "lesson_count": 10,
+      "estimated_minutes": 76,
+      "lessons": []
+    },
+    {
+      "id": 3,
+      "slug": "series-3-smart-money",
+      "name": "Smart money",
+      "tagline": "How the people who move markets actually think.",
+      "icon": "ti-chart-candle",
+      "color": "#0F6E56",
+      "bg": "#F0FBF5",
+      "lesson_count": 8,
+      "estimated_minutes": 68,
+      "lessons": []
+    },
+    {
+      "id": 4,
+      "slug": "series-4-kenya-money",
+      "name": "Kenya money",
+      "tagline": "The local financial landscape nobody maps for you.",
+      "icon": "ti-map-pin",
+      "color": "#854F0B",
+      "bg": "#FFFBF0",
+      "lesson_count": 8,
+      "estimated_minutes": 64,
+      "lessons": []
+    },
+    {
+      "id": 5,
+      "slug": "series-5-teenager-to-adult",
+      "name": "Teenager to adult",
+      "tagline": "The guide you should have been given at 18.",
+      "icon": "ti-rocket",
+      "color": "#993556",
+      "bg": "#FEF0F5",
+      "lesson_count": 8,
+      "estimated_minutes": 65,
+      "lessons": []
+    },
+    {
+      "id": 6,
+      "slug": "series-6-psychology-of-money",
+      "name": "Psychology of money",
+      "tagline": "Why smart people make terrible money decisions.",
+      "icon": "ti-brain",
+      "color": "#3C3489",
+      "bg": "#F4F0FE",
+      "lesson_count": 6,
+      "estimated_minutes": 44,
+      "lessons": []
+    },
+    {
+      "id": 7,
+      "slug": "series-7-home-household",
+      "name": "Home & household money",
+      "tagline": "Renting, owning, and running a home without going broke.",
+      "icon": "ti-building",
+      "color": "#3B6D11",
+      "bg": "#EAF3DE",
+      "lesson_count": 9,
+      "estimated_minutes": 71,
+      "lessons": []
+    },
+    {
+      "id": 8,
+      "slug": "series-8-investing-saving",
+      "name": "Investing & saving",
+      "tagline": "Making your money work while you sleep.",
+      "icon": "ti-trending-up",
+      "color": "#185FA5",
+      "bg": "#E6F1FB",
+      "lesson_count": 10,
+      "estimated_minutes": 86,
+      "lessons": []
+    },
+    {
+      "id": 9,
+      "slug": "series-9-family-parenting",
+      "name": "Family & parenting money",
+      "tagline": "Raising financially smart children — and a stable home.",
+      "icon": "ti-heart",
+      "color": "#993556",
+      "bg": "#FBEAF0",
+      "lesson_count": 9,
+      "estimated_minutes": 71,
+      "lessons": []
+    }
+  ],
+  "download_system": {
+    "description": "Each lesson is a standalone markdown file. Users download individual lessons on demand. Downloaded lessons are stored locally and indexed for RAG retrieval. Users can delete completed lessons to free space.",
+    "storage_path": "orchestra-core/lessons/",
+    "index_file": "orchestra-core/downloaded.json",
+    "max_file_size_kb": 50,
+    "rag_rebuild_on": ["download", "delete"]
+  }
+}
