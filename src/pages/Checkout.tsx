@@ -22,6 +22,7 @@ export default function Checkout() {
   const [txRef, setTxRef] = useState('');
   const [otp, setOtp] = useState('');
   const [licenseKey, setLicenseKey] = useState('');
+  const [sessionToken, setSessionToken] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -131,6 +132,7 @@ export default function Checkout() {
       saveSession(token, user);
       dispatchSessionChange();
       setLicenseKey(user.licenseKey || '');
+      setSessionToken(token);
       setStep('done');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid code.');
@@ -340,6 +342,14 @@ export default function Checkout() {
                 className="block w-full py-3 rounded-full bg-primary text-primary-foreground text-center hover:opacity-90 transition mb-3">
                 Download Orchestra-Core
               </Link>
+              {sessionToken && (
+                <a
+                  href={`orchestracore://auth?token=${encodeURIComponent(sessionToken)}`}
+                  className="block w-full py-3 rounded-full border border-primary text-primary text-center hover:bg-blush transition mb-3 text-sm"
+                >
+                  Open in Orchestra-Core app (if installed)
+                </a>
+              )}
               <Link to="/account" className="block text-sm text-primary hover:underline">
                 View your account
               </Link>

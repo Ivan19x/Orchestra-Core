@@ -3,13 +3,44 @@ const os      = require('os');
 const fs      = require('fs');
 const https   = require('https');
 const { execSync, spawn } = require('child_process');
-const { app, BrowserWindow, utilityProcess } = require('electron');
+const { app, BrowserWindow, ipcMain, utilityProcess } = require('electron');
 
 const SERVER_PORT = process.env.PORT || 5175;
 const SERVER_URL  = `http://localhost:${SERVER_PORT}`;
 
 let serverProcess;
 let mainWindow;
+let pendingToken = null; // JWT received via deep link before window was ready
+
+// ── Custom protocol for deep-link sign-in from the website ───────────────────
+// orchestracore://auth?token=JWT_TOKEN  →  saves session in the app
+app.setAsDefaultProtocolClient('orchestracore');
+
+function handleDeepLink(url) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname !== 'auth') return;
+    const token = parsed.searchParams.get('token');
+    if (!token) return;
+    if (mainWindow?.webContents) {
+      mainWindow.webContents.send('setup:token', token);
+    } else {
+      pendingToken = token; // deliver once window is ready
+    }
+  } catch {}
+}
+
+// Windows: single-instance lock so second launch passes args to running instance
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
+} else {
+  app.on('second-instance', (_event, argv) => {
+    const url = argv.find(a => a.startsWith('orchestracore://'));
+    if (url) handleDeepLink(url);
+    if (mainWindow) { mainWindow.show(); mainWindow.focus(); }
+  });
+}
 
 // ── Model selection based on actual system RAM ───────────────────────────────
 function getModelForDevice() {
@@ -140,14 +171,14 @@ function installOllamaSetup(installerPath) {
       detached: false, windowsHide: true,
     });
     proc.on('close', (code) => {
-      if (code === 0 || code === 1) resolve(); // 1 = already installed / restart pending
+      if (code === 0 || code === 1) resolve();
       else reject(new Error(`Installer exited with code ${code}`));
     });
     proc.on('error', reject);
   });
 }
 
-// ── Main setup orchestrator ───────────────────────────────────────────────────
+// ── Main setup orchestrator — runs after the React UI signals it's ready ──────
 async function runSetup() {
   const send = (stage, message, percent = null) => {
     if (!mainWindow?.webContents) return;
@@ -156,7 +187,7 @@ async function runSetup() {
 
   const model = getModelForDevice();
 
-  // ── Step 1: Check Ollama ──────────────────────────────────────────────────
+  // Step 1: Check Ollama
   send('checking', 'Checking your device…');
 
   const running = await isOllamaRunning();
@@ -164,11 +195,9 @@ async function runSetup() {
     let bin = findOllamaBin();
 
     if (bin) {
-      // Installed but not running — start it
       send('ollama', 'Starting Ollama…');
       startOllamaServe(bin);
     } else {
-      // Not installed — download and install it
       send('ollama', 'Downloading Ollama…', 0);
       const tmpDir = app.getPath('temp');
       const installerPath = path.join(tmpDir, 'OllamaSetup.exe');
@@ -193,7 +222,6 @@ async function runSetup() {
       }
     }
 
-    // Wait for Ollama to respond
     send('ollama', 'Waiting for Ollama to start…');
     const ready = await waitForOllama(30_000);
     if (!ready) {
@@ -205,14 +233,14 @@ async function runSetup() {
     }
   }
 
-  // ── Step 2: Pull model if needed ──────────────────────────────────────────
+  // Step 2: Pull model if needed
   const modelReady = await hasModel(model);
   if (!modelReady) {
     const bin = findOllamaBin() || 'ollama';
     send('model', `Downloading AI model (${model})…`, 0);
     try {
       await pullModel(bin, model, ({ percent, detail }) => {
-        send('model', `Downloading AI model… ${detail || ''}`, percent);
+        send('model', `Downloading AI model (${model})… ${detail || ''}`, percent);
       });
     } catch (err) {
       mainWindow?.webContents.send('setup:error', {
@@ -223,7 +251,7 @@ async function runSetup() {
     }
   }
 
-  // ── Done ──────────────────────────────────────────────────────────────────
+  // Done
   mainWindow?.webContents.send('setup:complete', { model });
 }
 
@@ -256,8 +284,8 @@ async function createWindow() {
     width: 1280,
     height: 800,
     minWidth: 960,
-    minHeight: 640,
-    backgroundColor: '#FBF1EE',
+    minHeight: 600,
+    backgroundColor: '#FFFFFF',
     autoHideMenuBar: true,
     webPreferences: {
       contextIsolation: true,
@@ -266,27 +294,28 @@ async function createWindow() {
     },
   });
 
+  // Listen for React UI ready signal — then start setup
+  ipcMain.once('setup:ready', () => {
+    // Deliver any deep-link token that arrived before the window was ready
+    if (pendingToken) {
+      mainWindow?.webContents.send('setup:token', pendingToken);
+      pendingToken = null;
+    }
+    runSetup();
+  });
+
   const devServerUrl = process.env.VITE_DEV_SERVER_URL;
   if (devServerUrl) {
-    // Dev mode — go straight to dashboard
-    mainWindow.loadURL(devServerUrl + '/dashboard');
+    mainWindow.loadURL(devServerUrl + '/app');
     return;
   }
 
   await waitForServer(SERVER_URL);
+  mainWindow.loadURL(`${SERVER_URL}/app`);
 
-  // Check if setup is needed before showing the main UI
-  const needsOllama = !(await isOllamaRunning());
-  const model = getModelForDevice();
-  const needsModel = needsOllama || !(await hasModel(model));
-
-  if (needsOllama || needsModel) {
-    mainWindow.loadURL(`${SERVER_URL}/setup`);
-    // Run setup in background — sends IPC events to the setup page
-    runSetup();
-  } else {
-    mainWindow.loadURL(`${SERVER_URL}/dashboard`);
-  }
+  // Handle orchestracore:// URLs passed at launch time (before single-instance listener fires)
+  const deepLinkArg = process.argv.find(a => a.startsWith('orchestracore://'));
+  if (deepLinkArg) handleDeepLink(deepLinkArg);
 }
 
 // ── App lifecycle ─────────────────────────────────────────────────────────────
