@@ -1,22 +1,47 @@
 import { useState, useCallback } from 'react';
 import {
   Brain, BookOpen, Heart, User, LogOut, Orbit,
-  Clock, ChevronRight,
+  Clock, ChevronRight, Download,
 } from 'lucide-react';
 import { AskPanel } from '@/components/orchestra-core/AskPanel';
 import { SetupStatus } from '@/components/orchestra-core/SetupStatus';
 import { OTPInput } from '@/components/orchestra-core/OTPInput';
 import { useSession, saveSession, clearSession, dispatchSessionChange } from '@/lib/session';
+import { isElectron } from '@/lib/platform';
 import { sendOtp, verifyOtp } from '@/lib/api';
 import { series } from '@/lib/lessons';
 
 type Tab = 'ai' | 'lessons' | 'support' | 'account';
+
+interface UpdateState {
+  available: boolean;
+  downloaded: boolean;
+  version: string;
+  percent: number | null;
+}
 
 export default function AppShell() {
   const user = useSession();
   const [tab, setTab] = useState<Tab>('ai');
   const [aiQuestion, setAiQuestion] = useState('');
   const [aiKey, setAiKey] = useState(0);
+  const [update, setUpdate] = useState<UpdateState>({
+    available: false, downloaded: false, version: '', percent: null,
+  });
+
+  // Auto-update listeners
+  useEffect(() => {
+    if (!window.electronSetup) return;
+    window.electronSetup.onUpdateAvailable?.((data: { version: string }) => {
+      setUpdate(prev => ({ ...prev, available: true, version: data.version }));
+    });
+    window.electronSetup.onUpdateProgress?.((data: { percent: number }) => {
+      setUpdate(prev => ({ ...prev, percent: data.percent }));
+    });
+    window.electronSetup.onUpdateDownloaded?.((data: { version: string }) => {
+      setUpdate(prev => ({ ...prev, downloaded: true, version: data.version, percent: null }));
+    });
+  }, []);
 
   const handleTokenReceived = useCallback((token: string) => {
     // Called when a JWT arrives via deep link (orchestracore://auth?token=...)
@@ -42,7 +67,35 @@ export default function AppShell() {
   }
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden font-sans">
+    <div className="flex flex-col h-screen bg-background overflow-hidden font-sans">
+      {/* ── Update banner ─────────────────────────────────────── */}
+      {update.available && !update.downloaded && (
+        <div className="bg-primary/10 border-b border-primary/20 px-4 py-2 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2 text-xs text-foreground">
+            <Download className="w-3.5 h-3.5 text-primary shrink-0" />
+            <span>
+              Update v{update.version} downloading…
+              {update.percent !== null && ` ${update.percent}%`}
+            </span>
+          </div>
+        </div>
+      )}
+      {update.downloaded && (
+        <div className="bg-primary text-primary-foreground px-4 py-2 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2 text-xs">
+            <Download className="w-3.5 h-3.5 shrink-0" />
+            <span>Orchestra-Core v{update.version} is ready to install.</span>
+          </div>
+          <button
+            onClick={() => window.electronSetup?.installUpdate?.()}
+            className="text-xs bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full transition"
+          >
+            Restart &amp; update
+          </button>
+        </div>
+      )}
+
+      <div className="flex flex-1 overflow-hidden">
       {/* ── Left sidebar ─────────────────────────────────────── */}
       <aside className="w-56 shrink-0 border-r border-border bg-blush flex flex-col">
         {/* Logo */}
@@ -76,6 +129,7 @@ export default function AppShell() {
         {tab === 'support' && <AppSupport />}
         {tab === 'account' && <AppAccount user={user} />}
       </main>
+      </div>
     </div>
   );
 }
@@ -101,6 +155,28 @@ function NavItem({ icon: Icon, label, active, onClick }: {
 
 // ── AI Coach tab ──────────────────────────────────────────────────────────────
 function AppAI({ initialQuestion }: { initialQuestion: string }) {
+  if (!isElectron) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center px-8 text-center">
+        <Orbit className="w-12 h-12 text-primary mb-4" strokeWidth={1.5} />
+        <h2 className="font-serif text-2xl text-foreground mb-2">AI Coach runs on desktop</h2>
+        <p className="text-sm text-warm-muted max-w-xs leading-relaxed mb-6">
+          The AI coach runs privately on your computer — your questions never leave your device.
+          Download the Orchestra-Core app for Windows or Mac to unlock it.
+        </p>
+        <a
+          href="https://github.com/Ivan19x/Orchestra-Core/releases/latest"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition"
+        >
+          Download for desktop
+        </a>
+        <p className="text-xs text-faint mt-4">Full lesson library is available right here on mobile.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full flex flex-col">
       <div className="px-8 pt-8 pb-4 border-b border-border">
@@ -108,10 +184,7 @@ function AppAI({ initialQuestion }: { initialQuestion: string }) {
         <p className="text-sm text-warm-muted mt-1">Ask anything about money. Powered by a local AI — nothing leaves your device.</p>
       </div>
       <div className="flex-1 overflow-auto px-8 py-6">
-        <AskPanel
-          key={initialQuestion || '__empty'}
-          initialQuestion={initialQuestion}
-        />
+        <AskPanel initialQuestion={initialQuestion} />
       </div>
     </div>
   );

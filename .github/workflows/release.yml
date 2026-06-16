@@ -6,6 +6,7 @@ on:
       - 'v*.*.*'
 
 jobs:
+  # ── Windows (.exe + latest.yml) ──────────────────────────────────────────────
   build-windows:
     runs-on: windows-latest
     steps:
@@ -16,30 +17,24 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Install root dependencies
+      - name: Install dependencies
         run: npm ci
 
       - name: Build frontend
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
-          VITE_DOWNLOAD_URL_WIN: ${{ secrets.VITE_DOWNLOAD_URL_WIN }}
-          VITE_DOWNLOAD_URL_MAC: ${{ secrets.VITE_DOWNLOAD_URL_MAC }}
+          VITE_TESTING_PHASE: 'false'
         run: npm run build
 
       - name: Install server runtime deps
         run: npm run server:deps
 
-      - name: Build Windows installer
-        run: npx electron-builder --win --publish=never
-
-      - name: Upload installer to release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: release/Orchestra-Core*.exe
-          generate_release_notes: true
+      - name: Build & publish Windows installer
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --win --publish=always
 
+  # ── macOS (.dmg + latest-mac.yml) ────────────────────────────────────────────
   build-mac:
     runs-on: macos-latest
     steps:
@@ -50,26 +45,87 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Install root dependencies
+      - name: Install dependencies
         run: npm ci
 
       - name: Build frontend
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
-          VITE_DOWNLOAD_URL_WIN: ${{ secrets.VITE_DOWNLOAD_URL_WIN }}
-          VITE_DOWNLOAD_URL_MAC: ${{ secrets.VITE_DOWNLOAD_URL_MAC }}
+          VITE_TESTING_PHASE: 'false'
         run: npm run build
 
       - name: Install server runtime deps
         run: npm run server:deps
 
-      - name: Build macOS DMG
-        run: npx electron-builder --mac --publish=never
+      - name: Build & publish macOS DMG
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --mac --publish=always
 
-      - name: Upload DMG to release
+  # ── Linux (.AppImage + latest-linux.yml) ─────────────────────────────────────
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_TESTING_PHASE: 'false'
+        run: npm run build
+
+      - name: Install server runtime deps
+        run: npm run server:deps
+
+      - name: Build & publish Linux AppImage
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --linux --publish=always
+
+  # ── Android APK ──────────────────────────────────────────────────────────────
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend (mobile — API points to backend)
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_TESTING_PHASE: 'false'
+        run: npm run build
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Build Android APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Upload APK to release
         uses: softprops/action-gh-release@v2
         with:
-          files: release/*.dmg
-          generate_release_notes: true
+          files: android/app/build/outputs/apk/release/app-release-unsigned.apk
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -4,6 +4,7 @@ const fs      = require('fs');
 const https   = require('https');
 const { execSync, spawn } = require('child_process');
 const { app, BrowserWindow, ipcMain, utilityProcess } = require('electron');
+const { autoUpdater } = require('electron-updater');
 
 const SERVER_PORT = process.env.PORT || 5175;
 const SERVER_URL  = `http://localhost:${SERVER_PORT}`;
@@ -318,10 +319,44 @@ async function createWindow() {
   if (deepLinkArg) handleDeepLink(deepLinkArg);
 }
 
+// ── Auto-updater ─────────────────────────────────────────────────────────────
+function setupAutoUpdater() {
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('update-available', (info) => {
+    mainWindow?.webContents.send('update:available', { version: info.version });
+  });
+
+  autoUpdater.on('download-progress', (progress) => {
+    mainWindow?.webContents.send('update:progress', {
+      percent: Math.round(progress.percent),
+      transferred: progress.transferred,
+      total: progress.total,
+    });
+  });
+
+  autoUpdater.on('update-downloaded', (info) => {
+    mainWindow?.webContents.send('update:downloaded', { version: info.version });
+  });
+
+  autoUpdater.on('error', () => {
+    // Silently ignore update errors — don't block the app
+  });
+
+  ipcMain.on('update:install', () => autoUpdater.quitAndInstall(false, true));
+
+  // Check 10 seconds after launch (enough time for the app to settle)
+  setTimeout(() => {
+    autoUpdater.checkForUpdates().catch(() => {});
+  }, 10_000);
+}
+
 // ── App lifecycle ─────────────────────────────────────────────────────────────
 app.whenReady().then(() => {
   startServer();
   createWindow();
+  if (!process.env.VITE_DEV_SERVER_URL) setupAutoUpdater();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

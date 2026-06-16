@@ -15,6 +15,10 @@ declare global {
       onError:    (cb: (data: ErrorEvent) => void) => void;
       notifyReady: () => void;
       onToken: (cb: (token: string) => void) => void;
+      onUpdateAvailable?:  (cb: (data: { version: string }) => void) => void;
+      onUpdateProgress?:   (cb: (data: { percent: number }) => void) => void;
+      onUpdateDownloaded?: (cb: (data: { version: string }) => void) => void;
+      installUpdate?: () => void;
     };
   }
 }

@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { isMobileApp } from "./lib/platform";
 import { SiteLayout } from "./components/orchestra-core/SiteLayout";
 import Home from "./pages/Home";
 import HowItWorks from "./pages/HowItWorks";
@@ -33,7 +34,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route element={<SiteLayout />}>
-            <Route path="/" element={<Home />} />
+            {/* On mobile (Capacitor), send root → /app so the app shell loads */}
+            <Route path="/" element={isMobileApp ? <Navigate to="/app" replace /> : <Home />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/lessons" element={<Lessons />} />
             <Route path="/try" element={<Try />} />

@@ -11,4 +11,10 @@ contextBridge.exposeInMainWorld('electronSetup', {
 
   // Receive a JWT token passed via orchestracore://auth?token=... deep link
   onToken: (cb) => ipcRenderer.on('setup:token', (_, token) => cb(token)),
+
+  // Auto-update events
+  onUpdateAvailable:  (cb) => ipcRenderer.on('update:available',  (_, data) => cb(data)),
+  onUpdateProgress:   (cb) => ipcRenderer.on('update:progress',   (_, data) => cb(data)),
+  onUpdateDownloaded: (cb) => ipcRenderer.once('update:downloaded', (_, data) => cb(data)),
+  installUpdate: () => ipcRenderer.send('update:install'),
 });

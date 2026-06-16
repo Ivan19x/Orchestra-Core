@@ -26,6 +26,12 @@ release*/
 # Generated RAG embeddings index (regenerate with `npm run rag:build`)
 public/rag-index.json
 
+# Android build outputs (source code committed, compiled output is not)
+android/.gradle/
+android/build/
+android/app/build/
+android/.idea/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
