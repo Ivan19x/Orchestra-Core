@@ -1,6 +1,7 @@
-import { Check } from 'lucide-react';
+import { Check, Clock } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Link } from 'react-router-dom';
+import { TESTING_PHASE, useCountdown, formatCountdown } from '@/lib/testingPhase';
 
 const benefits = [
   'Full lesson library, forever',
@@ -20,6 +21,8 @@ const faqs = [
 ];
 
 export default function Pricing() {
+  const countdown = useCountdown();
+
   return (
     <>
       <section className="bg-blush border-b border-border">
@@ -33,9 +36,27 @@ export default function Pricing() {
       <section className="container-prose py-20">
         <div className="max-w-md mx-auto p-8 md:p-10 rounded-2xl border border-border bg-background shadow-sm">
           <div className="text-center mb-8">
-            <div className="text-xs uppercase tracking-[0.18em] text-primary mb-3">No subscriptions</div>
-            <div className="font-serif text-6xl text-primary mb-2">KES 1,500</div>
-            <p className="text-sm text-warm-muted">paid once · roughly $11</p>
+            {TESTING_PHASE ? (
+              <>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium mb-3">
+                  <Clock className="w-3 h-3" />
+                  Testing phase
+                </div>
+                <div className="font-serif text-6xl text-primary mb-2">0 KES</div>
+                <p className="text-sm text-warm-muted mb-1">Free during testing</p>
+                {countdown && (
+                  <p className="text-xs text-faint">
+                    Paid access (KES 1,500) returns in {formatCountdown(countdown)}
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="text-xs uppercase tracking-[0.18em] text-primary mb-3">No subscriptions</div>
+                <div className="font-serif text-6xl text-primary mb-2">KES 1,500</div>
+                <p className="text-sm text-warm-muted">paid once · roughly $11</p>
+              </>
+            )}
           </div>
           <ul className="space-y-3 mb-8">
             {benefits.map(b => (
@@ -47,9 +68,13 @@ export default function Pricing() {
           </ul>
           <Link to="/checkout"
             className="block text-center px-7 py-3 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition">
-            Get Orchestra-Core
+            {TESTING_PHASE ? 'Get free access' : 'Get Orchestra-Core'}
           </Link>
-          <p className="text-xs text-faint text-center mt-4">Pay with M-Pesa or card via IntaSend.</p>
+          <p className="text-xs text-faint text-center mt-4">
+            {TESTING_PHASE
+              ? 'Testing phase — no payment required. Access resets when paid mode returns.'
+              : 'Pay with M-Pesa or card via IntaSend.'}
+          </p>
         </div>
       </section>
 

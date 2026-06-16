@@ -4,6 +4,7 @@ import { Check, Loader2, Smartphone, CreditCard, ArrowRight, ChevronLeft, Copy }
 import { OTPInput } from '@/components/orchestra-core/OTPInput';
 import { sendOtp, verifyOtp, initiatePayment, getPaymentStatus, verifyCardPayment, ApiError } from '@/lib/api';
 import { saveSession, dispatchSessionChange } from '@/lib/session';
+import { TESTING_PHASE } from '@/lib/testingPhase';
 
 type Step = 'identity' | 'payment' | 'processing' | 'otp' | 'done';
 type Method = 'mpesa' | 'card';
@@ -58,6 +59,24 @@ export default function Checkout() {
     const val = identifier.trim();
     if (!val) return setError('Enter your email address.');
     if (!val.includes('@')) return setError('Enter a valid email address.');
+
+    if (TESTING_PHASE) {
+      setLoading(true);
+      setStep('processing');
+      try {
+        const result = await initiatePayment(val, 'free');
+        setTxRef(result.txRef);
+        setStep('otp');
+        await sendOtpToUser();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Something went wrong. Try again.');
+        setStep('identity');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     setStep('payment');
   }
 

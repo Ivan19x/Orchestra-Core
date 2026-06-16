@@ -44,7 +44,7 @@ export function getMe() {
 
 // ── payment ────────────────────────────────────────────────────────────────
 
-export function initiatePayment(identifier: string, method: 'mpesa' | 'card', mpesaPhone?: string) {
+export function initiatePayment(identifier: string, method: 'mpesa' | 'card' | 'free', mpesaPhone?: string) {
   return request<{ ok: boolean; method: string; txRef: string; paymentLink?: string; message?: string }>(
     '/api/payment/initiate',
     { method: 'POST', body: JSON.stringify({ identifier, method, mpesaPhone }) },
