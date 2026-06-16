@@ -14,6 +14,7 @@ const router = Router();
 const initiateLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, message: { error: 'Too many payment attempts. Try again later.' } });
 
 const PRICE_KES = 1500;
+const TESTING_FREE = process.env.TESTING_FREE === 'true';
 
 // Live keys contain "_live_"; test keys contain "_test_"
 const IS_BASE = (process.env.INTASEND_PUBLISHABLE_KEY ?? '').includes('_live_')
@@ -40,14 +41,21 @@ function normalizePhone(phone) {
 router.post('/initiate', initiateLimit, async (req, res) => {
   const { identifier, method, mpesaPhone } = req.body;
   if (!identifier || !method) return res.status(400).json({ error: 'identifier and method required' });
-  if (!['mpesa', 'card'].includes(method)) return res.status(400).json({ error: 'method must be mpesa or card' });
+  const validMethods = TESTING_FREE ? ['mpesa', 'card', 'free'] : ['mpesa', 'card'];
+  if (!validMethods.includes(method)) return res.status(400).json({ error: 'method must be mpesa or card' });
 
   try {
     const user = await upsertUser(identifier);
     if (user.has_paid) return res.status(409).json({ error: 'already_paid', message: 'This account already has a licence. Sign in to access your download.' });
 
     const txRef = `OC-${randomUUID()}`;
-    await createPayment(user.id, txRef, PRICE_KES, 'KES', method);
+    await createPayment(user.id, txRef, TESTING_FREE ? 0 : PRICE_KES, 'KES', method);
+
+    // Testing phase: skip payment entirely and grant access immediately
+    if (TESTING_FREE) {
+      await handlePaymentSuccess({ user_id: user.id }, txRef, 'testing-free');
+      return res.json({ ok: true, method: 'free', txRef });
+    }
 
     const isEmail = identifier.includes('@');
     const customerEmail = isEmail ? identifier : 'customer@orchestracore.com';

@@ -1,9 +1,12 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Brain, Shield, FileText, Heart, ArrowRight } from 'lucide-react';
+import { BookOpen, Brain, Shield, FileText, Heart, ArrowRight, Clock } from 'lucide-react';
 import { LessonCard } from '@/components/orchestra-core/LessonCard';
 import { CTABand } from '@/components/orchestra-core/CTABand';
+import { TESTING_PHASE, useCountdown, formatCountdown } from '@/lib/testingPhase';
 
 export default function Home() {
+  const countdown = useCountdown();
+
   return (
     <>
       {/* Hero */}
@@ -69,11 +72,27 @@ export default function Home() {
       {/* Pricing teaser */}
       <section className="bg-blush border-y border-border">
         <div className="container-narrow py-24 text-center">
-          <div className="text-xs uppercase tracking-[0.18em] text-primary mb-4">No subscriptions. Ever.</div>
-          <h2 className="font-serif text-5xl md:text-6xl text-foreground mb-3">KES 1,500</h2>
-          <p className="text-warm-muted mb-8">One-time. Access to every lesson and every update, for as long as Orchestra-Core operates.</p>
+          {TESTING_PHASE ? (
+            <>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium mb-4">
+                <Clock className="w-3 h-3" />
+                Testing phase
+              </div>
+              <h2 className="font-serif text-5xl md:text-6xl text-foreground mb-3">Free</h2>
+              <p className="text-warm-muted mb-2">Access every lesson at no cost during the testing phase.</p>
+              {countdown && (
+                <p className="text-sm text-faint mb-8">Paid access (KES 1,500) returns in {formatCountdown(countdown)}</p>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="text-xs uppercase tracking-[0.18em] text-primary mb-4">No subscriptions. Ever.</div>
+              <h2 className="font-serif text-5xl md:text-6xl text-foreground mb-3">KES 1,500</h2>
+              <p className="text-warm-muted mb-8">One-time. Access to every lesson and every update, for as long as Orchestra-Core operates.</p>
+            </>
+          )}
           <Link to="/pricing" className="inline-flex items-center px-7 py-3 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition">
-            Get Orchestra-Core
+            {TESTING_PHASE ? 'Get free access' : 'Get Orchestra-Core'}
           </Link>
         </div>
       </section>
