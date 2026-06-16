@@ -37,7 +37,7 @@ export default function Home() {
           {[
             { icon: BookOpen, title: 'Learn at your pace', body: 'A real curriculum — not an infinite chat window. Series, modules, and lessons you can actually finish.' },
             { icon: Brain, title: 'Think like smart money', body: 'Read filings, balance sheets, and market moves the way the people who move markets do.' },
-            { icon: Shield, title: 'Private by design', body: 'Orchestra-Core runs on your device. Your money questions never leave it. No accounts, no tracking.' },
+            { icon: Shield, title: 'Private by design', body: 'Orchestra-Core runs on your device. Your financial questions and learning data never leave it. No tracking, no analytics on what you read or ask.' },
           ].map(f => (
             <div key={f.title} className="p-7 rounded-xl border border-border bg-background">
               <div className="w-11 h-11 rounded-lg bg-blush flex items-center justify-center text-primary mb-5">
@@ -86,7 +86,7 @@ export default function Home() {
           </div>
           <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-4">Support keeps Orchestra-Core free for those who can't pay.</h2>
           <p className="text-warm-muted mb-6 leading-relaxed">
-            Contributions fund the servers that let students and low-income learners use Orchestra-Core without paying. Built by a student in Nairobi, Kenya.
+            Contributions help Orchestra-Core grow — more lessons, more series, and eventually a free hosted tier for learners who can't pay. Built by a student in Nairobi, Kenya.
           </p>
           <Link to="/support" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
             Learn how to contribute <ArrowRight className="w-3.5 h-3.5" />

@@ -42,7 +42,7 @@ export default function HowItWorks() {
             <div className="text-xs uppercase tracking-[0.18em] text-faint mb-3">02 · Built to stay private</div>
             <h2 className="font-serif text-4xl text-foreground mb-4">Your money questions never leave your device.</h2>
             <p className="text-warm-muted leading-relaxed">
-              Orchestra-Core runs locally. No accounts, no servers logging what you ask, no analytics pipe. You can use it on a plane, in a tunnel, or in a country where someone might prefer you weren't asking those questions.
+              Orchestra-Core runs locally on your computer. Your learning data and financial questions never leave your device — no server logs what you ask, no analytics tracks what you read. You buy once through a secure payment page; after that, nothing you do in the app touches the internet unless you turn on the optional Deep Dive web research toggle.
             </p>
           </div>
         </div>
@@ -55,7 +55,7 @@ export default function HowItWorks() {
             <div className="text-xs uppercase tracking-[0.18em] text-faint mb-3">03 · How lessons work</div>
             <h2 className="font-serif text-4xl text-foreground mb-4">A curriculum, not an endless feed.</h2>
             <p className="text-warm-muted leading-relaxed mb-4">
-              Orchestra-Core is organized into three series: <strong className="text-foreground font-medium">Money basics</strong>, <strong className="text-foreground font-medium">Smart money</strong>, and <strong className="text-foreground font-medium">Kenya money</strong>. Each series has modules; each module has lessons. You finish things.
+              Orchestra-Core is organized into series, each covering a distinct area of financial life. Three series are live now — <strong className="text-foreground font-medium">Money basics</strong>, <strong className="text-foreground font-medium">Smart money</strong>, and <strong className="text-foreground font-medium">Kenya money</strong> — with six more in development. Each series has lessons you can actually finish.
             </p>
             <p className="text-warm-muted leading-relaxed">
               The first lessons in every series are free forever. Premium lessons — the deeper analysis pieces — unlock with one payment.
@@ -66,7 +66,7 @@ export default function HowItWorks() {
               <BookOpen className="w-5 h-5 text-primary" />
               <div className="flex-1">
                 <div className="text-sm text-foreground">Money basics</div>
-                <div className="text-xs text-warm-muted">4 modules · Free</div>
+                <div className="text-xs text-warm-muted">8 lessons · First 4 free</div>
               </div>
             </div>
             <div className="flex items-center gap-3 p-3 rounded-lg bg-blush">

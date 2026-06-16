@@ -19,7 +19,7 @@ export default function About() {
             What I actually wanted was simple: a thing that could sit beside me and explain how money works the way a patient teacher would. Why central banks raise rates. How a balance sheet hides things. What an M-Pesa float actually is. Not advice — understanding.
           </p>
           <p className="text-warm-muted">
-            So I built Orchestra-Core. One payment, no subscriptions, runs on your phone. The advanced lessons go deep on how the people who move markets actually think — because that's the part nobody outside finance gets to see.
+            So I built Orchestra-Core. One payment, no subscriptions, runs on your computer. The advanced lessons go deep on how the people who move markets actually think — because that's the part nobody outside finance gets to see.
           </p>
 
           <div className="my-12 p-8 rounded-2xl bg-blush border border-border">
