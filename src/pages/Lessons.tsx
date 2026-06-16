@@ -26,6 +26,25 @@ export default function Lessons() {
 
       <section className="container-prose py-16 space-y-16">
         {series.map(s => {
+          if (s.comingSoon) {
+            if (q) return null;
+            return (
+              <div key={s.id} className="opacity-50">
+                <div className="flex items-start gap-4 p-5 rounded-xl bg-blush border border-border mb-6">
+                  <div className="w-11 h-11 rounded-lg bg-background flex items-center justify-center text-primary shrink-0">
+                    <s.icon className="w-5 h-5" strokeWidth={1.75} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <h2 className="font-serif text-2xl text-foreground">{s.name}</h2>
+                      <span className="text-xs uppercase tracking-widest text-faint border border-border rounded-full px-2 py-0.5">Coming soon</span>
+                    </div>
+                    <p className="text-sm text-warm-muted mt-1">{s.tagline}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          }
           const filtered = s.lessons.filter(l => l.title.toLowerCase().includes(q.toLowerCase()));
           if (q && filtered.length === 0) return null;
           return (
@@ -36,7 +55,7 @@ export default function Lessons() {
                 </div>
                 <div>
                   <h2 className="font-serif text-2xl text-foreground">{s.name}</h2>
-                  <p className="text-sm text-warm-muted mt-1">{s.description}</p>
+                  <p className="text-sm text-warm-muted mt-1">{s.tagline}</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
