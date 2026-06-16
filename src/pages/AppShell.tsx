@@ -1,9 +1,7 @@
 import { useState, useCallback } from 'react';
 import {
   Brain, BookOpen, Heart, User, LogOut, Orbit,
-  Clock, ChevronRight, Smartphone, Building2, Landmark,
-  Wallet, TrendingUp, CreditCard, TrendingDown, Shield,
-  BarChart3, FileText, Briefcase, LineChart,
+  Clock, ChevronRight,
 } from 'lucide-react';
 import { AskPanel } from '@/components/orchestra-core/AskPanel';
 import { SetupStatus } from '@/components/orchestra-core/SetupStatus';
@@ -120,12 +118,6 @@ function AppAI({ initialQuestion }: { initialQuestion: string }) {
 }
 
 // ── Lessons tab ───────────────────────────────────────────────────────────────
-const SERIES_ICONS: Record<string, React.ElementType> = {
-  Wallet, TrendingUp, CreditCard, TrendingDown, Shield, BarChart3,
-  FileText, Briefcase, LineChart, Smartphone, Building2, Landmark,
-  BookOpen, Brain, Heart,
-};
-
 function AppLessons({ onAsk }: { onAsk: (q: string) => void }) {
   const active = series.filter(s => !s.comingSoon && s.lessons.length > 0);
 
