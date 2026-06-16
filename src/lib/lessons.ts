@@ -1,6 +1,6 @@
 import {
   Wallet, TrendingUp, TrendingDown, FileText, Shield, BookOpen, BarChart3,
-  Briefcase, Building2, Smartphone, Landmark, LineChart, Receipt, CreditCard,
+  Briefcase, Building2, Smartphone, Landmark, LineChart, CreditCard,
   Home, Brain, Rocket, Heart, Activity, type LucideIcon,
 } from 'lucide-react';
 
@@ -39,13 +39,13 @@ export const series: Series[] = [
       {
         id: '1-1', module: 'Module 1', slug: '1-1-what-money-actually-is',
         title: 'What money actually is', readTime: '5 min read', icon: Wallet,
-        summary: 'Money isn't what most people think it is — and understanding the truth changes how you use it.',
+        summary: "Money isn't what most people think it is — and understanding the truth changes how you use it.",
         tags: ['foundation', 'money', 'beginners'],
       },
       {
         id: '1-2', module: 'Module 2', slug: '1-2-how-banks-create-money',
         title: 'How banks create money', readTime: '6 min read', icon: Building2,
-        summary: 'Banks don't just store your money — they multiply it. Here's the mechanism that runs the entire financial world.',
+        summary: "Banks don't just store your money — they multiply it. Here's the mechanism that runs the entire financial world.",
         tags: ['banks', 'money creation', 'beginners'],
       },
       {
@@ -63,19 +63,19 @@ export const series: Series[] = [
       {
         id: '1-5', module: 'Module 5', slug: '1-5-good-debt-vs-bad-debt',
         title: 'Good debt vs bad debt', readTime: '6 min read', icon: CreditCard, premium: true,
-        summary: 'Not all debt is the enemy. The difference between debt that builds wealth and debt that destroys it.',
+        summary: "Not all debt is the enemy. The difference between debt that builds wealth and debt that destroys it.",
         tags: ['debt', 'loans', 'credit'],
       },
       {
         id: '1-6', module: 'Module 6', slug: '1-6-inflation-why-your-kes-shrinks',
-        title: 'Inflation — why your KES 1,000 shrinks', readTime: '6 min read', icon: TrendingDown, premium: true,
+        title: "Inflation — why your KES 1,000 shrinks", readTime: '6 min read', icon: TrendingDown, premium: true,
         summary: 'Inflation is the invisible tax on your savings. Understanding it changes how you think about holding cash.',
         tags: ['inflation', 'macro', 'purchasing power'],
       },
       {
         id: '1-7', module: 'Module 7', slug: '1-7-emergency-fund-the-boring-secret',
         title: 'The emergency fund — the boring secret', readTime: '5 min read', icon: Shield, premium: true,
-        summary: 'The most unsexy financial move that protects every other financial decision you'll ever make.',
+        summary: "The most unsexy financial move that protects every other financial decision you'll ever make.",
         tags: ['emergency fund', 'saving', 'financial security'],
       },
       {
@@ -89,7 +89,7 @@ export const series: Series[] = [
   {
     id: 'series-2-adult-life-money',
     name: 'Adult life money',
-    tagline: 'Everything you'll pay for that nobody told you about.',
+    tagline: "Everything you'll pay for that nobody told you about.",
     icon: Activity,
     color: '#185FA5',
     comingSoon: true,
