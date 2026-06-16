@@ -28,7 +28,11 @@ function isHeaders() {
 }
 
 function normalizePhone(phone) {
-  return phone.replace(/^\+/, '');
+  const digits = phone.replace(/\D/g, '');
+  if (digits.startsWith('254') && digits.length === 12) return digits;   // +254XXXXXXXXX
+  if (digits.startsWith('0') && digits.length === 10) return `254${digits.slice(1)}`; // 07XXXXXXXX
+  if (digits.length === 9) return `254${digits}`;                         // 7XXXXXXXX
+  return digits;
 }
 
 // POST /api/payment/initiate
@@ -65,9 +69,10 @@ router.post('/initiate', initiateLimit, async (req, res) => {
         method: 'POST', headers: isHeaders(), body: JSON.stringify(body),
       });
       const data = await r.json();
+      console.log('IntaSend STK response:', JSON.stringify(data));
       if (!data.invoice?.invoice_id) {
         await failPayment(txRef);
-        const msg = data.details?.[0] || data.detail || 'M-Pesa request failed. Check the number and try again.';
+        const msg = data.details?.[0] || data.detail || data.message || 'M-Pesa request failed. Check the number and try again.';
         return res.status(502).json({ error: msg });
       }
       // Store invoice_id so status polling can check it
