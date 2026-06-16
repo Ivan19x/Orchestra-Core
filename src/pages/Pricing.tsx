@@ -6,7 +6,7 @@ const benefits = [
   'Full lesson library, forever',
   'Ask Orchestra-Core, your private AI coach',
   'Works offline — your learning data stays on your device',
-  'Every future lesson and update included',
+  'Every future lesson and update, for as long as Orchestra-Core operates',
   'No subscriptions, no tracking, no upsells',
 ];
 

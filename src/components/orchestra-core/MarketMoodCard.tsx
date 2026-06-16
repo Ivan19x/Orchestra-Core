@@ -22,7 +22,7 @@ export function MarketMoodCard() {
           <Shuffle className="w-4 h-4" />
         </button>
       </div>
-      <h3 className="text-lg text-foreground mb-1.5">Market mood today</h3>
+      <h3 className="text-lg text-foreground mb-1.5">Money psychology</h3>
       <div className="text-sm text-foreground font-medium mb-1.5">{concept.title}</div>
       <p className="text-sm text-warm-muted leading-relaxed mb-5">{concept.blurb}</p>
 

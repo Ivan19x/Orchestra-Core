@@ -248,7 +248,7 @@ export default function Checkout() {
 
               {method === 'card' && (
                 <div className="mb-5 p-4 rounded-xl bg-blush border border-border text-sm text-warm-muted">
-                  You'll be taken to a secure IntaSend checkout to pay {PRICE} by card or bank transfer.
+                  You'll be taken to a secure IntaSend checkout page to pay {PRICE} by card.
                 </div>
               )}
 

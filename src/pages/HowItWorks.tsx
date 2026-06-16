@@ -22,8 +22,8 @@ export default function HowItWorks() {
             </p>
           </div>
           <div className="p-6 rounded-2xl bg-blush border border-border space-y-3">
-            <Bubble who="you">Why did the market drop today?</Bubble>
-            <Bubble who="coach">Three things happened at once. The Fed signaled rates may stay higher for longer, an earnings miss from a big tech name spooked sentiment, and oil prices jumped on supply news. Each on its own is mild — together they triggered a broad sell-off. Want me to walk through how each piece works?</Bubble>
+            <Bubble who="you">Why do markets drop?</Bubble>
+            <Bubble who="coach">Markets usually fall for one of a few reasons: central banks signal rates staying high (which reduces the value of future earnings), a big company misses expectations and drags sentiment, or a geopolitical event shifts risk appetite. Often it's several things stacking. I don't have live data — but I can walk you through exactly how each of those mechanisms works.</Bubble>
           </div>
         </div>
       </section>

@@ -11,10 +11,10 @@ export default function Home() {
         <div className="container-narrow py-24 md:py-32 text-center fade-in">
           <div className="text-xs uppercase tracking-[0.18em] text-primary mb-6">Private AI coach · Curriculum-based</div>
           <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl text-foreground leading-[1.05] mb-6">
-            Understand money the way the people who have the most of it do.
+            Understanding Money.
           </h1>
           <p className="text-lg text-warm-muted max-w-xl mx-auto mb-10 leading-relaxed">
-            Orchestra-Core is a private AI coach and curriculum that teaches you how smart money actually thinks — without jargon, without subscriptions, without selling you anything.
+            Orchestra-Core is a private AI coach and curriculum that teaches you how smart money actually thinks — in plain language, one payment, no subscriptions.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/pricing" className="inline-flex items-center justify-center px-7 py-3 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition">
@@ -71,7 +71,7 @@ export default function Home() {
         <div className="container-narrow py-24 text-center">
           <div className="text-xs uppercase tracking-[0.18em] text-primary mb-4">No subscriptions. Ever.</div>
           <h2 className="font-serif text-5xl md:text-6xl text-foreground mb-3">KES 1,500</h2>
-          <p className="text-warm-muted mb-8">One-time. Lifetime access to every lesson and every update.</p>
+          <p className="text-warm-muted mb-8">One-time. Access to every lesson and every update, for as long as Orchestra-Core operates.</p>
           <Link to="/pricing" className="inline-flex items-center px-7 py-3 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition">
             Get Orchestra-Core
           </Link>
