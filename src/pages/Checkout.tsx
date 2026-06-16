@@ -16,7 +16,6 @@ export default function Checkout() {
 
   const [step, setStep] = useState<Step>('identity');
   const [identifier, setIdentifier] = useState('');
-  const [identifierType, setIdentifierType] = useState<'email' | 'phone'>('phone');
   const [method, setMethod] = useState<Method>('mpesa');
   const [mpesaPhone, setMpesaPhone] = useState('');
   const [txRef, setTxRef] = useState('');
@@ -57,13 +56,8 @@ export default function Checkout() {
     e.preventDefault();
     setError('');
     const val = identifier.trim();
-    if (!val) return setError('Enter your email or phone number.');
-    if (identifierType === 'email' && !val.includes('@')) return setError('Enter a valid email address.');
-    if (identifierType === 'phone') {
-      const digits = val.replace(/\D/g, '');
-      if (digits.length < 9) return setError('Enter a valid phone number.');
-      setMpesaPhone(val); // pre-fill M-Pesa field
-    }
+    if (!val) return setError('Enter your email address.');
+    if (!val.includes('@')) return setError('Enter a valid email address.');
     setStep('payment');
   }
 
@@ -142,8 +136,6 @@ export default function Checkout() {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const isPhone = identifierType === 'phone';
-
   return (
     <div className="min-h-screen bg-blush flex items-start justify-center pt-16 pb-24 px-4">
       <div className="w-full max-w-md">
@@ -171,27 +163,17 @@ export default function Checkout() {
             <form onSubmit={handleIdentitySubmit}>
               <div className="text-xs uppercase tracking-[0.15em] text-primary mb-1">Get Orchestra-Core</div>
               <h1 className="font-serif text-3xl text-foreground mb-2">One payment. Lifetime access.</h1>
-              <p className="text-sm text-warm-muted mb-8">{PRICE} — enter your email or phone to continue.</p>
-
-              <div className="flex rounded-full border border-border overflow-hidden mb-5 text-sm">
-                {(['phone', 'email'] as const).map(t => (
-                  <button key={t} type="button" onClick={() => setIdentifierType(t)}
-                    className={`flex-1 py-2 transition capitalize ${identifierType === t ? 'bg-primary text-primary-foreground' : 'text-warm-muted hover:text-foreground'}`}>
-                    {t === 'phone' ? 'Phone number' : 'Email address'}
-                  </button>
-                ))}
-              </div>
+              <p className="text-sm text-warm-muted mb-8">{PRICE} — enter your email address to continue.</p>
 
               <input
-                type={isPhone ? 'tel' : 'email'}
+                type="email"
                 value={identifier}
                 onChange={e => setIdentifier(e.target.value)}
-                placeholder={isPhone ? '+254 7XX XXX XXX' : 'you@example.com'}
+                placeholder="you@example.com"
                 className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-primary transition mb-2"
                 autoFocus
               />
-              {isPhone && <p className="text-xs text-faint mb-5">We'll send your code via SMS. Standard rates may apply.</p>}
-              {!isPhone && <p className="text-xs text-faint mb-5">We'll send your code via email. No marketing, ever.</p>}
+              <p className="text-xs text-faint mb-5">We'll send your verification code here. No marketing, ever.</p>
 
               {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
 

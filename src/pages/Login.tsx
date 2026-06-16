@@ -21,7 +21,7 @@ export default function Login() {
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     const val = identifier.trim();
-    if (!val) return setError('Enter your email or phone number.');
+    if (!val || !val.includes('@')) return setError('Enter a valid email address.');
     setError('');
     setLoading(true);
     try {
@@ -67,14 +67,14 @@ export default function Login() {
               <p className="text-sm text-warm-muted mb-8">
                 {reason === 'already_paid'
                   ? 'This account already has a licence. Sign in to access your download.'
-                  : 'Enter the email or phone you used when you bought Orchestra-Core.'}
+                  : 'Enter the email address you used when you bought Orchestra-Core.'}
               </p>
 
               <input
-                type="text"
+                type="email"
                 value={identifier}
                 onChange={e => setIdentifier(e.target.value)}
-                placeholder="Email or phone number"
+                placeholder="you@example.com"
                 className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-primary transition mb-5"
                 autoFocus
               />
@@ -96,7 +96,7 @@ export default function Login() {
 
           {step === 'otp' && (
             <form onSubmit={handleVerify}>
-              <h1 className="font-serif text-3xl text-foreground mb-2">Check your {identifier.includes('@') ? 'inbox' : 'phone'}.</h1>
+              <h1 className="font-serif text-3xl text-foreground mb-2">Check your inbox.</h1>
               <p className="text-sm text-warm-muted mb-8">
                 We sent a code to <span className="text-foreground">{identifier}</span>
               </p>
