@@ -58,7 +58,7 @@ export default function HowItWorks() {
               Orchestra-Core is organized into series, each covering a distinct area of financial life. Three series are live now — <strong className="text-foreground font-medium">Money basics</strong>, <strong className="text-foreground font-medium">Smart money</strong>, and <strong className="text-foreground font-medium">Kenya money</strong> — with six more in development. Each series has lessons you can actually finish.
             </p>
             <p className="text-warm-muted leading-relaxed">
-              The first lessons in every series are free forever. Premium lessons — the deeper analysis pieces — unlock with one payment.
+              You can browse the full lesson library here as a preview. All lesson content, interactive learning, and your AI coach are inside the Orchestra-Core app — one payment gets you everything.
             </p>
           </div>
           <div className="p-6 rounded-2xl border border-border bg-background space-y-3">
@@ -66,21 +66,21 @@ export default function HowItWorks() {
               <BookOpen className="w-5 h-5 text-primary" />
               <div className="flex-1">
                 <div className="text-sm text-foreground">Money basics</div>
-                <div className="text-xs text-warm-muted">8 lessons · First 4 free</div>
+                <div className="text-xs text-warm-muted">8 lessons · Preview available</div>
               </div>
             </div>
             <div className="flex items-center gap-3 p-3 rounded-lg bg-blush">
               <BookOpen className="w-5 h-5 text-primary" />
               <div className="flex-1">
                 <div className="text-sm text-foreground">Smart money</div>
-                <div className="text-xs text-warm-muted">4 modules · 3 premium</div>
+                <div className="text-xs text-warm-muted">4 modules · Preview available</div>
               </div>
             </div>
             <div className="flex items-center gap-3 p-3 rounded-lg bg-blush">
               <BookOpen className="w-5 h-5 text-primary" />
               <div className="flex-1">
                 <div className="text-sm text-foreground">Kenya money</div>
-                <div className="text-xs text-warm-muted">4 modules · 2 premium</div>
+                <div className="text-xs text-warm-muted">4 modules · Preview available</div>
               </div>
             </div>
           </div>

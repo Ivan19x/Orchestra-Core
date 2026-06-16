@@ -10,8 +10,11 @@ export default function Lessons() {
     <>
       <section className="bg-blush border-b border-border">
         <div className="container-narrow py-20 text-center">
-          <div className="text-xs uppercase tracking-[0.18em] text-primary mb-4">Lessons</div>
-          <h1 className="font-serif text-5xl md:text-6xl text-foreground mb-6">Every lesson, in one place.</h1>
+          <div className="text-xs uppercase tracking-[0.18em] text-primary mb-4">Lesson library</div>
+          <h1 className="font-serif text-5xl md:text-6xl text-foreground mb-4">Every lesson, in one place.</h1>
+          <p className="text-sm text-warm-muted max-w-md mx-auto mb-6">
+            You're browsing a preview of the library. Full lesson content, interactive learning, and your AI coach are all inside the Orchestra-Core app.
+          </p>
           <div className="relative max-w-md mx-auto">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-muted" />
             <input
