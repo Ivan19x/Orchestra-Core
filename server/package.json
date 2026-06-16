@@ -1,0 +1,12 @@
+{
+  "name": "orchestra-core-server",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Runtime dependencies for Orchestra-Core's local server (Deep Dive search + static frontend host). Kept separate from the root package.json so electron-builder packages only this, not the full frontend dev toolchain.",
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}

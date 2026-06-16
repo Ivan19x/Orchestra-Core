@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm audit *)",
+      "Bash(npm run *)",
+      "Bash(cat .gitignore)",
+      "Bash(ls scripts *)",
+      "Bash(curl -s http://localhost:11434/api/tags)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8080/)",
+      "Bash(curl -s http://localhost:8080/rag-index.json -o /dev/null -w \"rag-index: %{http_code}\\\\n\")",
+      "WebSearch",
+      "Bash(npx tsc *)",
+      "Bash(du -sh node_modules)",
+      "Bash(ls release *)",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(Object.keys\\(p.dependencies\\).length, 'deps'\\)\")",
+      "Bash(du -sh server/node_modules)",
+      "Bash(npx electron-builder *)",
+      "PowerShell(Get-Process *)",
+      "Bash(ls release/win-unpacked)",
+      "Bash(npx asar *)",
+      "Bash(ls node_modules/.bin/esbuild*)",
+      "Bash(npx esbuild *)",
+      "Bash(PORT=5176 node server/dist/index.mjs)",
+      "Bash(curl -s http://localhost:5176/api/health)",
+      "Bash(curl -s -X POST http://localhost:5176/api/search -H \"Content-Type: application/json\" -d '{\"query\":\"Kenya SACCO basics\"}')",
+      "Bash(kill %1)",
+      "Bash(echo \"EXIT=$?\")",
+      "Read(//tmp/**)"
+    ]
+  }
+}
