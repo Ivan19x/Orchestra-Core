@@ -18,9 +18,10 @@ export default function Support() {
 
       <section className="container-narrow py-16">
         <div className="p-8 rounded-2xl border border-border bg-background text-center">
-          <div className="text-xs uppercase tracking-[0.18em] text-faint mb-3">M-Pesa · Lipa na M-Pesa · Buy Goods</div>
-          <div className="font-serif text-5xl text-primary mb-2">5283910</div>
-          <p className="text-sm text-warm-muted">Send any amount — every shilling goes directly to lesson development and hosting.</p>
+          <div className="text-xs uppercase tracking-[0.18em] text-faint mb-3">M-Pesa · Send Money</div>
+          <div className="font-serif text-5xl text-primary mb-2">0790 694 452</div>
+          <p className="text-sm text-warm-muted mb-1">Send any amount — every shilling goes directly to lesson development and hosting.</p>
+          <p className="text-xs text-faint">M-Pesa → Send Money → enter 0790694452</p>
         </div>
 
         <div className="mt-8 p-8 rounded-2xl border border-border bg-background">

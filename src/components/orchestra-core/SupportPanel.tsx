@@ -17,8 +17,9 @@ export function SupportPanel() {
       </p>
 
       <div className="bg-blush rounded-xl border border-border p-4 text-center mb-5">
-        <div className="text-xs uppercase tracking-wider text-faint mb-1">M-Pesa Till · Buy Goods</div>
-        <div className="font-serif text-3xl text-primary">5283910</div>
+        <div className="text-xs uppercase tracking-wider text-faint mb-1">M-Pesa · Send Money</div>
+        <div className="font-serif text-3xl text-primary">0790 694 452</div>
+        <div className="text-xs text-faint mt-1">M-Pesa → Send Money → 0790694452</div>
       </div>
 
       <Link to="/support" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
