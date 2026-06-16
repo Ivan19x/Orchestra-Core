@@ -23,16 +23,15 @@ export function Footer() {
           ['Try Orchestra-Core', '/try'],
         ]} />
         <FooterCol title="Legal" links={[
-          ['Terms', '#'],
-          ['Privacy', '#'],
-          ['Disclaimer', '#'],
+          ['Terms of Service', '/terms'],
+          ['Privacy Policy', '/privacy'],
         ]} />
       </div>
 
       <div className="border-t border-border">
         <div className="container-prose py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs text-faint">
           <span>Built in Nairobi, Kenya.</span>
-          <span className="max-w-xl md:text-right">Orchestra-Core is financial education, not financial advice. Always do your own research before making money decisions.</span>
+          <span className="max-w-xl md:text-right">Orchestra-Core provides general financial education only — not personalized financial, investment, legal, or tax advice. AI responses may be inaccurate; always verify independently. Nothing here is a recommendation to buy or sell any asset.</span>
           <div className="flex items-center gap-3">
             <a href="#" aria-label="Twitter"><Twitter className="w-4 h-4 hover:text-primary transition" /></a>
             <a href="#" aria-label="Instagram"><Instagram className="w-4 h-4 hover:text-primary transition" /></a>

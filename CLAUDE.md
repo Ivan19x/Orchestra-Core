@@ -236,7 +236,7 @@ investwise-manager-main/
 
 - **CMA:** Stay strictly on the education side — general/impersonal content only, never personalized buy/sell advice for specific securities.
 - **Business registration:** BRS business name "Orchestra-Core" via eCitizen, ~KES 950 one-time. Separate annual County Single Business Permit (~KES 5,000-10,000) once actively trading.
-- **Data Protection Act 2019:** Now collecting email/phone for purchases — **must register with ODPC** before going live with real users. No minimum-size exemption.
+- **Data Protection Act 2019:** Collecting email/phone for purchases. DPA *obligations* (lawful basis, privacy policy, data-subject rights, breach notification) apply from the first piece of personal data collected — no threshold. **Action required before first sale: publish Privacy Policy at `/privacy` (done).** Formal ODPC *registration* is a separate question: under the 2021 Registration Regulations you are exempt while under KES 5M annual turnover AND under 10 employees. Register with ODPC (KES 4,000) when approaching KES 5M or hiring staff. Note: the older Compass legal PDF said "no minimum-size exemption" — that referred to DPA obligations generally, not ODPC registration; the newer Orchestra-Core roadmap PDF correctly distinguishes the two.
 - **Model licensing:** All models are Apache-2.0 (Qwen2.5 family) — safe to redistribute in a downloadable product.
 - **RAG content:** Original summaries only, never verbatim book text.
 
@@ -392,8 +392,9 @@ This bakes the real download URL into the DeviceScanPanel button. The Download p
 #### 9. Legal prerequisites before accepting real money
 
 - [ ] **BRS business name registration** — "Orchestra-Core" at eCitizen.go.ke → Business Registration → Business Name → ~KES 950 one-time
-- [ ] **ODPC registration** — odpc.go.ke → Data Controller/Processor registration (required because you collect email/phone). Do this before your first real paying customer
-- [ ] **Flutterwave production verification** — switch from Test to Live mode in Flutterwave (requires business registration docs: BRS certificate, ID, bank account). Takes a few days to approve
+- [x] **Privacy Policy and Terms of Service** — created at `/privacy` and `/terms`, linked from footer. DPA compliance requires these published before any purchase.
+- [ ] **ODPC registration** — Formal registration with ODPC is NOT required before your first sale if turnover is under KES 5M and you have under 10 employees (2021 Registration Regulations exemption). However, register at odpc.go.ke (KES 4,000) as you approach KES 5M or hire staff. The Privacy Policy covers your day-1 DPA obligations.
+- [ ] **IntaSend production verification** — confirm live keys are active and receiving payouts (IntaSend KYC required)
 - [ ] **Africa's Talking production** — apply for a production shortcode/sender ID (requires KYC). Sandbox works for testing, production needed for real customers to receive SMS
 
 #### 10. Content marketing (start before going live)
@@ -419,7 +420,7 @@ This bakes the real download URL into the DeviceScanPanel button. The Download p
 
 **Phase 3:** multi-gear orchestrator (specialized models per domain, synthesized answers)
 
-**Phase 4:** ODPC registration (move here if not done in Phase 1), hosted web tier on VPS funded by donations, Oracle Always-Free or Hetzner
+**Phase 4:** Formal ODPC registration (when approaching KES 5M turnover or hiring staff), hosted web tier on VPS funded by donations, Oracle Always-Free or Hetzner
 
 **Phase 5:** SACCO/employer B2B licensing
 

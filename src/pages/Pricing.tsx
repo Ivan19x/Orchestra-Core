@@ -16,6 +16,7 @@ const faqs = [
   { q: 'Do I need internet?', a: 'Only to download Orchestra-Core and pull lesson updates. Day-to-day reading and chatting with your coach works fully offline.' },
   { q: 'What exactly do I get for one payment?', a: 'Every lesson across Money basics, Smart money, and Kenya money — current and future. Unlimited use of your private AI coach. Forever.' },
   { q: 'Why do I need to give my phone or email?', a: 'We link your payment to a contact so you can re-download if you switch devices, without paying again. We store nothing else — your learning data never leaves your device.' },
+  { q: 'Is the AI coach a real person?', a: 'No. The coach is a local AI language model (Qwen2.5) that runs entirely on your computer — not a human and not connected to any financial institution. It explains concepts; it does not give personalized financial advice.' },
 ];
 
 export default function Pricing() {
@@ -48,7 +49,7 @@ export default function Pricing() {
             className="block text-center px-7 py-3 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition">
             Get Orchestra-Core
           </Link>
-          <p className="text-xs text-faint text-center mt-4">Pay with M-Pesa, card, or bank transfer.</p>
+          <p className="text-xs text-faint text-center mt-4">Pay with M-Pesa or card via IntaSend.</p>
         </div>
       </section>
 
