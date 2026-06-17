@@ -23,9 +23,6 @@ release2
 release*/
 *.local
 
-# Generated RAG embeddings index (regenerate with `npm run rag:build`)
-public/rag-index.json
-
 # Android build outputs (source code committed, compiled output is not)
 android/.gradle/
 android/build/

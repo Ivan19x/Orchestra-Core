@@ -1,4 +1,4 @@
-// Builds content/rag-index.json: chunks every lesson in content/lessons/ and
+// Builds public/rag-index.json: chunks every lesson in content/lessons/ and
 // embeds each chunk via a local Ollama embedding model.
 //
 // Usage: npm run rag:build
@@ -14,9 +14,15 @@ const OUTPUT_FILE = path.resolve('public/rag-index.json');
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
 const EMBED_MODEL = process.env.EMBED_MODEL || 'nomic-embed-text';
 
+// money-basics/ is a superseded draft folder (replaced by series-1/) that
+// isn't referenced by src/lib/lessons.ts at all — skip it so the AI doesn't
+// cite lessons that don't actually exist in the app's lesson browser.
+const SKIP_DIRS = new Set(['money-basics']);
+
 function walkMarkdownFiles(dir) {
   const out = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.isDirectory() && SKIP_DIRS.has(entry.name)) continue;
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) out.push(...walkMarkdownFiles(full));
     else if (entry.isFile() && entry.name.endsWith('.md') && entry.name !== 'README.md') out.push(full);

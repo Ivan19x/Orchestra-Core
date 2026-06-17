@@ -2,7 +2,7 @@
 //
 // Usage: npm run ask -- "your question here"
 // Requires Ollama running locally with the chat model pulled (default: qwen2.5:7b)
-// and content/rag-index.json built (npm run rag:build).
+// and public/rag-index.json built (npm run rag:build).
 
 import fs from 'node:fs';
 import path from 'node:path';

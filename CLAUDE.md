@@ -201,7 +201,6 @@ Orchestra-Core/
 │   └── preload.cjs          — contextBridge: exposes electronSetup + update IPC to renderer
 ├── content/
 │   ├── lessons/             — Markdown lesson files (curriculum + RAG corpus + marketing scripts)
-│   ├── rag-index.json       — 89 embedded chunks (committed to repo)
 │   ├── system-prompt.md     — AI coach persona, guardrails, Kenya examples
 │   └── curriculum.json
 ├── android/                 — Capacitor Android project (committed, build outputs gitignored)
@@ -212,7 +211,8 @@ Orchestra-Core/
 │   └── icon.png             — App icon source for electron-builder
 ├── public/
 │   ├── logo-512.png
-│   └── favicon.ico
+│   ├── favicon.ico
+│   └── rag-index.json       — 134 embedded chunks, committed to repo (regenerate with `npm run rag:build`, requires local Ollama + nomic-embed-text). This is the path the app actually fetches at runtime — do not move it.
 ├── scripts/
 │   ├── build-rag-index.mjs  — chunks lessons + embeds via nomic-embed-text
 │   ├── query-rag.mjs        — test retrieval from CLI
@@ -397,7 +397,7 @@ $utf8NoBOM = New-Object System.Text.UTF8Encoding $false
 ### ✅ Done
 
 - **Lesson content** — 12+ lessons across 3 series in `content/lessons/`, Markdown with frontmatter
-- **RAG pipeline** — `content/rag-index.json` (89 chunks) committed to repo; `npm run rag:build` regenerates it; `npm run rag:query` tests retrieval
+- **RAG pipeline** — `public/rag-index.json` (134 chunks, 16 lessons) committed to repo; `npm run rag:build` regenerates it; `npm run rag:query` tests retrieval. (Was broken for every release through v1.1.6: the index lived only at the gitignored `public/rag-index.json` path and was never committed, so every shipped build had zero lesson grounding — fixed by committing it and deleting the stale, unused `content/rag-index.json` that nothing actually read.)
 - **System prompt** — `content/system-prompt.md` — educational framing, Socratic voice, Kenya examples, "not financial advice" guardrails
 - **CLI ask pipeline** — `npm run ask -- "question"` does full RAG + streaming Ollama end-to-end
 - **`/ask` page** — live browser chat panel, source-lesson chips, Deep Dive web toggle
@@ -491,6 +491,7 @@ Currently `AT_USERNAME=sandbox` — real users won't receive SMS OTPs. Apply at 
 - [ ] **iOS** — Capacitor config is ready but requires Apple Developer account ($99/year) and a Mac build. Deferred
 - [ ] **Mac DMG** — CI now builds it but it hasn't been locally tested end-to-end
 - [ ] **Content marketing** — start posting 1-2 clips/week from lesson corpus before launch. TikTok Kenya, Instagram, X. Example: "How one tweet wiped $2 trillion off markets", "What a 13F filing actually tells you", "Why M-Pesa is studied in Harvard Business School"
+- [ ] **"Reading a payslip" lesson is orphaned** — `content/lessons/money-basics/03-reading-a-payslip.md` covers PAYE/NSSF/SHIF/Housing Levy, a topic no current series-1 module covers, but it's from the superseded `money-basics/` draft folder (excluded from RAG indexing) and isn't wired into `src/lib/lessons.ts`. Worth promoting into series-1 as a real numbered module, or formally retiring — currently just sitting unused.
 
 ---
 

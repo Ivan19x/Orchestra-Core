@@ -1,4 +1,4 @@
-// Shared retrieval helpers over content/rag-index.json.
+// Shared retrieval helpers over public/rag-index.json.
 
 import fs from 'node:fs';
 import path from 'node:path';

@@ -1,4 +1,4 @@
-// Quick CLI to test retrieval over content/rag-index.json.
+// Quick CLI to test retrieval over public/rag-index.json.
 //
 // Usage: npm run rag:query -- "what is fuliza"
 
