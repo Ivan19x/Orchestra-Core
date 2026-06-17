@@ -40,6 +40,17 @@ Typography: clean sans-serif throughout (Inter-style); headings medium weight (5
 
 ---
 
+## Live deployments
+
+| Service | URL | Platform |
+|---|---|---|
+| Website | https://orchestra-core.vercel.app | Vercel (auto-deploys on push to main) |
+| Backend API | https://orchestra-core.onrender.com | Render (auto-deploys on push to main) |
+| GitHub repo | https://github.com/Ivan19x/Orchestra-Core | main branch |
+| Releases | https://github.com/Ivan19x/Orchestra-Core/releases | Built by CI on every `v*.*.*` tag |
+
+---
+
 ## Website pages
 
 Four-stage visitor journey: **Home → Explore → Try → Get Orchestra-Core**
@@ -57,8 +68,11 @@ Four-stage visitor journey: **Home → Explore → Try → Get Orchestra-Core**
 | `/download` | Device scan + download CTA (gated: shows device scan only if paid) |
 | `/support` | M-Pesa Till, Buy Me a Coffee, progress bar, supporter names |
 | `/about` | Founder story, mission |
+| `/privacy` | Privacy Policy (DPA compliance) |
+| `/terms` | Terms of Service |
 | `/ask` | Live AI chat panel (dev-only, not in nav) |
 | `/dashboard` | Full product dashboard (dev-only, not in nav) |
+| `/app` | Electron/Android app shell — not a website page, only loaded inside the apps |
 
 Global nav: sticky white header, Logo (Orbit icon + "Orchestra**-Core**" wordmark), nav links center, "Get Orchestra-Core" → `/checkout` button right. Shows "Sign in" or "Account" link based on session state. Collapses to hamburger on mobile, CTA always visible.
 
@@ -66,14 +80,33 @@ Global nav: sticky white header, Logo (Orbit icon + "Orchestra**-Core**" wordmar
 
 ## Product / app concept (what people use after buying)
 
-Local LLM via Ollama + RAG knowledge base. Dashboard at `/dashboard`:
-- Header: greeting + learning-streak badge (streaks tied to LEARNING progress only)
-- "Today's insight" card — rotates through lesson corpus by day-of-year
-- Quick tools row: Budget builder (50/30/20 calculator), "What would they do?" (Smart Money prompts), Market mood today — each pre-fills a question into `/ask`
-- `AskPanel` — streaming chat with `qwen2.5:7b` via Ollama, source-lesson chips, Deep Dive web toggle
-- `SupportPanel` — compact progress bar + M-Pesa CTA
+The downloadable Electron app (and Android APK) loads `/app` — a full shell separate from the website nav/footer.
 
-### Content corpus — three series, 12 lessons (4 per series)
+**App shell layout (`src/pages/AppShell.tsx`):**
+- Left sidebar (w-56, blush background): Logo, nav buttons (AI / Lessons / Support / Account), `SetupStatus` checklist at the bottom
+- Main content area: switches between AI chat, lesson browser, support, account panels
+- Update banner at top when a new version is available
+
+**`SetupStatus` sidebar checklist (`src/components/orchestra-core/SetupStatus.tsx`):**
+- Device scanned ✓
+- Ollama running ✓ / spinner
+- Model chosen (name shown)
+- Model downloaded (% progress bar)
+- Collapses to "AI ready · modelname" when complete
+- Invisible on website and Android (returns null when not in Electron)
+
+**Setup runs in background** — the app shows full content immediately. There is no blocking setup screen.
+
+**Auto sign-in from website:** When a user pays on the website, the checkout done screen shows a deep link button: `orchestracore://auth?token=JWT`. Clicking it opens the app (if installed) and signs them in automatically. Single-instance lock ensures the token is delivered even if the app was already open.
+
+**AI chat (`AppAI`):** Shows `AskPanel` in Electron. Shows "AI runs on desktop" message with download link on Android.
+
+**Lesson browser (`AppLessons`):** Full series browser. "Ask about this →" button per lesson pre-fills a question into the AI panel.
+
+**Account (`AppAccount`):** Shows session info + OTP sign-in if not logged in.
+
+### Content corpus — three series, 12+ lessons
+
 - **Money basics** — how money actually works, foundational concepts
 - **Smart money** — 13F/13D filings, Buffett-style analysis, central bank communication, crypto on-chain concepts. All framed as educational case studies, never "copy them to get rich"
 - **Kenya money** — M-Pesa, SACCOs, NSE, local financial landscape
@@ -90,14 +123,16 @@ All lesson content lives in `content/lessons/` as Markdown with frontmatter. Sam
 |---|---|
 | Frontend | React 18 + TypeScript + Vite, Tailwind CSS, shadcn/ui |
 | Routing | React Router v6 |
-| AI chat | Ollama local server (qwen2.5:7b), browser-side RAG retrieval |
+| AI chat | Ollama local server (qwen2.5 family), browser-side RAG retrieval |
 | In-app server | Express (`server/index.mjs`) — Deep Dive search + static file serving |
-| Desktop packaging | Electron 33 + electron-builder (NSIS for Windows, DMG for Mac) |
-| Payment backend | Express API (`backend/`) — separate from in-app server |
+| Desktop packaging | Electron 33 + electron-builder (NSIS for Windows, DMG for Mac, AppImage for Linux) |
+| Auto-update | `electron-updater` — checks GitHub Releases on startup, downloads + installs silently |
+| Mobile | Capacitor 8 wrapping the same React build as an Android APK |
+| Payment backend | Express API (`backend/`) — deployed on Render |
 | Database | Supabase (managed PostgreSQL) |
 | Auth | OTP via SMS/email → 30-day JWT in localStorage |
-| Payments | Flutterwave (M-Pesa STK push + card, single integration) |
-| SMS | Africa's Talking REST API |
+| Payments | IntaSend (M-Pesa STK push + card) |
+| SMS | Africa's Talking REST API (sandbox for now, production requires KYC) |
 | Email | Resend |
 
 ### Device-aware model tiers
@@ -114,22 +149,26 @@ Key principle: static content (lessons) always ships regardless of device tier. 
 ### Key files / directories
 
 ```
-investwise-manager-main/
+Orchestra-Core/
 ├── src/
 │   ├── pages/
 │   │   ├── Home, HowItWorks, Lessons, Try, Pricing, Download, Support, About
+│   │   ├── Privacy.tsx, Terms.tsx
 │   │   ├── Ask.tsx          — live AI chat (dev-only)
 │   │   ├── Dashboard.tsx    — product dashboard (dev-only)
-│   │   ├── Checkout.tsx     — payment flow (new)
-│   │   ├── Login.tsx        — returning user sign-in (new)
-│   │   └── Account.tsx      — license key + download link (new)
+│   │   ├── Checkout.tsx     — 4-step payment flow
+│   │   ├── Login.tsx        — returning user OTP sign-in
+│   │   ├── Account.tsx      — license key + download link
+│   │   ├── Setup.tsx        — legacy (no longer used as entry point)
+│   │   └── AppShell.tsx     — Electron/Android app shell (loads at /app)
 │   ├── components/orchestra-core/
 │   │   ├── Nav.tsx          — sticky header, auth-aware
 │   │   ├── Footer.tsx
 │   │   ├── Logo.tsx         — Orbit icon + wordmark, mobile monogram
-│   │   ├── AskPanel.tsx     — reusable chat UI (used in /ask + /dashboard)
+│   │   ├── AskPanel.tsx     — reusable chat UI (used in /ask, /dashboard, AppShell)
+│   │   ├── SetupStatus.tsx  — sidebar setup checklist (Electron-only)
 │   │   ├── DeviceScanPanel.tsx — device scan + download CTA
-│   │   ├── OTPInput.tsx     — 6-digit code entry (new)
+│   │   ├── OTPInput.tsx     — 6-digit code entry with paste support
 │   │   ├── ThinkingIndicator.tsx
 │   │   ├── StreakBadge.tsx
 │   │   └── SupportPanel.tsx
@@ -139,13 +178,14 @@ investwise-manager-main/
 │       ├── modelTiers.ts    — four tier definitions
 │       ├── lessons.ts       — lesson metadata
 │       ├── quickTools.ts    — Smart Money / market mood prompts
-│       ├── api.ts           — typed fetch wrapper for backend API (new)
-│       └── session.ts       — JWT storage, useSession hook (new)
-├── backend/                 — payment + auth API server (new)
+│       ├── api.ts           — typed fetch wrapper for backend API
+│       ├── session.ts       — JWT localStorage management, useSession hook
+│       └── platform.ts      — isElectron, isCapacitor, isMobileApp, getPlatform()
+├── backend/                 — payment + auth API (deployed on Render)
 │   ├── index.mjs            — Express entry point
 │   ├── routes/
 │   │   ├── auth.mjs         — send-otp, verify-otp, /me
-│   │   └── payment.mjs      — initiate, webhook, status, verify
+│   │   └── payment.mjs      — IntaSend M-Pesa STK push + card, webhook, status
 │   ├── lib/
 │   │   ├── db.mjs           — all Supabase queries
 │   │   ├── otp.mjs          — generate + bcrypt-verify 6-digit codes
@@ -153,30 +193,72 @@ investwise-manager-main/
 │   │   └── notify.mjs       — Africa's Talking SMS + Resend email
 │   ├── supabase-schema.sql  — paste into Supabase SQL Editor to create tables
 │   ├── .env.example         — every credential needed, with instructions
-│   ├── Procfile             — Railway deployment (web: node index.mjs)
 │   └── Dockerfile           — Docker deployment (any VPS)
 ├── server/                  — in-app local server (bundled inside Electron)
 │   └── index.mjs            — Deep Dive search + static serving of dist/
 ├── electron/
-│   └── main.cjs             — Electron main process, starts server sidecar
+│   ├── main.cjs             — Electron main process, starts server sidecar, auto-updater, deep link handler
+│   └── preload.cjs          — contextBridge: exposes electronSetup + update IPC to renderer
 ├── content/
-│   ├── lessons/             — 12 lesson .md files (curriculum + RAG + marketing)
-│   ├── rag-index.json       — 89 embedded chunks (gitignored, regenerate with npm run rag:build)
-│   └── system-prompt.md     — AI coach persona, guardrails, Kenya examples
+│   ├── lessons/             — Markdown lesson files (curriculum + RAG corpus + marketing scripts)
+│   ├── rag-index.json       — 89 embedded chunks (committed to repo)
+│   ├── system-prompt.md     — AI coach persona, guardrails, Kenya examples
+│   └── curriculum.json
+├── android/                 — Capacitor Android project (committed, build outputs gitignored)
+├── assets/                  — Source images for Capacitor icon/splash generation
+│   ├── icon-only.png
+│   └── splash.png
+├── build/
+│   └── icon.png             — App icon source for electron-builder
+├── public/
+│   ├── logo-512.png
+│   └── favicon.ico
 ├── scripts/
 │   ├── build-rag-index.mjs  — chunks lessons + embeds via nomic-embed-text
 │   ├── query-rag.mjs        — test retrieval from CLI
 │   └── ask.mjs              — test full ask pipeline from CLI
+├── capacitor.config.ts      — Capacitor config (appId: com.orchestracore.app)
 ├── .github/workflows/
-│   ├── release.yml          — auto-build Windows + Mac installers on git tag push
-│   └── deploy-backend.yml   — auto-deploy backend to Railway on push to main
-├── .env.local.example       — frontend env vars template (VITE_API_URL, VITE_DOWNLOAD_URL_WIN/MAC)
-└── package.json             — version: 1.0.0, electron-builder config
+│   ├── release.yml          — builds Windows + Mac + Linux + Android on git tag push
+│   └── deploy-backend.yml   — auto-deploys backend to Render on push to main
+├── .env.local.example       — frontend env vars template
+└── package.json             — version: 1.1.2
 ```
+
+### IPC bridge (Electron preload → renderer)
+
+`window.electronSetup` is exposed via contextBridge:
+- `onProgress(cb)` — setup step updates: `{ step, detail, percent? }`
+- `onComplete(cb)` — setup finished: `{ model }`
+- `onError(cb)` — setup failed: `{ step, message }`
+- `notifyReady()` — renderer calls this when mounted; triggers main to start setup
+- `onToken(cb)` — deep link JWT delivered: `{ token }`
+- `onUpdateAvailable(cb)` / `onUpdateProgress(cb)` / `onUpdateDownloaded(cb)` — auto-update events
+- `installUpdate()` — trigger quit-and-install
+
+### Auto-update flow
+
+1. App starts → after 10 seconds, `autoUpdater.checkForUpdatesAndNotify()` runs
+2. If new version found → downloads silently → sends `update:downloaded` IPC
+3. AppShell shows banner: "v1.x.x is ready — Restart & update"
+4. User clicks → `installUpdate()` → `autoUpdater.quitAndInstall(false, true)`
+5. App restarts with new version
+
+Update source: GitHub Releases (`latest.yml` / `latest-mac.yml` / `latest-linux.yml` published by electron-builder).
+
+### Deep link auto sign-in
+
+Protocol: `orchestracore://auth?token=JWT_TOKEN`
+
+- `app.setAsDefaultProtocolClient('orchestracore')` registered in main.cjs
+- `app.requestSingleInstanceLock()` ensures second instance passes URL to first via `second-instance` event
+- `handleDeepLink(url)` parses token and sends `setup:token` IPC to renderer
+- If app not yet open when link is clicked, token is stored in `pendingToken` and delivered once window is ready
+- Checkout done screen shows: `<a href="orchestracore://auth?token=...">Open in Orchestra-Core app</a>`
 
 ---
 
-## Payment & auth system (fully built, needs credentials + deployment)
+## Payment & auth system
 
 ### How it works end-to-end
 
@@ -184,16 +266,18 @@ investwise-manager-main/
 1. Visits `/pricing` → clicks "Get Orchestra-Core" → goes to `/checkout`
 2. **Step 1 — Identity:** enters email OR Kenyan phone number (+254...)
 3. **Step 2 — Payment:** chooses M-Pesa or card
-   - M-Pesa: enters M-Pesa number → backend calls Flutterwave → STK push sent to phone → frontend polls `/api/payment/status/:txRef` every 3 seconds until confirmed
-   - Card: backend generates Flutterwave hosted checkout link → user redirected → pays → redirected back to `/checkout?step=card-return&tx_ref=...&transaction_id=...` → frontend calls `/api/payment/verify`
+   - M-Pesa: enters M-Pesa number → backend calls IntaSend → STK push sent to phone → frontend polls `/api/payment/status/:txRef` every 3 seconds until confirmed
+   - Card: backend generates IntaSend hosted checkout link → user redirected → pays → redirected back → frontend calls `/api/payment/verify`
 4. **Step 3 — OTP:** payment confirmed → OTP sent via SMS (Africa's Talking) or email (Resend) → user enters 6-digit code
-5. **Step 4 — Done:** OTP verified → JWT issued (30-day) → license key displayed → download link shown
+5. **Step 4 — Done:** OTP verified → JWT issued (30-day) → license key displayed → download link shown → deep link button to open app
 
 **Returning buyer:**
 1. Visits `/login` → enters email or phone → OTP sent → enters code → redirected to `/account`
 2. `/account` shows license key + download link
 
-**Session storage:** JWT in `localStorage` under key `oc_token`. `useSession()` hook reads it and updates any component that cares (Nav, Download, Account). Sessions last 30 days — OTP again after that.
+**Testing mode:** `TESTING_FREE=true` on Render allows checkout to complete without real payment. Set to `false` before accepting real money.
+
+**Session storage:** JWT in `localStorage` under key `oc_token`. `useSession()` hook reads it and updates any component that cares (Nav, Download, Account). Sessions last 30 days.
 
 ### Backend API routes
 
@@ -203,19 +287,74 @@ investwise-manager-main/
 | POST | `/api/auth/send-otp` | Generate OTP, send via SMS or email (rate-limited: 3/10min per IP) |
 | POST | `/api/auth/verify-otp` | Verify OTP → return JWT + user data (rate-limited: 8/10min) |
 | GET | `/api/auth/me` | Validate JWT → return current user |
-| POST | `/api/payment/initiate` | Start M-Pesa STK push OR generate Flutterwave card link |
+| POST | `/api/payment/initiate` | Start IntaSend M-Pesa STK push OR generate card checkout link |
 | GET | `/api/payment/status/:txRef` | Poll payment status (pending/completed/failed) |
-| POST | `/api/payment/verify` | Verify card payment after Flutterwave redirect |
-| POST | `/api/payment/webhook` | Flutterwave fires this on payment completion (validates `verif-hash` header) |
+| POST | `/api/payment/verify` | Verify card payment after redirect |
+| POST | `/api/payment/webhook` | IntaSend fires this on payment completion |
+
+### Backend environment variables (on Render)
+
+| Variable | Value |
+|---|---|
+| `JWT_SECRET` | 64-byte random hex |
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_SERVICE_KEY` | Supabase service_role key |
+| `RESEND_API_KEY` | Resend API key (`re_...`) |
+| `EMAIL_FROM` | `Orchestra-Core <onboarding@resend.dev>` |
+| `AT_API_KEY` | Africa's Talking API key |
+| `AT_USERNAME` | `sandbox` (testing) → production username when KYC approved |
+| `INTASEND_PUBLISHABLE_KEY` | IntaSend publishable key |
+| `INTASEND_SECRET_KEY` | IntaSend secret key |
+| `INTASEND_WEBHOOK_SECRET` | Random string matching IntaSend webhook settings |
+| `FRONTEND_URL` | `https://orchestra-core.vercel.app` |
+| `CORS_ORIGINS` | `https://orchestra-core.vercel.app` (add localhost entries for local dev) |
+| `TESTING_FREE` | `true` during testing phase; `false` for real sales |
+| `NODE_ENV` | `production` |
 
 ### Database tables (Supabase)
 
 **users** — `id`, `email`, `phone`, `license_key`, `has_paid`, `created_at`
 **otp_codes** — `id`, `identifier`, `code_hash` (bcrypt), `expires_at` (10 min), `used`, `created_at`
-**payments** — `id`, `user_id`, `tx_ref`, `amount`, `currency`, `payment_method`, `status`, `flw_tx_id`, `created_at`
+**payments** — `id`, `user_id`, `tx_ref`, `amount`, `currency`, `payment_method`, `status`, `intasend_tx_id`, `created_at`
 
 ### License key format
 `OC-XXXXXXXX-XXXX-XXXX-XXXX-XXXX` (random 12-byte hex, uppercase). Generated on payment confirmation, stored in `users.license_key`, sent in confirmation SMS/email.
+
+---
+
+## CI / release pipeline
+
+`.github/workflows/release.yml` — triggered on any `v*.*.*` tag push.
+
+Four parallel jobs, all on Node 22, all with `permissions: contents: write`:
+
+| Job | Runner | Output |
+|---|---|---|
+| build-windows | windows-latest | `Orchestra-Core Setup X.X.X.exe` + `latest.yml` |
+| build-mac | macos-latest | `Orchestra-Core-X.X.X.dmg` + `latest-mac.yml` |
+| build-linux | ubuntu-latest | `Orchestra-Core-X.X.X.AppImage` + `latest-linux.yml` |
+| build-android | ubuntu-latest | `app-release-unsigned.apk` |
+
+All artifacts are uploaded to the GitHub Release. The `latest*.yml` files are what `electron-updater` uses to detect and serve updates.
+
+**To release a new version:**
+```bash
+# 1. Bump version in package.json (use [System.IO.File]::WriteAllText — NOT Set-Content -Encoding utf8, which adds a BOM and breaks CI)
+# 2. Commit
+git add package.json
+git commit -m "chore: bump to vX.X.X"
+git push origin main
+# 3. Tag
+git tag vX.X.X
+git push origin vX.X.X
+# 4. Wait ~15 min for CI → go to GitHub Releases → Edit → Publish (remove Draft status)
+```
+
+**Critical: never use PowerShell `Set-Content -Encoding utf8` on package.json** — PowerShell 5.1 writes a UTF-8 BOM which breaks Vite's JSON parsing on CI. Always use:
+```powershell
+$utf8NoBOM = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText("$pwd\package.json", $content, $utf8NoBOM)
+```
 
 ---
 
@@ -236,7 +375,7 @@ investwise-manager-main/
 
 - **CMA:** Stay strictly on the education side — general/impersonal content only, never personalized buy/sell advice for specific securities.
 - **Business registration:** BRS business name "Orchestra-Core" via eCitizen, ~KES 950 one-time. Separate annual County Single Business Permit (~KES 5,000-10,000) once actively trading.
-- **Data Protection Act 2019:** Collecting email/phone for purchases. DPA *obligations* (lawful basis, privacy policy, data-subject rights, breach notification) apply from the first piece of personal data collected — no threshold. **Action required before first sale: publish Privacy Policy at `/privacy` (done).** Formal ODPC *registration* is a separate question: under the 2021 Registration Regulations you are exempt while under KES 5M annual turnover AND under 10 employees. Register with ODPC (KES 4,000) when approaching KES 5M or hiring staff. Note: the older Compass legal PDF said "no minimum-size exemption" — that referred to DPA obligations generally, not ODPC registration; the newer Orchestra-Core roadmap PDF correctly distinguishes the two.
+- **Data Protection Act 2019:** Privacy Policy live at `/privacy`, Terms at `/terms`. DPA obligations apply from first data collected. ODPC formal registration not required until KES 5M turnover or 10+ staff.
 - **Model licensing:** All models are Apache-2.0 (Qwen2.5 family) — safe to redistribute in a downloadable product.
 - **RAG content:** Original summaries only, never verbatim book text.
 
@@ -247,7 +386,7 @@ investwise-manager-main/
 1. **Phase 1 — Ship something real.** ← WE ARE HERE
 2. **Phase 2 — Meet people where their devices are.** (per-tier builds, budget Android)
 3. **Phase 3 — Build the actual orchestra.** (multi-gear orchestrator, specialized models)
-4. **Phase 4 — Let the community fund reach.** (business reg, ODPC, hosted tier on VPS)
+4. **Phase 4 — Let the community fund reach.** (ODPC, hosted tier on VPS)
 5. **Phase 5 — Go where the trust already exists.** (SACCO/employer site licences)
 6. **Phase 6 — Beyond Kenya.** (USD pricing, global app stores, second country module)
 
@@ -257,170 +396,111 @@ investwise-manager-main/
 
 ### ✅ Done
 
-- **12 lessons written** across Money basics / Smart money / Kenya money (`content/lessons/`, Markdown with frontmatter)
-- **RAG pipeline** — `scripts/build-rag-index.mjs` embeds lessons via `nomic-embed-text` into `content/rag-index.json` (89 chunks). Run with `npm run rag:build`, test with `npm run rag:query -- "question"`
-- **System prompt** written to `content/system-prompt.md` — educational framing, Socratic voice, Kenya examples, "not financial advice" guardrails
-- **CLI ask pipeline** — `npm run ask -- "question"` does full RAG retrieval + streaming chat via Ollama end-to-end
-- **`/ask` page** — live browser chat panel, source-lesson chips, Deep Dive web research toggle (scrapes DuckDuckGo via `server/index.mjs`)
-- **`/dashboard` page** — full product dashboard: streak badge, Today's insight, Budget builder, Smart Money tools, Ask panel, Support panel
-- **Electron desktop app** packaged and working:
-  - `electron/main.cjs` forks `server/index.mjs` as sidecar, waits for `/api/health`, opens BrowserWindow
-  - `server/package.json` + `server/node_modules` (~13MB pruned runtime deps) bundled into `app.asar` — excludes ~550MB dev toolchain
-  - `build.win.signAndEditExecutable: false` in `package.json` fixes Windows symlink errors during NSIS build
-  - `npm run electron:build:win` → `release/Orchestra-Core Setup 1.0.0.exe` (~80MB, verified working)
-- **Device scan on Download page** — `src/lib/deviceScan.ts` + `src/lib/modelTiers.ts` + `DeviceScanPanel.tsx` — detects RAM, CPU, GPU/NPU, OS, storage; recommends one of 4 tiers; full transparency disclosure of what was checked
-- **Logo / wordmark** — `src/components/orchestra-core/Logo.tsx`, Orbit icon, "Orchestra**-Core**" split colour, mobile "OC" monogram
-- **Payment + auth system** (full implementation — needs credentials + deployment):
-  - `backend/` directory — Express API, Supabase DB, OTP (bcrypt), Flutterwave payments, Africa's Talking SMS, Resend email
-  - `src/pages/Checkout.tsx` — 4-step flow: identity → M-Pesa/card → processing → OTP → done
-  - `src/pages/Login.tsx` — returning user OTP sign-in
-  - `src/pages/Account.tsx` — license key, download link, sign out
-  - `src/lib/api.ts` — typed fetch wrapper for all backend calls
-  - `src/lib/session.ts` — JWT localStorage management, `useSession()` hook
-  - `src/components/orchestra-core/OTPInput.tsx` — 6-digit code input with paste support
-  - Nav updated: "Get Orchestra-Core" → `/checkout`, shows "Sign in" / "Account" based on JWT
-  - Pricing CTA → `/checkout`
-  - Download page gated: shows DeviceScanPanel only if `session.paid === true`
-  - `DeviceScanPanel` download button is now a real `<a download>` when `VITE_DOWNLOAD_URL_WIN` / `VITE_DOWNLOAD_URL_MAC` is set; shows "coming soon" otherwise
-- **Deployment config:**
-  - `backend/Procfile` — for Railway (`web: node index.mjs`)
-  - `backend/Dockerfile` — for any Docker-based VPS
-  - `.github/workflows/release.yml` — auto-builds Windows + Mac installers on `git tag v*.*.*` push, uploads to GitHub Release
-  - `.github/workflows/deploy-backend.yml` — auto-deploys backend to Railway on push to `main`
-- **Supabase schema created** — tables `users`, `otp_codes`, `payments` running in Supabase project
+- **Lesson content** — 12+ lessons across 3 series in `content/lessons/`, Markdown with frontmatter
+- **RAG pipeline** — `content/rag-index.json` (89 chunks) committed to repo; `npm run rag:build` regenerates it; `npm run rag:query` tests retrieval
+- **System prompt** — `content/system-prompt.md` — educational framing, Socratic voice, Kenya examples, "not financial advice" guardrails
+- **CLI ask pipeline** — `npm run ask -- "question"` does full RAG + streaming Ollama end-to-end
+- **`/ask` page** — live browser chat panel, source-lesson chips, Deep Dive web toggle
+- **`/dashboard` page** — streak badge, Today's insight, Budget builder, Smart Money tools, Ask panel, Support panel
+- **Electron app** — `AppShell` with sidebar setup checklist, auto-updater, deep link sign-in
+- **Android app** — Capacitor 8 wrapping the React build; `android/` project committed; icons generated
+- **Device scan** — `src/lib/deviceScan.ts` + `src/lib/modelTiers.ts` + `DeviceScanPanel.tsx`
+- **Logo / wordmark** — `Logo.tsx`, Orbit icon, "Orchestra**-Core**" split colour, "OC" monogram
+- **Payment + auth system** — IntaSend M-Pesa + card, OTP via SMS/Resend, JWT sessions, license keys
+- **Checkout flow** — `/checkout` (4 steps) + `/login` + `/account`
+- **Website** — all pages live at https://orchestra-core.vercel.app, auto-deploys on push
+- **Backend** — deployed on Render at https://orchestra-core.onrender.com, `TESTING_FREE=true`
+- **CI pipeline** — 4-platform builds (Windows, Mac, Linux, Android) on every version tag
+- **Privacy Policy + Terms** — live at `/privacy` and `/terms`
 
 ---
 
-### ⏳ Remaining — in order of priority
+### ⏳ Remaining before first real sale
 
-#### 1. Create service accounts and fill in `backend/.env`
+#### 1. Fix: add `content/` to electron-builder files
 
-Copy `backend/.env.example` → `backend/.env` and fill in:
+The `content/` directory (RAG index + lessons) is **not** in the `files` array in `package.json`. The distributed app won't have the lesson corpus — RAG won't work and the AI has no grounding.
 
-| Credential | Where to get it |
-|---|---|
-| `JWT_SECRET` | Run in terminal: `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"` |
-| `SUPABASE_URL` | Supabase → Project Settings → API → Project URL |
-| `SUPABASE_SERVICE_KEY` | Supabase → Project Settings → API → service_role key (Reveal) |
-| `RESEND_API_KEY` | resend.com → sign up free → API Keys → Create → copy `re_...` key |
-| `EMAIL_FROM` | `Orchestra-Core <onboarding@resend.dev>` (use their free domain to start) |
-| `AT_API_KEY` | africastalking.com → register → Settings → API Key → Generate |
-| `AT_USERNAME` | `sandbox` for testing; your registered username for production |
-| `FLW_PUBLIC_KEY` | flutterwave.com → register → Settings → API Keys → Test mode |
-| `FLW_SECRET_KEY` | same place, Test Secret Key |
-| `FLW_WEBHOOK_SECRET` | Make up any random string (e.g. `oc_hook_abc123`) — you'll put the same string in Flutterwave's webhook settings |
-| `FRONTEND_URL` | `http://localhost:5173` for dev; your real domain once deployed |
-| `CORS_ORIGINS` | `http://localhost:5173,http://localhost:5175,http://localhost:8080` for dev |
-
-#### 2. Test the backend locally
-
-```bash
-cd backend
-npm run dev
-# Should print: Orchestra-Core API listening on :3001
+Add to `package.json` build config:
+```json
+"files": [
+  "dist/**/*",
+  "electron/**/*",
+  "server/**/*",
+  "content/**/*",
+  "package.json",
+  "!node_modules/**/*"
+]
 ```
 
-Open browser → `http://localhost:3001/api/health` → should return `{"ok":true}`
+Then rebuild and tag a new version.
 
-Then test the full checkout flow at `http://localhost:5173/checkout` while both `npm run dev` (Vite) and `cd backend && npm run dev` are running.
+#### 2. Fix: set Vercel URL in Render environment variables
 
-#### 3. Deploy the backend to Railway
+The Render deployment needs the production Vercel URL, not localhost:
 
-1. Push the whole project to a GitHub repo (`git init` → `git add .` → `git commit -m "initial"` → push to GitHub)
-2. Go to [railway.app](https://railway.app) → New Project → Deploy from GitHub repo
-3. When asked for root directory, set it to `backend`
-4. Add all `backend/.env` values in Railway's **Variables** tab
-5. Railway auto-detects `Procfile` and runs `node index.mjs`
-6. Railway gives you a URL like `https://orchestra-core-api.railway.app` — copy it
+| Variable | Current (wrong) | Should be |
+|---|---|---|
+| `FRONTEND_URL` | `http://localhost:5173` | `https://orchestra-core.vercel.app` |
+| `CORS_ORIGINS` | `http://localhost:5173,...` | `https://orchestra-core.vercel.app` |
 
-#### 4. Add Flutterwave webhook
+Fix in Render dashboard → Orchestra-Core service → Environment → edit those two values → redeploy.
 
-1. In Flutterwave dashboard → Settings → Webhooks
-2. Set URL to: `https://orchestra-core-api.railway.app/api/payment/webhook`
-3. Set Secret Hash to the same string you put in `FLW_WEBHOOK_SECRET`
+#### 3. Set `VITE_DOWNLOAD_URL_WIN` on Vercel
 
-#### 5. Rebuild frontend with live backend URL
+After publishing the v1.1.2 GitHub Release (remove draft status):
+1. Copy the `.exe` URL from the release assets
+2. Vercel → Orchestra-Core → Settings → Environment Variables → add `VITE_DOWNLOAD_URL_WIN`
+3. Redeploy
 
-Create `.env.local` (copy from `.env.local.example`):
-```
-VITE_API_URL=https://orchestra-core-api.railway.app
-```
+This makes the Download page show a real link for paid users.
 
-Then rebuild:
-```bash
-npm run build
-```
+#### 4. Publish v1.1.2 GitHub Release (remove draft)
 
-#### 6. Publish installer to GitHub Releases
+Go to github.com/Ivan19x/Orchestra-Core/releases → edit v1.1.2 → uncheck "Set as draft" → Publish release. This makes the auto-updater serve it to existing users.
 
-Push a version tag:
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
+#### 5. Configure IntaSend webhook
 
-GitHub Actions (`.github/workflows/release.yml`) automatically:
-- Builds `Orchestra-Core Setup 1.0.0.exe` (Windows, ~80MB)
-- Builds `Orchestra-Core-1.0.0.dmg` (Mac)
-- Attaches both to a GitHub Release
+In IntaSend dashboard → Webhooks:
+- URL: `https://orchestra-core.onrender.com/api/payment/webhook`
+- Secret: same value as `INTASEND_WEBHOOK_SECRET` on Render
 
-Copy the `.exe` download URL from the release page.
+#### 6. BRS business name registration
 
-#### 7. Set download URL and rebuild Electron app
+"Orchestra-Core" at eCitizen.go.ke → Business Registration → Business Name → ~KES 950 one-time. Required before accepting real money.
 
-Add to `.env.local`:
-```
-VITE_DOWNLOAD_URL_WIN=https://github.com/YOUR_USER/orchestra-core/releases/download/v1.0.0/Orchestra-Core-Setup-1.0.0.exe
-```
+#### 7. Turn off testing mode when ready to charge
 
-Then rebuild the installer:
-```bash
-npm run electron:build:win
-```
+Set `TESTING_FREE=false` on Render. Before doing this, complete end-to-end test with IntaSend sandbox:
+- Go through `/checkout` with a test phone
+- Verify OTP arrives (email works now; SMS needs Africa's Talking production for real phones)
+- Verify license key generated, `/account` shows it, `/download` shows the button
 
-This bakes the real download URL into the DeviceScanPanel button. The Download page now shows a real clickable download link for paid users.
+#### 8. Africa's Talking production KYC
 
-#### 8. Test end-to-end with Flutterwave sandbox
+Currently `AT_USERNAME=sandbox` — real users won't receive SMS OTPs. Apply at africastalking.com for a production shortcode/sender ID (requires KYC, takes a few days). Until then, OTP via email works fine as a fallback.
 
-- Go through `/checkout` with a test phone/email
-- For M-Pesa sandbox: use phone `+254708374149` (Flutterwave test number) — they simulate the STK push
-- Verify OTP arrives (SMS sandbox shows in Africa's Talking dashboard; email goes to your inbox)
-- Verify license key is generated and displayed
-- Verify `/account` shows the license key
-- Verify `/download` shows the download button
+---
 
-#### 9. Legal prerequisites before accepting real money
+### ⏳ Post-launch improvements (not blockers)
 
-- [ ] **BRS business name registration** — "Orchestra-Core" at eCitizen.go.ke → Business Registration → Business Name → ~KES 950 one-time
-- [x] **Privacy Policy and Terms of Service** — created at `/privacy` and `/terms`, linked from footer. DPA compliance requires these published before any purchase.
-- [ ] **ODPC registration** — Formal registration with ODPC is NOT required before your first sale if turnover is under KES 5M and you have under 10 employees (2021 Registration Regulations exemption). However, register at odpc.go.ke (KES 4,000) as you approach KES 5M or hire staff. The Privacy Policy covers your day-1 DPA obligations.
-- [ ] **IntaSend production verification** — confirm live keys are active and receiving payouts (IntaSend KYC required)
-- [ ] **Africa's Talking production** — apply for a production shortcode/sender ID (requires KYC). Sandbox works for testing, production needed for real customers to receive SMS
-
-#### 10. Content marketing (start before going live)
-
-- Start posting 1-2 short-form clips per week drawn directly from the lesson corpus
-- Every lesson = one video script. Platforms: TikTok Kenya, Instagram, X
-- Goal: have an audience before launch, not after
-- Example clips: "How one tweet wiped $2 trillion off markets", "What a 13F filing actually tells you", "Why M-Pesa is studied in Harvard Business School"
-
-#### 11. Post-launch nice-to-haves (not blockers)
-
-- [ ] Custom app icon (`.ico` for Windows, `.icns` for Mac) — replace default Electron icon
-- [ ] Friendlier first-run Ollama setup screen in the Electron app (currently shows "Couldn't reach Orchestra-Core" if Ollama isn't running — works but could be clearer)
-- [ ] Add `/ask` and `/dashboard` to nav (or a post-login redirect to dashboard) so users can reach them without DevTools
-- [ ] Mac build tested and verified (`.dmg`) — only Windows verified so far
-- [ ] Switch Africa's Talking from sandbox to production once KYC approved
+- [ ] **Ollama first-run screen** — if user downloads app without Ollama installed, they see a connection error with no guidance. Add a screen that detects Ollama is missing and shows: "Download Ollama at ollama.com → install it → come back"
+- [ ] **App icon** — `build/icon.png` set for electron-builder but proper `.ico` (Windows taskbar) and `.icns` (Mac) formats should be generated from it
+- [ ] **Dashboard/Ask nav for web users** — `/dashboard` and `/ask` exist but aren't reachable from the website nav post-login. Add a "Go to dashboard" link on the `/account` page or in Nav when session.paid is true
+- [ ] **Android APK signing** — current CI output is unsigned (works for sideloading, can't go on Google Play). Needs a signing keystore + Gradle signing config
+- [ ] **iOS** — Capacitor config is ready but requires Apple Developer account ($99/year) and a Mac build. Deferred
+- [ ] **Mac DMG** — CI now builds it but it hasn't been locally tested end-to-end
+- [ ] **Content marketing** — start posting 1-2 clips/week from lesson corpus before launch. TikTok Kenya, Instagram, X. Example: "How one tweet wiped $2 trillion off markets", "What a 13F filing actually tells you", "Why M-Pesa is studied in Harvard Business School"
 
 ---
 
 ## Deferred to later phases
 
-**Phase 2:** per-tier download artifacts (currently one build for all tiers), smaller models actually shipping for Light/Standard tiers, budget Android support
+**Phase 2:** per-tier download artifacts, smaller models for Light/Standard tiers, budget Android support
 
 **Phase 3:** multi-gear orchestrator (specialized models per domain, synthesized answers)
 
-**Phase 4:** Formal ODPC registration (when approaching KES 5M turnover or hiring staff), hosted web tier on VPS funded by donations, Oracle Always-Free or Hetzner
+**Phase 4:** Formal ODPC registration (when approaching KES 5M turnover or hiring staff), hosted web tier on VPS funded by donations
 
 **Phase 5:** SACCO/employer B2B licensing
 
