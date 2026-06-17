@@ -8,15 +8,7 @@ interface ProgressEvent { stage: Stage; message: string; percent: number | null 
 interface CompleteEvent { model: string }
 interface ErrorEvent   { message: string; detail?: string }
 
-declare global {
-  interface Window {
-    electronSetup?: {
-      onProgress: (cb: (data: ProgressEvent) => void) => void;
-      onComplete: (cb: (data: CompleteEvent) => void) => void;
-      onError:    (cb: (data: ErrorEvent)    => void) => void;
-    };
-  }
-}
+// window.electronSetup is declared globally in components/orchestra-core/SetupStatus.tsx
 
 const STEPS: { id: Stage; label: string }[] = [
   { id: 'checking', label: 'Checking your device' },

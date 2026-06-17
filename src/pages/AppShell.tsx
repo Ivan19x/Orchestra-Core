@@ -123,8 +123,12 @@ export default function AppShell() {
       </aside>
 
       {/* ── Main content ─────────────────────────────────────── */}
+      {/* AI panel stays mounted across tab switches (hidden via CSS, not unmounted) so an
+          in-flight Ollama response keeps streaming into the chat even while you're on another tab. */}
       <main className="flex-1 overflow-auto bg-background">
-        {tab === 'ai'      && <AppAI     key={aiKey} initialQuestion={aiQuestion} />}
+        <div className={tab === 'ai' ? 'contents' : 'hidden'}>
+          <AppAI key={aiKey} initialQuestion={aiQuestion} />
+        </div>
         {tab === 'lessons' && <AppLessons onAsk={openAI} />}
         {tab === 'support' && <AppSupport />}
         {tab === 'account' && <AppAccount user={user} />}
