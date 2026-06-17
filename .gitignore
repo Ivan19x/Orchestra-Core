@@ -42,3 +42,16 @@ android/.idea/
 *.njsproj
 *.sln
 *.sw?
+
+# Word lock files
+~$*
+
+# Personal business documents — not for the public repo
+/*.docx
+/*.pdf
+
+# Superseded curriculum drafts — canonical content lives in content/lessons/
+/Curriculum/
+
+# Marketing-only logo variants — not used by the website/app build
+/logo-instagram.png
