@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import {
   Brain, BookOpen, Heart, User, LogOut, Orbit,
-  Clock, ChevronRight, Download,
+  Clock, ChevronRight, ChevronLeft, Download,
 } from 'lucide-react';
 import { AskPanel } from '@/components/orchestra-core/AskPanel';
 import { SetupStatus } from '@/components/orchestra-core/SetupStatus';
@@ -9,7 +10,8 @@ import { OTPInput } from '@/components/orchestra-core/OTPInput';
 import { useSession, saveSession, clearSession, dispatchSessionChange } from '@/lib/session';
 import { isElectron } from '@/lib/platform';
 import { sendOtp, verifyOtp } from '@/lib/api';
-import { series } from '@/lib/lessons';
+import { series, type FlatLesson } from '@/lib/lessons';
+import { getLessonContent } from '@/lib/lessonContent';
 
 type Tab = 'ai' | 'lessons' | 'support' | 'account';
 
@@ -120,6 +122,10 @@ export default function AppShell() {
         <div className="px-4 py-4 border-t border-border">
           <SetupStatus onTokenReceived={handleTokenReceived} />
         </div>
+
+        <div className="px-4 pb-3 text-center">
+          <span className="text-[10px] text-faint">v{__APP_VERSION__}</span>
+        </div>
       </aside>
 
       {/* ── Main content ─────────────────────────────────────── */}
@@ -196,12 +202,17 @@ function AppAI({ initialQuestion }: { initialQuestion: string }) {
 
 // ── Lessons tab ───────────────────────────────────────────────────────────────
 function AppLessons({ onAsk }: { onAsk: (q: string) => void }) {
+  const [reading, setReading] = useState<FlatLesson | null>(null);
   const active = series.filter(s => !s.comingSoon && s.lessons.length > 0);
+
+  if (reading) {
+    return <LessonReader lesson={reading} onBack={() => setReading(null)} onAsk={onAsk} />;
+  }
 
   return (
     <div className="px-8 py-8">
       <h1 className="font-serif text-2xl text-foreground mb-1">Lessons</h1>
-      <p className="text-sm text-warm-muted mb-8">Your full curriculum — tap "Ask about this" on any lesson to discuss it with your AI coach.</p>
+      <p className="text-sm text-warm-muted mb-8">Your full curriculum — tap any lesson to read it.</p>
 
       <div className="space-y-10">
         {active.map(s => (
@@ -223,7 +234,8 @@ function AppLessons({ onAsk }: { onAsk: (q: string) => void }) {
               {s.lessons.map((lesson, idx) => (
                 <div
                   key={lesson.id ?? idx}
-                  className="flex items-start gap-4 p-4 rounded-2xl border border-border bg-background hover:bg-blush transition-colors"
+                  onClick={() => setReading({ ...lesson, seriesId: s.id, seriesName: s.name })}
+                  className="flex items-start gap-4 p-4 rounded-2xl border border-border bg-background hover:bg-blush transition-colors cursor-pointer"
                 >
                   <div
                     className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
@@ -242,11 +254,17 @@ function AppLessons({ onAsk }: { onAsk: (q: string) => void }) {
                         <Clock className="w-3 h-3" />
                         {lesson.readTime}
                       </span>
+                      <span className="inline-flex items-center gap-1 text-[10px] text-primary">
+                        Read lesson <ChevronRight className="w-3 h-3" />
+                      </span>
                       <button
-                        onClick={() => onAsk(`Tell me about the lesson "${lesson.title}" — explain it in plain English with an example.`)}
-                        className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAsk(`Tell me about the lesson "${lesson.title}" — explain it in plain English with an example.`);
+                        }}
+                        className="inline-flex items-center gap-1 text-[10px] text-warm-muted hover:text-primary hover:underline"
                       >
-                        Ask about this <ChevronRight className="w-3 h-3" />
+                        Ask about this
                       </button>
                     </div>
                   </div>
@@ -271,6 +289,47 @@ function AppLessons({ onAsk }: { onAsk: (q: string) => void }) {
             ))}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Lesson reader ────────────────────────────────────────────────────────────
+function LessonReader({ lesson, onBack, onAsk }: {
+  lesson: FlatLesson; onBack: () => void; onAsk: (q: string) => void;
+}) {
+  const content = lesson.slug ? getLessonContent(lesson.slug) : undefined;
+
+  return (
+    <div className="px-8 py-8 max-w-2xl">
+      <button
+        onClick={onBack}
+        className="inline-flex items-center gap-1.5 text-sm text-warm-muted hover:text-foreground transition mb-6"
+      >
+        <ChevronLeft className="w-4 h-4" /> Back to lessons
+      </button>
+
+      <div className="text-[10px] uppercase tracking-[0.12em] text-faint mb-1">{lesson.seriesName} · {lesson.module}</div>
+      <h1 className="font-serif text-3xl text-foreground mb-2 leading-tight">{lesson.title}</h1>
+      <span className="inline-flex items-center gap-1 text-xs text-faint mb-8">
+        <Clock className="w-3 h-3" /> {lesson.readTime}
+      </span>
+
+      {content ? (
+        <div className="prose prose-sm max-w-none prose-headings:font-serif prose-headings:font-medium prose-headings:text-foreground prose-p:text-foreground prose-li:text-foreground prose-strong:text-foreground prose-a:text-primary">
+          <ReactMarkdown>{content.body}</ReactMarkdown>
+        </div>
+      ) : (
+        <p className="text-sm text-warm-muted">This lesson's full content isn't available yet — check back soon.</p>
+      )}
+
+      <div className="mt-10 pt-6 border-t border-border">
+        <button
+          onClick={() => onAsk(`Tell me about the lesson "${lesson.title}" — explain it in plain English with an example.`)}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition"
+        >
+          <Brain className="w-4 h-4" /> Discuss this with your AI coach
+        </button>
       </div>
     </div>
   );
