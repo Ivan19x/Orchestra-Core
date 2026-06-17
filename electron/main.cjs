@@ -31,6 +31,12 @@ function handleDeepLink(url) {
   } catch {}
 }
 
+// macOS: deep links arrive via open-url event (not second-instance)
+app.on('open-url', (event, url) => {
+  event.preventDefault();
+  handleDeepLink(url);
+});
+
 // Windows: single-instance lock so second launch passes args to running instance
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
@@ -304,6 +310,9 @@ async function createWindow() {
     }
     runSetup();
   });
+
+  // Allow renderer to retry setup after the user fixes Ollama manually
+  ipcMain.on('setup:retry', () => runSetup());
 
   const devServerUrl = process.env.VITE_DEV_SERVER_URL;
   if (devServerUrl) {

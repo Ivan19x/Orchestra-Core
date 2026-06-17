@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Copy, Check, Download, LogOut } from 'lucide-react';
+import { Copy, Check, Download, LogOut, Brain } from 'lucide-react';
 import { useSession, clearSession, dispatchSessionChange, getToken } from '@/lib/session';
 import { getMe } from '@/lib/api';
 
@@ -73,13 +73,27 @@ export default function Account() {
           ) : null}
         </div>
 
+        {/* AI Coach (browser) */}
+        {session.paid && (
+          <div className="bg-background rounded-2xl border border-border p-6 md:p-8">
+            <h2 className="font-serif text-xl text-foreground mb-1">AI Coach</h2>
+            <p className="text-sm text-warm-muted mb-5">
+              Open the full dashboard — lessons, AI chat, and your learning tools. Requires Ollama running on this device.
+            </p>
+            <Link to="/dashboard"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition">
+              <Brain className="w-4 h-4" /> Open dashboard
+            </Link>
+          </div>
+        )}
+
         {/* Download */}
         {session.paid && (
           <div className="bg-background rounded-2xl border border-border p-6 md:p-8">
-            <h2 className="font-serif text-xl text-foreground mb-1">Download</h2>
-            <p className="text-sm text-warm-muted mb-5">Get the latest version of Orchestra-Core for your device.</p>
+            <h2 className="font-serif text-xl text-foreground mb-1">Download desktop app</h2>
+            <p className="text-sm text-warm-muted mb-5">Get the standalone Orchestra-Core app for Windows, Mac, or Linux.</p>
             <Link to="/download"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition">
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-primary text-primary text-sm hover:bg-primary hover:text-primary-foreground transition">
               <Download className="w-4 h-4" /> Go to Download page
             </Link>
           </div>

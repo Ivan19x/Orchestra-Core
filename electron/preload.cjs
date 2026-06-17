@@ -12,6 +12,9 @@ contextBridge.exposeInMainWorld('electronSetup', {
   // Receive a JWT token passed via orchestracore://auth?token=... deep link
   onToken: (cb) => ipcRenderer.on('setup:token', (_, token) => cb(token)),
 
+  // Retry setup after an error (e.g. user fixed Ollama and wants to try again)
+  retrySetup: () => ipcRenderer.send('setup:retry'),
+
   // Auto-update events
   onUpdateAvailable:  (cb) => ipcRenderer.on('update:available',  (_, data) => cb(data)),
   onUpdateProgress:   (cb) => ipcRenderer.on('update:progress',   (_, data) => cb(data)),

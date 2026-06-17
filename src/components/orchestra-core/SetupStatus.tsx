@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CheckCircle2, Circle, Loader2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle2, Circle, Loader2, AlertCircle, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 
 type Stage = 'checking' | 'ollama' | 'model' | 'done' | 'error';
 
@@ -14,6 +14,7 @@ declare global {
       onComplete: (cb: (data: CompleteEvent) => void) => void;
       onError:    (cb: (data: ErrorEvent) => void) => void;
       notifyReady: () => void;
+      retrySetup: () => void;
       onToken: (cb: (token: string) => void) => void;
       onUpdateAvailable?:  (cb: (data: { version: string }) => void) => void;
       onUpdateProgress?:   (cb: (data: { percent: number }) => void) => void;
@@ -155,10 +156,29 @@ export function SetupStatus({ onTokenReceived }: { onTokenReceived?: (token: str
       />
 
       {state.error && (
-        <div className="mt-1 p-2.5 rounded-xl bg-red-50 border border-red-200">
+        <div className="mt-1 p-2.5 rounded-xl bg-red-50 border border-red-200 space-y-2">
           <div className="flex gap-2">
             <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
             <p className="text-[10px] text-red-700 leading-relaxed">{state.error}</p>
+          </div>
+          <div className="flex items-center gap-3 pl-5">
+            <button
+              onClick={() => {
+                setState(prev => ({ ...prev, error: null, ollamaDone: false, modelDone: false }));
+                window.electronSetup?.retrySetup();
+              }}
+              className="inline-flex items-center gap-1 text-[10px] text-red-700 hover:text-red-900 font-medium transition"
+            >
+              <RefreshCw className="w-3 h-3" /> Try again
+            </button>
+            <a
+              href="https://ollama.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] text-red-600 hover:underline"
+            >
+              Get Ollama →
+            </a>
           </div>
         </div>
       )}

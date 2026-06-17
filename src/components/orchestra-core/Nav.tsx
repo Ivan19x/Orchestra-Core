@@ -42,11 +42,18 @@ export function Nav() {
               Sign in
             </Link>
           )}
-          <Link to="/checkout"
-            className="inline-flex items-center px-4 sm:px-5 py-2 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition">
-            <span className="sm:hidden">Get app</span>
-            <span className="hidden sm:inline">Get Orchestra-Core</span>
-          </Link>
+          {session?.paid ? (
+            <Link to="/dashboard"
+              className="inline-flex items-center px-4 sm:px-5 py-2 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition">
+              Open dashboard
+            </Link>
+          ) : (
+            <Link to="/checkout"
+              className="inline-flex items-center px-4 sm:px-5 py-2 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition">
+              <span className="sm:hidden">Get app</span>
+              <span className="hidden sm:inline">Get Orchestra-Core</span>
+            </Link>
+          )}
           <button className="md:hidden p-2 text-foreground" onClick={() => setOpen(!open)} aria-label="Menu">
             {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -69,10 +76,17 @@ export function Nav() {
             ) : (
               <Link to="/login" onClick={() => setOpen(false)} className="text-sm py-1 text-warm-muted">Sign in</Link>
             )}
-            <Link to="/checkout" onClick={() => setOpen(false)}
-              className="mt-2 inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm">
-              Get Orchestra-Core
-            </Link>
+            {session?.paid ? (
+              <Link to="/dashboard" onClick={() => setOpen(false)}
+                className="mt-2 inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm">
+                Open dashboard
+              </Link>
+            ) : (
+              <Link to="/checkout" onClick={() => setOpen(false)}
+                className="mt-2 inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm">
+                Get Orchestra-Core
+              </Link>
+            )}
           </div>
         </div>
       )}
