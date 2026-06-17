@@ -5,6 +5,13 @@ on:
     tags:
       - 'v*.*.*'
 
+# Each platform job builds locally (--publish=never) and then uploads its own
+# artifacts via softprops/action-gh-release. Letting electron-builder itself
+# run --publish=always in 3 concurrent jobs against the same release caused a
+# race condition where whichever job finished last clobbered the others'
+# uploaded assets — Windows and Linux silently vanished from v1.1.7 even
+# though their build logs showed no errors. softprops/action-gh-release is
+# safe to call repeatedly against the same tag/release.
 jobs:
   # ── Windows (.exe + latest.yml) ──────────────────────────────────────────────
   build-windows:
@@ -31,10 +38,19 @@ jobs:
       - name: Install server runtime deps
         run: npm run server:deps
 
-      - name: Build & publish Windows installer
+      - name: Build Windows installer
+        run: npx electron-builder --win --publish=never
+
+      - name: Upload Windows artifacts to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/*.exe
+            release/*.exe.blockmap
+            release/latest.yml
+          generate_release_notes: false
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --win --publish=always
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ── macOS (.dmg + latest-mac.yml) ────────────────────────────────────────────
   build-mac:
@@ -61,10 +77,19 @@ jobs:
       - name: Install server runtime deps
         run: npm run server:deps
 
-      - name: Build & publish macOS DMG
+      - name: Build macOS DMG
+        run: npx electron-builder --mac --publish=never
+
+      - name: Upload macOS artifacts to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/*.dmg
+            release/*.dmg.blockmap
+            release/latest-mac.yml
+          generate_release_notes: false
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --mac --publish=always
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ── Linux (.AppImage + latest-linux.yml) ─────────────────────────────────────
   build-linux:
@@ -91,10 +116,19 @@ jobs:
       - name: Install server runtime deps
         run: npm run server:deps
 
-      - name: Build & publish Linux AppImage
+      - name: Build Linux AppImage
+        run: npx electron-builder --linux --publish=never
+
+      - name: Upload Linux artifacts to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/*.AppImage
+            release/*.AppImage.blockmap
+            release/latest-linux.yml
+          generate_release_notes: false
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --linux --publish=always
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ── Android APK ──────────────────────────────────────────────────────────────
   build-android:
