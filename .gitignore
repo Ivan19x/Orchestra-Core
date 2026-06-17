@@ -55,3 +55,6 @@ android/.idea/
 
 # Marketing-only logo variants — not used by the website/app build
 /logo-instagram.png
+
+# Scratch notes containing live credentials — never commit
+/Orchestra-Core.txt
