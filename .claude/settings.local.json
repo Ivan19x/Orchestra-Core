@@ -26,7 +26,20 @@
       "Bash(curl -s -X POST http://localhost:5176/api/search -H \"Content-Type: application/json\" -d '{\"query\":\"Kenya SACCO basics\"}')",
       "Bash(kill %1)",
       "Bash(echo \"EXIT=$?\")",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(git push *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(python -c \"import docx; print\\('python-docx available'\\)\")",
+      "Bash(pip install *)",
+      "Bash(gh --version)",
+      "Bash(gh release *)",
+      "Bash(gh run *)",
+      "Bash(git ls-files *)",
+      "Bash(git status *)",
+      "Bash(cat .github/modernize/java-upgrade/.gitignore)",
+      "Bash(find .github/modernize -maxdepth 4 -type d)",
+      "Bash(unzip -l Curriculum/files.zip)"
     ]
   }
 }

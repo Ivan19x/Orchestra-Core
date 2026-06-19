@@ -1,3 +1,4 @@
+
 # Project: Orchestra-Core — AI Financial Literacy Coach
 
 > This file is the single source of truth for this project. It covers every major decision, everything built so far, and exactly what remains before the first sale. Update it whenever something meaningful changes.

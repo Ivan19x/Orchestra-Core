@@ -55,3 +55,6 @@ android/.idea/
 
 # Scratch notes containing live credentials — never commit
 /Orchestra-Core.txt
+
+# Unused/dead code and reference material set aside by repo audit — never commit
+/recycle/

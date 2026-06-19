@@ -20,7 +20,6 @@ import Login from "./pages/Login";
 import Account from "./pages/Account";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
-import Setup from "./pages/Setup";
 import AppShell from "./pages/AppShell";
 import NotFound from "./pages/NotFound";
 
@@ -51,8 +50,7 @@ const App = () => (
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
           </Route>
-          {/* Electron-only screens — no site nav/footer */}
-          <Route path="/setup" element={<Setup />} />
+          {/* Electron-only screen — no site nav/footer */}
           <Route path="/app" element={<AppShell />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
