@@ -466,7 +466,7 @@ Currently `AT_USERNAME=sandbox` — real users won't receive SMS OTPs. Apply at 
 - [ ] **iOS** — Capacitor config is ready but requires Apple Developer account ($99/year) and a Mac build. Deferred
 - [ ] **Mac DMG** — CI now builds it but it hasn't been locally tested end-to-end
 - [ ] **Content marketing** — start posting 1-2 clips/week from lesson corpus before launch. TikTok Kenya, Instagram, X. Example: "How one tweet wiped $2 trillion off markets", "What a 13F filing actually tells you", "Why M-Pesa is studied in Harvard Business School"
-- [ ] **"Reading a payslip" lesson has no home** — covers PAYE/NSSF/SHIF/Housing Levy, a topic no current series-1 module covers. Moved to `recycle/content/lessons/money-basics/03-reading-a-payslip.md` during the repo audit (the whole `money-basics/` draft folder was superseded by `series-1/` and unreferenced by `src/lib/lessons.ts`), but the topic itself is still worth promoting into series-1 as a real numbered module if useful.
+- [x] **"Reading a payslip" lesson promoted** — now `1-9-reading-a-payslip.md`, Module 9 of series-1 (PAYE/NSSF/SHIF/Housing Levy).
 - [ ] **moondream has no UI yet** — pulled during setup alongside qwen2.5:7b and nomic-embed-text, but nothing in the app uses vision capability yet. Wire up a feature (e.g. "read this payslip/receipt screenshot") or it's just sitting unused on every install.
 
 ---

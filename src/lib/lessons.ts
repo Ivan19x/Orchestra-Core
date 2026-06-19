@@ -1,7 +1,7 @@
 import {
   Wallet, TrendingUp, TrendingDown, FileText, Shield, BookOpen, BarChart3,
   Briefcase, Building2, Smartphone, Landmark, LineChart, CreditCard,
-  Home, Brain, Rocket, Heart, Activity, type LucideIcon,
+  Home, Brain, Rocket, Heart, Activity, Receipt, type LucideIcon,
 } from 'lucide-react';
 
 export interface Lesson {
@@ -83,6 +83,12 @@ export const series: Series[] = [
         title: 'Net worth — how to measure yourself', readTime: '6 min read', icon: BarChart3, premium: true,
         summary: 'Your salary tells you what you earn. Your net worth tells you where you actually stand.',
         tags: ['net worth', 'assets', 'liabilities'],
+      },
+      {
+        id: '1-9', module: 'Module 9', slug: '1-9-reading-a-payslip',
+        title: 'Reading a payslip line by line', readTime: '5 min read', icon: Receipt, premium: true,
+        summary: 'Gross pay, net pay, and the deductions in between — PAYE, NSSF, SHIF, and the Housing Levy explained simply.',
+        tags: ['payslip', 'tax', 'paye', 'nssf', 'shif', 'kenya'],
       },
     ],
   },
