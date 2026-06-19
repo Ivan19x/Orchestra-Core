@@ -24,7 +24,9 @@ interface UpdateState {
 
 export default function AppShell() {
   const user = useSession();
-  const [tab, setTab] = useState<Tab>('ai');
+  // Opens to Lessons, not an empty chat — a brand-new user should land on the
+  // curriculum, not a blank input box with nothing telling them where to start.
+  const [tab, setTab] = useState<Tab>('lessons');
   const [aiQuestion, setAiQuestion] = useState('');
   const [aiKey, setAiKey] = useState(0);
   const [update, setUpdate] = useState<UpdateState>({
@@ -209,10 +211,28 @@ function AppLessons({ onAsk }: { onAsk: (q: string) => void }) {
     return <LessonReader lesson={reading} onBack={() => setReading(null)} onAsk={onAsk} />;
   }
 
+  const firstSeries = active[0];
+  const firstLesson = firstSeries?.lessons[0];
+
   return (
     <div className="px-8 py-8">
       <h1 className="font-serif text-2xl text-foreground mb-1">Lessons</h1>
       <p className="text-sm text-warm-muted mb-8">Your full curriculum — tap any lesson to read it.</p>
+
+      {firstSeries && firstLesson && (
+        <button
+          onClick={() => setReading({ ...firstLesson, seriesId: firstSeries.id, seriesName: firstSeries.name })}
+          className="w-full flex items-center justify-between gap-4 p-5 rounded-2xl bg-primary text-primary-foreground mb-10 hover:opacity-90 transition text-left"
+        >
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.15em] text-primary-foreground/70 mb-1">New here? Start with the basics</div>
+            <p className="text-base font-medium">{firstSeries.name}, {firstLesson.module} — {firstLesson.title}</p>
+          </div>
+          <span className="inline-flex items-center gap-1 text-sm shrink-0">
+            Start learning <ChevronRight className="w-4 h-4" />
+          </span>
+        </button>
+      )}
 
       <div className="space-y-10">
         {active.map(s => (
