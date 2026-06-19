@@ -39,7 +39,9 @@
       "Bash(git status *)",
       "Bash(cat .github/modernize/java-upgrade/.gitignore)",
       "Bash(find .github/modernize -maxdepth 4 -type d)",
-      "Bash(unzip -l Curriculum/files.zip)"
+      "Bash(unzip -l Curriculum/files.zip)",
+      "Read(//c/Users/Chwey/AppData/Local/Programs/Ollama/**)",
+      "Read(//c/Program Files/Ollama/**)"
     ]
   }
 }

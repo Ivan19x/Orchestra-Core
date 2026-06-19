@@ -1,5 +1,4 @@
 const path    = require('path');
-const os      = require('os');
 const fs      = require('fs');
 const https   = require('https');
 const { execSync, spawn } = require('child_process');
@@ -49,14 +48,11 @@ if (!gotLock) {
   });
 }
 
-// ── Model selection based on actual system RAM ───────────────────────────────
-function getModelForDevice() {
-  const gb = os.totalmem() / (1024 ** 3);
-  if (gb >= 16) return 'qwen2.5:14b';
-  if (gb >= 8)  return 'qwen2.5:7b';
-  if (gb >= 4)  return 'qwen2.5:3b';
-  return 'qwen2.5:0.5b';
-}
+// ── Fixed model lineup — every install pulls the same three models ──────────
+// No more device-RAM tiering: qwen2.5:7b is the one chat model for everyone,
+// moondream is reserved for a future vision feature (downloaded now so it's
+// ready when that ships), nomic-embed-text powers RAG lesson retrieval.
+const REQUIRED_MODELS = ['qwen2.5:7b', 'moondream', 'nomic-embed-text'];
 
 // ── Find the Ollama binary ───────────────────────────────────────────────────
 function findOllamaBin() {
@@ -187,12 +183,10 @@ function installOllamaSetup(installerPath) {
 
 // ── Main setup orchestrator — runs after the React UI signals it's ready ──────
 async function runSetup() {
-  const send = (stage, message, percent = null) => {
+  const send = (stage, message, percent = null, extra = {}) => {
     if (!mainWindow?.webContents) return;
-    mainWindow.webContents.send('setup:progress', { stage, message, percent });
+    mainWindow.webContents.send('setup:progress', { stage, message, percent, ...extra });
   };
-
-  const model = getModelForDevice();
 
   // Step 1: Check Ollama
   send('checking', 'Checking your device…');
@@ -240,18 +234,22 @@ async function runSetup() {
     }
   }
 
-  // Step 2: Pull model if needed
-  const modelReady = await hasModel(model);
-  if (!modelReady) {
-    const bin = findOllamaBin() || 'ollama';
-    send('model', `Downloading AI model (${model})…`, 0);
+  // Step 2: Pull every required model that isn't already present
+  const bin = findOllamaBin() || 'ollama';
+  for (let i = 0; i < REQUIRED_MODELS.length; i++) {
+    const model = REQUIRED_MODELS[i];
+    const modelReady = await hasModel(model);
+    if (modelReady) continue;
+
+    const meta = { model, modelIndex: i, modelCount: REQUIRED_MODELS.length };
+    send('model', `Downloading ${model}…`, 0, meta);
     try {
       await pullModel(bin, model, ({ percent, detail }) => {
-        send('model', `Downloading AI model (${model})… ${detail || ''}`, percent);
+        send('model', `Downloading ${model}… ${detail || ''}`, percent, meta);
       });
     } catch (err) {
       mainWindow?.webContents.send('setup:error', {
-        message: `Could not download the AI model (${model}). Check your internet connection and reopen Orchestra-Core.`,
+        message: `Could not download ${model}. Check your internet connection and reopen Orchestra-Core.`,
         detail: err.message,
       });
       return;
@@ -259,7 +257,7 @@ async function runSetup() {
   }
 
   // Done
-  mainWindow?.webContents.send('setup:complete', { model });
+  mainWindow?.webContents.send('setup:complete', { model: 'qwen2.5:7b' });
 }
 
 // ── Utilities ─────────────────────────────────────────────────────────────────

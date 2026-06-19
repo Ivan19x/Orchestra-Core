@@ -32,6 +32,11 @@ export default function AppShell() {
   const [update, setUpdate] = useState<UpdateState>({
     available: false, downloaded: false, version: '', percent: null,
   });
+  // False until SetupStatus reports the models are pulled and Ollama is up —
+  // lets the AI tab block input with a friendly message instead of a failed
+  // request if someone types before setup finishes.
+  const [aiReady, setAiReady] = useState(!isElectron);
+  const handleSetupComplete = useCallback(() => setAiReady(true), []);
 
   // Auto-update listeners
   useEffect(() => {
@@ -122,7 +127,7 @@ export default function AppShell() {
 
         {/* Setup status */}
         <div className="px-4 py-4 border-t border-border">
-          <SetupStatus onTokenReceived={handleTokenReceived} />
+          <SetupStatus onTokenReceived={handleTokenReceived} onSetupComplete={handleSetupComplete} />
         </div>
 
         <div className="px-4 pb-3 text-center">
@@ -135,7 +140,7 @@ export default function AppShell() {
           in-flight Ollama response keeps streaming into the chat even while you're on another tab. */}
       <main className="flex-1 overflow-auto bg-background">
         <div className={tab === 'ai' ? 'contents' : 'hidden'}>
-          <AppAI key={aiKey} initialQuestion={aiQuestion} />
+          <AppAI key={aiKey} initialQuestion={aiQuestion} ready={aiReady} />
         </div>
         {tab === 'lessons' && <AppLessons onAsk={openAI} />}
         {tab === 'support' && <AppSupport />}
@@ -166,7 +171,7 @@ function NavItem({ icon: Icon, label, active, onClick }: {
 }
 
 // ── AI Coach tab ──────────────────────────────────────────────────────────────
-function AppAI({ initialQuestion }: { initialQuestion: string }) {
+function AppAI({ initialQuestion, ready }: { initialQuestion: string; ready: boolean }) {
   if (!isElectron) {
     return (
       <div className="h-full flex flex-col items-center justify-center px-8 text-center">
@@ -193,10 +198,10 @@ function AppAI({ initialQuestion }: { initialQuestion: string }) {
     <div className="h-full flex flex-col">
       <div className="px-8 pt-8 pb-4 border-b border-border">
         <h1 className="font-serif text-2xl text-foreground">AI Coach</h1>
-        <p className="text-sm text-warm-muted mt-1">Ask anything about money. Powered by a local AI — nothing leaves your device.</p>
+        <p className="text-sm text-warm-muted mt-1">Go deeper on a lesson, look something up, or get help setting up an account. Nothing leaves your device.</p>
       </div>
       <div className="flex-1 overflow-auto px-8 py-6">
-        <AskPanel initialQuestion={initialQuestion} />
+        <AskPanel initialQuestion={initialQuestion} ready={ready} />
       </div>
     </div>
   );

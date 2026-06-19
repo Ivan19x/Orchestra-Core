@@ -14,9 +14,11 @@ interface AskPanelProps {
   initialQuestion?: string;
   /** Shorter panel for embedding inside the dashboard, with a link out to the full /ask page. */
   compact?: boolean;
+  /** False while the model is still being set up — blocks sending with a friendly message instead of a failed request. Defaults to true for callers outside the Electron setup flow (e.g. the website's /ask, /dashboard). */
+  ready?: boolean;
 }
 
-export function AskPanel({ initialQuestion, compact = false }: AskPanelProps) {
+export function AskPanel({ initialQuestion, compact = false, ready = true }: AskPanelProps) {
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [input, setInput] = useState(initialQuestion ?? '');
   const [isStreaming, setIsStreaming] = useState(false);
@@ -31,7 +33,7 @@ export function AskPanel({ initialQuestion, compact = false }: AskPanelProps) {
 
   async function handleSend() {
     const question = input.trim();
-    if (!question || isStreaming) return;
+    if (!question || isStreaming || !ready) return;
 
     setError(null);
     setInput('');
@@ -87,7 +89,7 @@ export function AskPanel({ initialQuestion, compact = false }: AskPanelProps) {
         {messages.length === 0 ? (
           <div className={`h-full flex flex-col items-center justify-center text-center text-warm-muted ${compact ? 'py-8' : 'py-16'}`}>
             <Sparkles className="w-8 h-8 text-primary mb-3" strokeWidth={1.5} />
-            <p>Ask anything about money — try "What is Fuliza and is it bad?"</p>
+            <p>Ask me to explain a lesson further, look something up, or walk you through setting up an account — try "What is Fuliza and is it bad?"</p>
           </div>
         ) : (
           messages.map((m, i) => (
@@ -156,25 +158,31 @@ export function AskPanel({ initialQuestion, compact = false }: AskPanelProps) {
               ? 'bg-primary text-primary-foreground border-primary'
               : 'bg-blush text-warm-muted border-border hover:border-primary/40'
           }`}
-          title="When on, Orchestra-Core searches the web for extra context on this question."
+          title="When on, Orchestra-Core can search the web and read pages itself if this question needs current information."
         >
           <Globe className="w-3.5 h-3.5" />
           Deep Dive {deepDive ? 'on' : 'off'}
         </button>
       </div>
 
+      {!ready && (
+        <p className="mt-3 text-xs text-primary bg-blush border border-border rounded-lg px-3 py-2">
+          Currently setting up the model, kindly wait…
+        </p>
+      )}
+
       <div className="mt-4 flex items-center gap-2">
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleSend(); }}
-          disabled={isStreaming}
-          placeholder="Ask anything about money…"
+          disabled={isStreaming || !ready}
+          placeholder={ready ? 'Ask anything about money…' : 'Setting up the model…'}
           className="flex-1 px-4 py-2.5 rounded-full bg-blush border border-border text-sm focus:outline-none focus:border-primary disabled:opacity-60"
         />
         <button
           onClick={handleSend}
-          disabled={isStreaming || !input.trim()}
+          disabled={isStreaming || !ready || !input.trim()}
           className="p-2.5 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Send className="w-4 h-4" />

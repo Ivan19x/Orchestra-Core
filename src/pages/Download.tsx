@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { LogIn, ShoppingBag } from 'lucide-react';
-import { DeviceScanPanel } from '@/components/orchestra-core/DeviceScanPanel';
+import { DownloadPanel } from '@/components/orchestra-core/DownloadPanel';
 import { useSession } from '@/lib/session';
 
 const setupSteps = [
@@ -23,7 +23,7 @@ export default function Download() {
 
       <section className="container-narrow py-16">
         {session?.paid ? (
-          <DeviceScanPanel />
+          <DownloadPanel />
         ) : (
           <div className="max-w-md mx-auto rounded-2xl border border-border bg-background p-8 text-center">
             <p className="text-warm-muted mb-6">
