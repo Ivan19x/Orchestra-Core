@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import {
   Brain, BookOpen, Heart, User, LogOut, Orbit,
-  Clock, ChevronRight, ChevronLeft, Download,
+  Clock, ChevronRight, ChevronLeft, Download, ExternalLink,
 } from 'lucide-react';
 import { AskPanel } from '@/components/orchestra-core/AskPanel';
 import { SetupStatus } from '@/components/orchestra-core/SetupStatus';
@@ -483,9 +483,23 @@ function AppAccount({ user }: { user: ReturnType<typeof useSession> }) {
   return (
     <div className="px-8 py-8 max-w-sm">
       <h1 className="font-serif text-2xl text-foreground mb-2">Sign in</h1>
-      <p className="text-sm text-warm-muted mb-6">
-        Already purchased Orchestra-Core? Sign in with the email you used at checkout to access your account and license key.
-      </p>
+
+      <div className="p-5 rounded-2xl border border-primary/30 bg-blush mb-6">
+        <p className="text-sm text-foreground mb-3">
+          Already signed in on the website? Connect this app instantly — no verification code needed.
+        </p>
+        <a
+          href="https://orchestra-core.vercel.app/account"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition"
+        >
+          <ExternalLink className="w-4 h-4" /> Open my account on the website
+        </a>
+        <p className="text-xs text-warm-muted mt-2">On your Account page there, click "Connect to desktop app."</p>
+      </div>
+
+      <p className="text-xs text-faint uppercase tracking-[0.12em] mb-3">Or sign in with a code</p>
 
       {signinStep === 'email' && (
         <form onSubmit={handleEmailSubmit} className="space-y-3">

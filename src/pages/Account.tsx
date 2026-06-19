@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Copy, Check, Download, LogOut, Brain } from 'lucide-react';
+import { Copy, Check, Download, LogOut, Brain, Link2 } from 'lucide-react';
 import { useSession, clearSession, dispatchSessionChange, getToken } from '@/lib/session';
 import { getMe } from '@/lib/api';
 
@@ -84,6 +84,23 @@ export default function Account() {
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition">
               <Brain className="w-4 h-4" /> Open dashboard
             </Link>
+          </div>
+        )}
+
+        {/* Connect to desktop app — pushes this session into the installed app via deep link, no OTP needed there */}
+        {session.paid && (
+          <div className="bg-background rounded-2xl border border-border p-6 md:p-8">
+            <h2 className="font-serif text-xl text-foreground mb-1">Connect to desktop app</h2>
+            <p className="text-sm text-warm-muted mb-5">
+              Already have Orchestra-Core installed? Click below to sign in there instantly — no verification code needed,
+              it uses this website session.
+            </p>
+            <a
+              href={`orchestracore://auth?token=${encodeURIComponent(getToken() ?? '')}`}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition"
+            >
+              <Link2 className="w-4 h-4" /> Connect to desktop app
+            </a>
           </div>
         )}
 
