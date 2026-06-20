@@ -234,8 +234,16 @@ async function runSetup() {
     }
   }
 
-  // Step 2: Pull every required model that isn't already present
+  // Step 2: Pull every required model that isn't already present.
+  // ollama pull resumes from its local blob cache rather than restarting from
+  // 0% on a fresh invocation, so retrying a failed/interrupted pull is cheap.
+  // Each model gets its own retry budget, and a model running out of retries
+  // does NOT stop the others from being attempted — a network blip on
+  // moondream shouldn't also block nomic-embed-text.
   const bin = findOllamaBin() || 'ollama';
+  const MAX_ATTEMPTS_PER_MODEL = 3;
+  const failedModels = [];
+
   for (let i = 0; i < REQUIRED_MODELS.length; i++) {
     const model = REQUIRED_MODELS[i];
     const modelReady = await hasModel(model);
@@ -243,17 +251,30 @@ async function runSetup() {
 
     const meta = { model, modelIndex: i, modelCount: REQUIRED_MODELS.length };
     send('model', `Downloading ${model}…`, 0, meta);
-    try {
-      await pullModel(bin, model, ({ percent, detail }) => {
-        send('model', `Downloading ${model}… ${detail || ''}`, percent, meta);
-      });
-    } catch (err) {
-      mainWindow?.webContents.send('setup:error', {
-        message: `Could not download ${model}. Check your internet connection and reopen Orchestra-Core.`,
-        detail: err.message,
-      });
-      return;
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS_PER_MODEL; attempt++) {
+      try {
+        await pullModel(bin, model, ({ percent, detail }) => {
+          send('model', `Downloading ${model}… ${detail || ''}`, percent, meta);
+        });
+        break; // this model is done
+      } catch (err) {
+        if (attempt < MAX_ATTEMPTS_PER_MODEL) {
+          send('model', `Connection interrupted — resuming ${model} (attempt ${attempt + 1}/${MAX_ATTEMPTS_PER_MODEL})…`, null, { ...meta, retrying: true });
+          await sleep(3000 * attempt);
+        } else {
+          failedModels.push(model);
+        }
+      }
     }
+  }
+
+  if (failedModels.length > 0) {
+    mainWindow?.webContents.send('setup:error', {
+      message: `Couldn't finish downloading ${failedModels.join(', ')} — check your internet connection. Orchestra-Core will automatically pick up where it left off next time you open the app.`,
+      detail: `Failed after ${MAX_ATTEMPTS_PER_MODEL} attempts: ${failedModels.join(', ')}`,
+    });
+    return;
   }
 
   // Done

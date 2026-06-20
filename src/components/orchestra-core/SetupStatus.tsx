@@ -10,6 +10,7 @@ interface ProgressEvent {
   model?: string;
   modelIndex?: number;
   modelCount?: number;
+  retrying?: boolean;
 }
 interface CompleteEvent { model: string }
 interface ErrorEvent { message: string; detail?: string }
@@ -38,6 +39,7 @@ interface SetupState {
   modelIndex: number;
   modelCount: number;
   modelPercent: number | null;
+  retrying: boolean;
   modelsDone: boolean;
   error: string | null;
   allDone: boolean;
@@ -46,7 +48,7 @@ interface SetupState {
 const READY: SetupState = {
   deviceDone: true, ollamaDone: true, modelName: null,
   modelIndex: 0, modelCount: 3, modelPercent: null,
-  modelsDone: true, error: null, allDone: true,
+  retrying: false, modelsDone: true, error: null, allDone: true,
 };
 
 export function SetupStatus({ onTokenReceived, onSetupComplete }: {
@@ -59,7 +61,7 @@ export function SetupStatus({ onTokenReceived, onSetupComplete }: {
     isElectron ? {
       deviceDone: true, ollamaDone: false, modelName: null,
       modelIndex: 0, modelCount: 3, modelPercent: null,
-      modelsDone: false, error: null, allDone: false,
+      retrying: false, modelsDone: false, error: null, allDone: false,
     } : READY
   );
   const [collapsed, setCollapsed] = useState(false);
@@ -82,6 +84,7 @@ export function SetupStatus({ onTokenReceived, onSetupComplete }: {
             modelIndex: data.modelIndex ?? prev.modelIndex,
             modelCount: data.modelCount ?? prev.modelCount,
             modelPercent: data.percent ?? null,
+            retrying: !!data.retrying,
           };
         }
         return base;
@@ -155,6 +158,9 @@ export function SetupStatus({ onTokenReceived, onSetupComplete }: {
                   style={{ width: `${state.modelPercent ?? 0}%` }}
                 />
               </div>
+              {state.retrying && (
+                <p className="text-[10px] text-faint italic">Connection interrupted — resuming…</p>
+              )}
             </div>
           ) : null
         }
