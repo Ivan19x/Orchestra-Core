@@ -137,6 +137,17 @@
             "target": "nsis",
             "signAndEditExecutable": false
         },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true,
+            "installerIcon": "build/icon.ico",
+            "uninstallerIcon": "build/icon.ico",
+            "installerHeaderIcon": "build/icon.ico",
+            "installerSidebar": "build/installerSidebar.bmp",
+            "uninstallerSidebar": "build/installerSidebar.bmp",
+            "createDesktopShortcut": true,
+            "createStartMenuShortcut": true
+        },
         "mac": {
             "target": "dmg",
             "protocols": [
