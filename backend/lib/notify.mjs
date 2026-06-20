@@ -33,12 +33,19 @@ export async function sendSms(phone, message) {
 // ── Email via Resend ───────────────────────────────────────────────────────
 
 export async function sendEmail(to, subject, html) {
-  await resend.emails.send({
+  // The Resend SDK does NOT throw on API-level failures (e.g. the shared
+  // onboarding@resend.dev sender can only email the account's own address
+  // until a custom domain is verified) - it resolves with { data, error }.
+  // Ignoring `error` here meant every failed send silently reported success.
+  const { error } = await resend.emails.send({
     from: process.env.EMAIL_FROM,
     to: [to],
     subject,
     html,
   });
+  if (error) {
+    throw new Error(`Resend email failed: ${error.message || error.name || JSON.stringify(error)}`);
+  }
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────

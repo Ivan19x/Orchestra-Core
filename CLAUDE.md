@@ -268,7 +268,7 @@ Protocol: `orchestracore://auth?token=JWT_TOKEN`
 
 **New buyer:**
 1. Visits `/pricing` → clicks "Get Orchestra-Core" → goes to `/checkout`
-2. **Step 1 — Identity:** enters email OR Kenyan phone number (+254...)
+2. **Step 1 — Identity:** enters email (the identity/OTP field is email-only — a separate phone number field appears in Step 2, but only for the M-Pesa STK push, never for OTP delivery)
 3. **Step 2 — Payment:** chooses M-Pesa or card
    - M-Pesa: enters M-Pesa number → backend calls IntaSend → STK push sent to phone → frontend polls `/api/payment/status/:txRef` every 3 seconds until confirmed
    - Card: backend generates IntaSend hosted checkout link → user redirected → pays → redirected back → frontend calls `/api/payment/verify`
@@ -421,6 +421,36 @@ $utf8NoBOM = New-Object System.Text.UTF8Encoding $false
 ---
 
 ### ⏳ Remaining before first real sale
+
+#### 0. CRITICAL — OTP emails cannot reach anyone except your own address
+
+Confirmed by testing the Resend API directly: `EMAIL_FROM` uses Resend's shared
+`onboarding@resend.dev` sender, which Resend restricts to only deliver to the
+account owner's own verified email (`chweyaivan@gmail.com`) until a custom
+domain is verified. Every email OTP sent to any other address — every friend,
+every real customer — has silently failed. The actual error from Resend:
+
+> "You can only send testing emails to your own email address
+> (chweyaivan@gmail.com). To send emails to other recipients, please verify a
+> domain at resend.com/domains, and change the `from` address to an email
+> using this domain."
+
+Since every sign-in/checkout/account flow in this app uses email-only OTP (the
+phone number field in Checkout is only ever used for the M-Pesa STK push, never
+for OTP delivery — CLAUDE.md previously said "email OR phone" for identity,
+which was inaccurate), **this has blocked 100% of real signups from day one.**
+
+Fixed in code: `backend/lib/notify.mjs`'s `sendEmail()` now checks the Resend
+SDK's `{ data, error }` response and throws on failure — previously the SDK's
+error was silently ignored, so `/api/auth/send-otp` always returned `{ ok: true }`
+even when nothing was delivered. Now it correctly returns a 500 and the
+frontend shows "Failed to send code. Try again."
+
+**What you still need to do:** buy/use a domain you control, verify it at
+resend.com/domains (add the DNS records Resend gives you), then change
+`EMAIL_FROM` on Render to an address on that domain (e.g.
+`Orchestra-Core <noreply@yourdomain.com>`). Until that's done, email sign-in
+only works for your own email address — nobody else can sign up.
 
 #### 1. Confirm Render environment variables are production values
 
