@@ -223,10 +223,9 @@ Orchestra-Core/
 │   └── ask.mjs              — test full ask pipeline from CLI
 ├── capacitor.config.ts      — Capacitor config (appId: com.orchestracore.app)
 ├── .github/workflows/
-│   ├── release.yml          — builds Windows + Mac + Linux + Android on git tag push
-│   └── deploy-backend.yml   — auto-deploys backend to Render on push to main
+│   └── release.yml          — builds Windows + Mac + Linux + Android on git tag push
 ├── .env.local.example       — frontend env vars template
-└── package.json             — version: 1.2.0
+└── package.json             — version: 1.2.4
 ```
 
 ### IPC bridge (Electron preload → renderer)
