@@ -16,6 +16,12 @@ const initiateLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, message: { e
 const PRICE_KES = 1500;
 const TESTING_FREE = process.env.TESTING_FREE === 'true';
 
+// IntaSend's API requires an email even for M-Pesa-only customers who signed
+// up with a phone number. Derived from EMAIL_FROM rather than hardcoded, so
+// switching to a real domain (just by updating EMAIL_FROM) updates this too -
+// one source of truth instead of two places to remember.
+const FALLBACK_EMAIL_DOMAIN = process.env.EMAIL_FROM?.match(/@([\w.-]+)/)?.[1] || 'example.com';
+
 // Live keys contain "_live_"; test keys contain "_test_"
 const IS_BASE = (process.env.INTASEND_PUBLISHABLE_KEY ?? '').includes('_live_')
   ? 'https://payment.intasend.com/api/v1'
@@ -58,7 +64,7 @@ router.post('/initiate', initiateLimit, async (req, res) => {
     }
 
     const isEmail = identifier.includes('@');
-    const customerEmail = isEmail ? identifier : 'customer@orchestracore.com';
+    const customerEmail = isEmail ? identifier : `customer@${FALLBACK_EMAIL_DOMAIN}`;
     const customerPhone = normalizePhone(mpesaPhone || (!isEmail ? identifier : ''));
     const redirectUrl = `${process.env.FRONTEND_URL}/checkout?step=card-return&tx_ref=${txRef}`;
 

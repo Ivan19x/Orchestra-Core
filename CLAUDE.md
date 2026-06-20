@@ -419,70 +419,108 @@ $utf8NoBOM = New-Object System.Text.UTF8Encoding $false
 
 ---
 
-### ⏳ Remaining before first real sale
+### ⏳ Go-live checklist (code is fully ready — only dashboard steps remain)
 
-#### 0. CRITICAL — OTP emails cannot reach anyone except your own address
+BRS business name is registered. IntaSend application is approved for live
+payments. Every remaining step below is a dashboard action only the account
+owner can take (no API/CLI access available for any of these) — the code
+side is already done and waiting. Do them in this order:
 
-Confirmed by testing the Resend API directly: `EMAIL_FROM` uses Resend's shared
-`onboarding@resend.dev` sender, which Resend restricts to only deliver to the
-account owner's own verified email (`chweyaivan@gmail.com`) until a custom
-domain is verified. Every email OTP sent to any other address — every friend,
-every real customer — has silently failed. The actual error from Resend:
+#### 1. Buy a domain
 
-> "You can only send testing emails to your own email address
-> (chweyaivan@gmail.com). To send emails to other recipients, please verify a
-> domain at resend.com/domains, and change the `from` address to an email
-> using this domain."
+Any registrar, any TLD (e.g. Namecheap + `.com`, or KENIC + `.co.ke`). This
+unblocks everything else below — Resend can't verify a sender domain you
+don't own.
 
-Since every sign-in/checkout/account flow in this app uses email-only OTP (the
-phone number field in Checkout is only ever used for the M-Pesa STK push, never
-for OTP delivery — CLAUDE.md previously said "email OR phone" for identity,
-which was inaccurate), **this has blocked 100% of real signups from day one.**
+#### 2. Verify the domain on Resend, fix email delivery
 
-Fixed in code: `backend/lib/notify.mjs`'s `sendEmail()` now checks the Resend
-SDK's `{ data, error }` response and throws on failure — previously the SDK's
-error was silently ignored, so `/api/auth/send-otp` always returned `{ ok: true }`
-even when nothing was delivered. Now it correctly returns a 500 and the
-frontend shows "Failed to send code. Try again."
+**Why this matters:** confirmed by testing the Resend API directly — the
+current `EMAIL_FROM` uses Resend's shared `onboarding@resend.dev` sender,
+which Resend restricts to only deliver to the account owner's own verified
+email until a custom domain is verified. Every OTP sent to anyone else has
+silently failed since day one (the exact error: *"You can only send testing
+emails to your own email address... please verify a domain"*). Since every
+sign-in/checkout flow uses email-only OTP (the phone field in Checkout is
+only ever used for the M-Pesa STK push, never OTP), **this alone has blocked
+100% of real signups.**
 
-**What you still need to do:** buy/use a domain you control, verify it at
-resend.com/domains (add the DNS records Resend gives you), then change
-`EMAIL_FROM` on Render to an address on that domain (e.g.
-`Orchestra-Core <noreply@yourdomain.com>`). Until that's done, email sign-in
-only works for your own email address — nobody else can sign up.
+Steps:
+1. resend.com/domains → add your new domain → add the DNS records Resend
+   gives you at your registrar → wait for it to verify.
+2. Render → Orchestra-Core service → Environment → set `EMAIL_FROM` to
+   `Orchestra-Core <noreply@yourdomain.com>` → redeploy.
+3. That's the *only* code-adjacent value to change — `backend/routes/payment.mjs`'s
+   fallback customer email for M-Pesa-only signups now derives its domain
+   from `EMAIL_FROM` automatically (`FALLBACK_EMAIL_DOMAIN`), so there's
+   nothing else to update in code.
+4. Verify: send a real OTP to a non-owner email address and confirm it
+   actually arrives (not just that no error is thrown).
 
-#### 1. Confirm Render environment variables are production values
+Also already fixed in code regardless of domain status:
+`backend/lib/notify.mjs`'s `sendEmail()` now checks the Resend SDK's
+`{ data, error }` response and throws on failure — previously the error was
+silently ignored, so `/api/auth/send-otp` always returned `{ ok: true }` even
+when nothing was delivered.
 
-`FRONTEND_URL` and `CORS_ORIGINS` on Render need the production Vercel URL, not localhost dev values — check the Render dashboard directly (can't be verified from the repo). Note: as of this session, the backend's CORS config (`backend/index.mjs`) always allows `http://localhost:5175` (the Electron app's fixed local origin) in code, regardless of what `CORS_ORIGINS` is set to — so the *app* won't break even if this is still wrong, but the *website* will if `CORS_ORIGINS` doesn't include the Vercel URL.
+#### 3. Rotate IntaSend keys and configure the webhook
 
-#### 2. Set `VITE_DOWNLOAD_URL_WIN` on Vercel
+The live keys currently in use sat exposed in git history earlier (since
+purged, repo is now public) — rotate them before real money flows through:
+1. IntaSend dashboard → Settings → API Keys → generate new live publishable
+   + secret keys.
+2. IntaSend dashboard → Webhooks → URL: `https://orchestra-core.onrender.com/api/payment/webhook`,
+   set a secret string.
+3. Render → set `INTASEND_PUBLISHABLE_KEY`, `INTASEND_SECRET_KEY` (new
+   values), `INTASEND_WEBHOOK_SECRET` (matching what you set in IntaSend).
+   No code change needed — `payment.mjs` already auto-detects live vs
+   sandbox from the key prefix and already authenticates webhooks against
+   `INTASEND_WEBHOOK_SECRET`.
 
-1. Copy the `.exe` URL from the latest published GitHub Release
-2. Vercel → Orchestra-Core → Settings → Environment Variables → add `VITE_DOWNLOAD_URL_WIN`
-3. Redeploy
+#### 4. Production environment variables on Render
 
-This makes the Download page show a real link for paid users. Still not confirmed done as of this session.
+| Variable | Required value |
+|---|---|
+| `FRONTEND_URL` | `https://orchestra-core.vercel.app` |
+| `CORS_ORIGINS` | `https://orchestra-core.vercel.app` |
+| `NODE_ENV` | `production` |
+| `EMAIL_FROM` | set in step 2 above |
+| `INTASEND_*` | set in step 3 above |
+| `TESTING_FREE` | leave `true` until step 6 |
 
-#### 3. Configure IntaSend webhook
+Note: the backend's CORS config (`backend/index.mjs`) always allows
+`http://localhost:5175` (the Electron app's fixed local origin) in code
+regardless of `CORS_ORIGINS` — so the *app* won't break even if this is
+still wrong, but the *website* will if `CORS_ORIGINS` doesn't include the
+Vercel URL.
 
-In IntaSend dashboard → Webhooks:
-- URL: `https://orchestra-core.onrender.com/api/payment/webhook`
-- Secret: same value as `INTASEND_WEBHOOK_SECRET` on Render
+#### 5. Vercel environment variables
 
-#### 4. BRS business name registration
+- Confirm `VITE_API_URL=https://orchestra-core.onrender.com`
+- Set `VITE_DOWNLOAD_URL_WIN` to the latest GitHub Release's `.exe` URL
+  (currently `https://github.com/Ivan19x/Orchestra-Core/releases/download/v1.2.4/Orchestra-Core.Setup.1.2.4.exe`
+  — grab whatever's actually latest when you do this) → redeploy. This makes
+  the Download page show a real link for paid users — outstanding since
+  early in the project.
 
-"Orchestra-Core" at eCitizen.go.ke → Business Registration → Business Name → ~KES 950 one-time. Required before accepting real money.
+#### 6. End-to-end live test, then go live
 
-#### 5. Turn off testing mode when ready to charge
+With `TESTING_FREE` still `true`, confirm steps 2-5 above are all working
+(test OTP delivery especially). When ready: flip `TESTING_FREE=false` on
+Render, then go through `/checkout` for real — pay the actual KES 1,500
+yourself via M-Pesa as the live-mode test (IntaSend live mode has no fake
+sandbox once keys are live, so this is the standard way to validate a live
+integration). Confirm: payment completes, OTP email arrives, license key
+generates, `/account` shows it, `/download` works. If all of that passes,
+`TESTING_FREE` stays `false` — you're live.
 
-Set `TESTING_FREE=false` on Render. Before doing this, complete end-to-end test with IntaSend sandbox:
-- Go through `/checkout` with a test phone
-- Verify OTP arrives (email works now; SMS needs Africa's Talking production for real phones)
-- Verify license key generated, `/account` shows it, `/download` shows the button
+#### Deferred, not blocking
 
-#### 6. Africa's Talking production KYC
-
-Currently `AT_USERNAME=sandbox` — real users won't receive SMS OTPs. Apply at africastalking.com for a production shortcode/sender ID (requires KYC, takes a few days). Until then, OTP via email works fine as a fallback.
+- **Africa's Talking production KYC** — SMS stays sandbox; not blocking
+  since OTP is email-only in the current UI.
+- **ODPC formal registration** — still correctly deferred until KES 5M
+  turnover or 10+ staff.
+- **Single Business Permit** — county-level, separate from the BRS name
+  registration already done; worth doing but not code-related.
 
 ---
 
