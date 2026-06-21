@@ -267,12 +267,14 @@ Protocol: `orchestracore://auth?token=JWT_TOKEN`
 
 **New buyer:**
 1. Visits `/pricing` → clicks "Get Orchestra-Core" → goes to `/checkout`
-2. **Step 1 — Identity:** enters email (the identity/OTP field is email-only — a separate phone number field appears in Step 2, but only for the M-Pesa STK push, never for OTP delivery)
-3. **Step 2 — Payment:** chooses M-Pesa or card
+2. **Step 1 — Identity:** enters email (the identity/OTP field is email-only — a separate phone number field appears in Step 3, but only for the M-Pesa STK push, never for OTP delivery)
+3. **Step 2 — OTP (verified *before* any charge):** OTP sent via email (Resend) immediately → user enters 6-digit code → JWT issued (30-day), saved to localStorage, `paid: false`. Identity is deliberately verified before payment, not after — a customer whose OTP can't be delivered is blocked here, before any money moves, not stuck after paying with no way to reach their license key. If `verifyOtp` returns `paid: true` (already bought before), skip straight to `/account` — nothing to charge.
+4. **Step 3 — Payment:** chooses M-Pesa or card
    - M-Pesa: enters M-Pesa number → backend calls IntaSend → STK push sent to phone → frontend polls `/api/payment/status/:txRef` every 3 seconds until confirmed
-   - Card: backend generates IntaSend hosted checkout link → user redirected → pays → redirected back → frontend calls `/api/payment/verify`
-4. **Step 3 — OTP:** payment confirmed → OTP sent via SMS (Africa's Talking) or email (Resend) → user enters 6-digit code
-5. **Step 4 — Done:** OTP verified → JWT issued (30-day) → license key displayed → download link shown → deep link button to open app
+   - Card: backend generates IntaSend hosted checkout link → user redirected → pays → redirected back to `/checkout?step=card-return&tx_ref=...`. The component remounts fresh here (component state is gone) — identity is recovered from the session saved in Step 2 (`getStoredUser()`), not from component state, which was a latent bug before the reorder.
+5. **Step 4 — Done:** payment confirmed → `GET /api/auth/me` fetches the freshly-generated license key → displayed, download link shown, deep link button to open app
+
+`TESTING_PHASE` (`VITE_TESTING_PHASE` on Vercel) skips Step 3 entirely after OTP verification — calls `/api/payment/initiate` with `method: 'free'` and goes straight to Done. Separate flag from the backend's `TESTING_FREE`.
 
 **Returning buyer:**
 1. Visits `/login` → enters email or phone → OTP sent → enters code → redirected to `/account`

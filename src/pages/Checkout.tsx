@@ -2,11 +2,16 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Check, Loader2, Smartphone, CreditCard, ArrowRight, ChevronLeft, Copy } from 'lucide-react';
 import { OTPInput } from '@/components/orchestra-core/OTPInput';
-import { sendOtp, verifyOtp, initiatePayment, getPaymentStatus, verifyCardPayment, ApiError } from '@/lib/api';
-import { saveSession, dispatchSessionChange } from '@/lib/session';
+import { sendOtp, verifyOtp, getMe, initiatePayment, getPaymentStatus, verifyCardPayment, ApiError } from '@/lib/api';
+import { saveSession, getStoredUser, getToken, dispatchSessionChange } from '@/lib/session';
 import { TESTING_PHASE } from '@/lib/testingPhase';
 
-type Step = 'identity' | 'payment' | 'processing' | 'otp' | 'done';
+// Identity is verified by OTP BEFORE any payment is collected — not after.
+// Taking payment first and verifying second meant a real customer whose OTP
+// failed to arrive (e.g. email restrictions) would pay and then have no way
+// to ever reach their license key, with no recourse. Verifying first means a
+// failed OTP costs nothing — the customer is blocked before paying, not after.
+type Step = 'identity' | 'otp' | 'payment' | 'processing' | 'done';
 type Method = 'mpesa' | 'card';
 
 const PRICE = 'KES 1,500';
@@ -22,23 +27,27 @@ export default function Checkout() {
   const [txRef, setTxRef] = useState('');
   const [otp, setOtp] = useState('');
   const [licenseKey, setLicenseKey] = useState('');
-  const [sessionToken, setSessionToken] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Handle card payment return from IntaSend
+  // Handle the browser returning from IntaSend's hosted card checkout page.
+  // The component remounts fresh here — `identifier` (component state) is
+  // gone, so recover it from the session saved during OTP verification,
+  // which happened before the redirect and survives in localStorage.
   useEffect(() => {
     const cardStep = searchParams.get('step');
     const txRefParam = searchParams.get('tx_ref');
 
     if (cardStep === 'card-return' && txRefParam) {
+      const stored = getStoredUser();
+      if (stored) setIdentifier(stored.identifier);
       setTxRef(txRefParam);
       const invoiceId = searchParams.get('invoice_id') || searchParams.get('checkout_id') || undefined;
       setStep('processing');
       verifyCardPayment(txRefParam, invoiceId)
-        .then(() => { setStep('otp'); sendOtpToUser(); })
+        .then(() => finishUpAfterPayment())
         .catch(e => { setError(e.message); setStep('payment'); });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -46,12 +55,13 @@ export default function Checkout() {
 
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
-  async function sendOtpToUser() {
+  // Payment succeeded — fetch the freshly-generated license key and finish.
+  async function finishUpAfterPayment() {
     try {
-      await sendOtp(identifier);
-    } catch {
-      // non-fatal — user can request resend
-    }
+      const me = await getMe();
+      setLicenseKey(me.licenseKey || '');
+    } catch { /* license key will still show on /account */ }
+    setStep('done');
   }
 
   async function handleIdentitySubmit(e: React.FormEvent) {
@@ -61,24 +71,57 @@ export default function Checkout() {
     if (!val) return setError('Enter your email address.');
     if (!val.includes('@')) return setError('Enter a valid email address.');
 
-    if (TESTING_PHASE) {
-      setLoading(true);
-      setStep('processing');
-      try {
-        const result = await initiatePayment(val, 'free');
-        setTxRef(result.txRef);
-        setStep('otp');
-        await sendOtpToUser();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Something went wrong. Try again.');
-        setStep('identity');
-      } finally {
-        setLoading(false);
-      }
-      return;
+    setLoading(true);
+    try {
+      await sendOtp(val);
+      setStep('otp');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send code. Try again.');
+    } finally {
+      setLoading(false);
     }
+  }
 
-    setStep('payment');
+  async function handleOtpSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (otp.length < 6) return setError('Enter the full 6-digit code.');
+    setError('');
+    setLoading(true);
+    try {
+      const { token, user } = await verifyOtp(identifier, otp);
+      saveSession(token, user);
+      dispatchSessionChange();
+
+      if (user.paid) {
+        // Already bought previously — nothing to charge, send them to their account.
+        navigate('/account');
+        return;
+      }
+
+      if (TESTING_PHASE) {
+        // Free testing window — skip straight to granting access, no charge.
+        const result = await initiatePayment(identifier, 'free');
+        setTxRef(result.txRef);
+        await finishUpAfterPayment();
+        return;
+      }
+
+      setStep('payment');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Invalid code.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleResendOtp() {
+    setError('');
+    try {
+      await sendOtp(identifier);
+      setError(''); // clear any prior error
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not resend code.');
+    }
   }
 
   async function handlePaymentSubmit(e: React.FormEvent) {
@@ -102,8 +145,7 @@ export default function Checkout() {
           const { status } = await getPaymentStatus(result.txRef);
           if (status === 'completed') {
             clearInterval(pollRef.current!);
-            setStep('otp');
-            await sendOtpToUser();
+            await finishUpAfterPayment();
           } else if (status === 'failed') {
             clearInterval(pollRef.current!);
             setError('Payment was declined or timed out. Try again.');
@@ -122,35 +164,6 @@ export default function Checkout() {
     }
   }
 
-  async function handleOtpSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (otp.length < 6) return setError('Enter the full 6-digit code.');
-    setError('');
-    setLoading(true);
-    try {
-      const { token, user } = await verifyOtp(identifier, otp);
-      saveSession(token, user);
-      dispatchSessionChange();
-      setLicenseKey(user.licenseKey || '');
-      setSessionToken(token);
-      setStep('done');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid code.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleResendOtp() {
-    setError('');
-    try {
-      await sendOtp(identifier);
-      setError(''); // clear any prior error
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not resend code.');
-    }
-  }
-
   function copyLicenseKey() {
     navigator.clipboard.writeText(licenseKey);
     setCopied(true);
@@ -164,8 +177,8 @@ export default function Checkout() {
         {/* Progress bar */}
         {step !== 'done' && (
           <div className="flex gap-1.5 mb-8">
-            {(['identity', 'payment', 'processing', 'otp'] as Step[]).map((s, i) => {
-              const steps: Step[] = ['identity', 'payment', 'processing', 'otp'];
+            {(['identity', 'otp', 'payment', 'processing'] as Step[]).map((s, i) => {
+              const steps: Step[] = ['identity', 'otp', 'payment', 'processing'];
               const current = steps.indexOf(step);
               const isDone = i < current;
               const isActive = i === current;
@@ -194,13 +207,14 @@ export default function Checkout() {
                 className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-primary transition mb-2"
                 autoFocus
               />
-              <p className="text-xs text-faint mb-5">We'll send your verification code here. No marketing, ever.</p>
+              <p className="text-xs text-faint mb-5">We'll send your verification code here — before any payment, so you know it works. No marketing, ever.</p>
 
               {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
 
-              <button type="submit"
-                className="w-full py-3 rounded-full bg-primary text-primary-foreground flex items-center justify-center gap-2 hover:opacity-90 transition">
-                Continue <ArrowRight className="w-4 h-4" />
+              <button type="submit" disabled={loading}
+                className="w-full py-3 rounded-full bg-primary text-primary-foreground flex items-center justify-center gap-2 hover:opacity-90 transition disabled:opacity-60">
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                {loading ? 'Sending…' : 'Continue'}
               </button>
 
               <p className="text-xs text-faint text-center mt-4">
@@ -209,14 +223,44 @@ export default function Checkout() {
             </form>
           )}
 
-          {/* ── Step 2: Payment ──────────────────────────────── */}
-          {step === 'payment' && (
-            <form onSubmit={handlePaymentSubmit}>
-              <button type="button" onClick={() => setStep('identity')}
+          {/* ── Step 2: OTP (verify identity before any charge) ──── */}
+          {step === 'otp' && (
+            <form onSubmit={handleOtpSubmit}>
+              <button type="button" onClick={() => { setStep('identity'); setOtp(''); setError(''); }}
                 className="flex items-center gap-1 text-sm text-warm-muted hover:text-foreground mb-6 -ml-1">
                 <ChevronLeft className="w-4 h-4" /> Back
               </button>
 
+              <div className="text-center mb-8">
+                <div className="w-12 h-12 rounded-full bg-blush flex items-center justify-center mx-auto mb-4">
+                  <Check className="w-6 h-6 text-primary" />
+                </div>
+                <h2 className="font-serif text-2xl text-foreground mb-1">Check your inbox.</h2>
+                <p className="text-sm text-warm-muted">
+                  We sent a code to <span className="text-foreground">{identifier}</span> — nothing's been charged yet.
+                </p>
+              </div>
+
+              <OTPInput value={otp} onChange={setOtp} disabled={loading} />
+
+              {error && <p className="text-sm text-red-600 text-center mt-4">{error}</p>}
+
+              <button type="submit" disabled={loading || otp.length < 6}
+                className="w-full mt-6 py-3 rounded-full bg-primary text-primary-foreground flex items-center justify-center gap-2 hover:opacity-90 transition disabled:opacity-60">
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                {loading ? 'Verifying…' : 'Verify'}
+              </button>
+
+              <p className="text-xs text-faint text-center mt-4">
+                Didn't get it?{' '}
+                <button type="button" onClick={handleResendOtp} className="text-primary hover:underline">Resend code</button>
+              </p>
+            </form>
+          )}
+
+          {/* ── Step 3: Payment ──────────────────────────────── */}
+          {step === 'payment' && (
+            <form onSubmit={handlePaymentSubmit}>
               <div className="text-xs uppercase tracking-[0.15em] text-primary mb-1">Payment</div>
               <h2 className="font-serif text-3xl text-foreground mb-2">How would you like to pay?</h2>
               <p className="text-sm text-warm-muted mb-7">{PRICE} · one payment · no renewal</p>
@@ -265,7 +309,7 @@ export default function Checkout() {
             </form>
           )}
 
-          {/* ── Step 3: Processing ───────────────────────────── */}
+          {/* ── Step 4: Processing ───────────────────────────── */}
           {step === 'processing' && (
             <div className="text-center py-4">
               <div className="w-12 h-12 rounded-full bg-blush flex items-center justify-center mx-auto mb-5">
@@ -285,36 +329,6 @@ export default function Checkout() {
                 </div>
               )}
             </div>
-          )}
-
-          {/* ── Step 4: OTP ──────────────────────────────────── */}
-          {step === 'otp' && (
-            <form onSubmit={handleOtpSubmit}>
-              <div className="text-center mb-8">
-                <div className="w-12 h-12 rounded-full bg-blush flex items-center justify-center mx-auto mb-4">
-                  <Check className="w-6 h-6 text-primary" />
-                </div>
-                <h2 className="font-serif text-2xl text-foreground mb-1">Payment confirmed!</h2>
-                <p className="text-sm text-warm-muted">
-                  We've sent a verification code to <span className="text-foreground">{identifier}</span>
-                </p>
-              </div>
-
-              <OTPInput value={otp} onChange={setOtp} disabled={loading} />
-
-              {error && <p className="text-sm text-red-600 text-center mt-4">{error}</p>}
-
-              <button type="submit" disabled={loading || otp.length < 6}
-                className="w-full mt-6 py-3 rounded-full bg-primary text-primary-foreground flex items-center justify-center gap-2 hover:opacity-90 transition disabled:opacity-60">
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                {loading ? 'Verifying…' : 'Verify'}
-              </button>
-
-              <p className="text-xs text-faint text-center mt-4">
-                Didn't get it?{' '}
-                <button type="button" onClick={handleResendOtp} className="text-primary hover:underline">Resend code</button>
-              </p>
-            </form>
           )}
 
           {/* ── Step 5: Done ─────────────────────────────────── */}
@@ -342,9 +356,9 @@ export default function Checkout() {
                 className="block w-full py-3 rounded-full bg-primary text-primary-foreground text-center hover:opacity-90 transition mb-3">
                 Download Orchestra-Core
               </Link>
-              {sessionToken && (
+              {getToken() && (
                 <a
-                  href={`orchestracore://auth?token=${encodeURIComponent(sessionToken)}`}
+                  href={`orchestracore://auth?token=${encodeURIComponent(getToken() || '')}`}
                   className="block w-full py-3 rounded-full border border-primary text-primary text-center hover:bg-blush transition mb-3 text-sm"
                 >
                   Open in Orchestra-Core app (if installed)
