@@ -5,7 +5,7 @@ export default function Privacy() {
         <div className="container-narrow py-20 text-center">
           <div className="text-xs uppercase tracking-[0.18em] text-primary mb-4">Legal</div>
           <h1 className="font-serif text-5xl md:text-6xl text-foreground">Privacy Policy</h1>
-          <p className="text-sm text-warm-muted mt-4">Effective date: 16 June 2026 · Last updated: 16 June 2026</p>
+          <p className="text-sm text-warm-muted mt-4">Effective date: 16 June 2026 · Last updated: 21 June 2026</p>
         </div>
       </section>
 
@@ -26,8 +26,8 @@ export default function Privacy() {
             <h2 className="font-serif text-2xl text-foreground mb-3">2. What data we collect and why</h2>
             <p className="text-warm-muted mb-3">We collect the minimum data necessary to process your purchase and deliver your license:</p>
             <ul className="list-disc list-inside text-warm-muted space-y-2 ml-2">
-              <li><strong className="text-foreground">Email address or Kenyan phone number</strong> — provided by you at checkout. Used to send your OTP verification code, deliver your license key, and allow you to re-access your account if you switch devices. Lawful basis: performance of a contract (you purchasing Orchestra-Core).</li>
-              <li><strong className="text-foreground">Payment information</strong> — M-Pesa payments are processed directly by IntaSend Limited. Card payments are similarly handled by IntaSend. We do not receive or store your card number, M-Pesa PIN, or any payment credentials. We receive only a transaction reference and payment status from IntaSend.</li>
+              <li><strong className="text-foreground">Email address and password</strong> — provided by you when you create an account. Your password is used only to verify it's you signing in; we never see or store it in plain text (see Section 4). Your email is used to deliver your license key and let you re-access your account if you switch devices. Lawful basis: performance of a contract (you purchasing Orchestra-Core).</li>
+              <li><strong className="text-foreground">Payment information</strong> — M-Pesa, card, and other payments are processed directly by IntaSend Limited. We do not receive or store your card number, M-Pesa PIN, or any payment credentials. We receive only a transaction reference and payment status from IntaSend.</li>
               <li><strong className="text-foreground">License key and payment status</strong> — stored in our database (hosted on Supabase, a US-based cloud provider) so we can verify your purchase if you need to re-download.</li>
             </ul>
             <p className="text-warm-muted mt-3">
@@ -48,7 +48,7 @@ export default function Privacy() {
           <div>
             <h2 className="font-serif text-2xl text-foreground mb-3">4. How we store and protect your data</h2>
             <p className="text-warm-muted">
-              Your email or phone number and license key are stored in a Supabase-hosted PostgreSQL database. OTP codes are stored as bcrypt hashes (never in plain text) and expire after 10 minutes. Access is restricted to the server-side API only. We use HTTPS for all data in transit.
+              Your email, license key, and password are stored in a Supabase-hosted PostgreSQL database. Your password is stored as a bcrypt hash, never in plain text — we cannot see or recover your actual password, only verify a sign-in attempt against the hash. Access is restricted to the server-side API only. We use HTTPS for all data in transit.
             </p>
             <p className="text-warm-muted mt-3">
               Supabase infrastructure is hosted in data centers outside Kenya. By purchasing Orchestra-Core you consent to this cross-border transfer, which is necessary to fulfill your order. Supabase maintains industry-standard security certifications.
@@ -81,10 +81,9 @@ export default function Privacy() {
           <div>
             <h2 className="font-serif text-2xl text-foreground mb-3">7. Third-party services</h2>
             <ul className="list-disc list-inside text-warm-muted space-y-2 ml-2">
-              <li><strong className="text-foreground">IntaSend</strong> — payment processing (M-Pesa and card). IntaSend is a licensed payment service provider regulated by the Central Bank of Kenya. See <span className="text-foreground">intasend.com/privacy</span> for their policy.</li>
+              <li><strong className="text-foreground">IntaSend</strong> — payment processing (M-Pesa, card, and other supported methods). IntaSend is a licensed payment service provider regulated by the Central Bank of Kenya. See <span className="text-foreground">intasend.com/privacy</span> for their policy.</li>
               <li><strong className="text-foreground">Supabase</strong> — database hosting. See <span className="text-foreground">supabase.com/privacy</span>.</li>
-              <li><strong className="text-foreground">Africa's Talking</strong> — SMS delivery for OTP codes. See <span className="text-foreground">africastalking.com/privacy</span>.</li>
-              <li><strong className="text-foreground">Resend</strong> — email delivery for OTP codes. See <span className="text-foreground">resend.com/privacy</span>.</li>
+              <li><strong className="text-foreground">Resend</strong> — delivers your license key confirmation email after purchase. See <span className="text-foreground">resend.com/privacy</span>.</li>
               <li><strong className="text-foreground">Render</strong> — backend API hosting. See <span className="text-foreground">render.com/privacy</span>.</li>
             </ul>
             <p className="text-warm-muted mt-3">
@@ -102,7 +101,7 @@ export default function Privacy() {
           <div>
             <h2 className="font-serif text-2xl text-foreground mb-3">9. Changes to this policy</h2>
             <p className="text-warm-muted">
-              If we make material changes, we will update the effective date at the top and, where we have your contact details, notify you by email or SMS. Continued use after notification constitutes acceptance.
+              If we make material changes, we will update the effective date at the top and, where we have your contact details, notify you by email. Continued use after notification constitutes acceptance.
             </p>
           </div>
 

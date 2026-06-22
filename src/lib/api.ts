@@ -28,17 +28,21 @@ export class ApiError extends Error {
 
 // ── auth ───────────────────────────────────────────────────────────────────
 
-export function sendOtp(identifier: string) {
-  return request<{ ok: boolean; identifier: string }>('/api/auth/send-otp', {
-    method: 'POST', body: JSON.stringify({ identifier }),
+export interface AuthResult {
+  token: string;
+  user: { id: string; identifier: string; paid: boolean; licenseKey?: string };
+}
+
+export function signup(identifier: string, password: string) {
+  return request<AuthResult>('/api/auth/signup', {
+    method: 'POST', body: JSON.stringify({ identifier, password }),
   });
 }
 
-export function verifyOtp(identifier: string, code: string) {
-  return request<{ token: string; user: { id: string; identifier: string; paid: boolean; licenseKey?: string } }>(
-    '/api/auth/verify-otp',
-    { method: 'POST', body: JSON.stringify({ identifier, code }) },
-  );
+export function login(identifier: string, password: string) {
+  return request<AuthResult>('/api/auth/login', {
+    method: 'POST', body: JSON.stringify({ identifier, password }),
+  });
 }
 
 export function getMe() {

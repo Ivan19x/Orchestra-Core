@@ -41,7 +41,8 @@
       "Bash(find .github/modernize -maxdepth 4 -type d)",
       "Bash(unzip -l Curriculum/files.zip)",
       "Read(//c/Users/Chwey/AppData/Local/Programs/Ollama/**)",
-      "Read(//c/Program Files/Ollama/**)"
+      "Read(//c/Program Files/Ollama/**)",
+      "Bash(curl -s -X POST http://localhost:3001/api/auth/signup -H \"Content-Type: application/json\" -d '{\"identifier\":\"claude-test-verify@example.com\",\"password\":\"testpass123\"}')"
     ]
   }
 }

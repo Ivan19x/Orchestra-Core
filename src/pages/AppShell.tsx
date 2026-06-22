@@ -6,10 +6,9 @@ import {
 } from 'lucide-react';
 import { AskPanel } from '@/components/orchestra-core/AskPanel';
 import { SetupStatus } from '@/components/orchestra-core/SetupStatus';
-import { OTPInput } from '@/components/orchestra-core/OTPInput';
 import { useSession, saveSession, clearSession, dispatchSessionChange } from '@/lib/session';
 import { isElectron } from '@/lib/platform';
-import { sendOtp, verifyOtp } from '@/lib/api';
+import { login } from '@/lib/api';
 import { series, type FlatLesson } from '@/lib/lessons';
 import { getLessonContent } from '@/lib/lessonContent';
 
@@ -401,38 +400,26 @@ function AppSupport() {
 
 // ── Account tab ───────────────────────────────────────────────────────────────
 function AppAccount({ user }: { user: ReturnType<typeof useSession> }) {
-  const [signinStep, setSigninStep] = useState<'email' | 'otp' | 'loading'>('email');
   const [email, setEmail] = useState('');
-  const [otpValue, setOtpValue] = useState('');
-  const [otpError, setOtpError] = useState('');
-  const [emailError, setEmailError] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [signinError, setSigninError] = useState('');
 
-  async function handleEmailSubmit(e: React.FormEvent) {
+  async function handleSigninSubmit(e: React.FormEvent) {
     e.preventDefault();
     const val = email.trim().toLowerCase();
-    if (!val || !val.includes('@')) { setEmailError('Enter a valid email address.'); return; }
-    setEmailError('');
-    setSigninStep('loading');
+    if (!val || !val.includes('@')) { setSigninError('Enter a valid email address.'); return; }
+    if (!password) { setSigninError('Enter your password.'); return; }
+    setSigninError('');
+    setLoading(true);
     try {
-      await sendOtp(val);
-      setSigninStep('otp');
-    } catch (err) {
-      setEmailError(err instanceof Error ? err.message : 'Could not send code. Try again.');
-      setSigninStep('email');
-    }
-  }
-
-  async function handleOtpChange(code: string) {
-    setOtpValue(code);
-    if (code.replace(/\D/g, '').length !== 6) return;
-    setOtpError('');
-    try {
-      const result = await verifyOtp(email.trim().toLowerCase(), code);
+      const result = await login(val, password);
       saveSession(result.token, result.user);
       dispatchSessionChange();
     } catch (err) {
-      setOtpError(err instanceof Error ? err.message : 'Incorrect code. Try again.');
-      setOtpValue('');
+      setSigninError(err instanceof Error ? err.message : 'Incorrect email or password.');
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -499,45 +486,33 @@ function AppAccount({ user }: { user: ReturnType<typeof useSession> }) {
         <p className="text-xs text-warm-muted mt-2">On your Account page there, click "Connect to desktop app."</p>
       </div>
 
-      <p className="text-xs text-faint uppercase tracking-[0.12em] mb-3">Or sign in with a code</p>
+      <p className="text-xs text-faint uppercase tracking-[0.12em] mb-3">Or sign in with your password</p>
 
-      {signinStep === 'email' && (
-        <form onSubmit={handleEmailSubmit} className="space-y-3">
-          <input
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            autoFocus
-            className="w-full px-4 py-3 rounded-xl border border-border bg-blush text-sm focus:outline-none focus:border-primary"
-          />
-          {emailError && <p className="text-xs text-red-600">{emailError}</p>}
-          <button
-            type="submit"
-            className="w-full py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition"
-          >
-            Send verification code
-          </button>
-        </form>
-      )}
-
-      {signinStep === 'loading' && (
-        <p className="text-sm text-warm-muted">Sending code to {email}…</p>
-      )}
-
-      {signinStep === 'otp' && (
-        <div className="space-y-4">
-          <p className="text-sm text-warm-muted">Check your inbox at <strong className="text-foreground">{email}</strong>. Enter the 6-digit code below.</p>
-          <OTPInput value={otpValue} onChange={handleOtpChange} />
-          {otpError && <p className="text-xs text-red-600">{otpError}</p>}
-          <button
-            onClick={() => setSigninStep('email')}
-            className="text-xs text-warm-muted hover:text-foreground transition"
-          >
-            Use a different email
-          </button>
-        </div>
-      )}
+      <form onSubmit={handleSigninSubmit} className="space-y-3">
+        <input
+          type="email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          autoFocus
+          className="w-full px-4 py-3 rounded-xl border border-border bg-blush text-sm focus:outline-none focus:border-primary"
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          placeholder="Password"
+          className="w-full px-4 py-3 rounded-xl border border-border bg-blush text-sm focus:outline-none focus:border-primary"
+        />
+        {signinError && <p className="text-xs text-red-600">{signinError}</p>}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition disabled:opacity-60"
+        >
+          {loading ? 'Signing in…' : 'Sign in'}
+        </button>
+      </form>
     </div>
   );
 }

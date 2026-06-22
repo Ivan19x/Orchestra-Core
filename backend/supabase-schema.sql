@@ -2,13 +2,17 @@
 -- Run this in your Supabase project: SQL Editor → New query → paste → Run
 
 create table if not exists users (
-  id           uuid primary key default gen_random_uuid(),
-  email        text unique,
-  phone        text unique,
-  license_key  text unique,
-  has_paid     boolean not null default false,
-  created_at   timestamptz not null default now()
+  id            uuid primary key default gen_random_uuid(),
+  email         text unique,
+  phone         text unique,
+  password_hash text,
+  license_key   text unique,
+  has_paid      boolean not null default false,
+  created_at    timestamptz not null default now()
 );
+
+-- Run this if the table already existed before password auth was added:
+-- alter table users add column if not exists password_hash text;
 
 create table if not exists otp_codes (
   id           uuid primary key default gen_random_uuid(),

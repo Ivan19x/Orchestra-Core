@@ -1,17 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { Check, Loader2, Smartphone, CreditCard, ArrowRight, ChevronLeft, Copy } from 'lucide-react';
-import { OTPInput } from '@/components/orchestra-core/OTPInput';
-import { sendOtp, verifyOtp, getMe, initiatePayment, getPaymentStatus, verifyCardPayment, ApiError } from '@/lib/api';
+import { Check, Loader2, Smartphone, CreditCard, ArrowRight, Copy } from 'lucide-react';
+import { signup, getMe, initiatePayment, getPaymentStatus, verifyCardPayment, ApiError } from '@/lib/api';
 import { saveSession, getStoredUser, getToken, dispatchSessionChange } from '@/lib/session';
 import { TESTING_PHASE } from '@/lib/testingPhase';
 
-// Identity is verified by OTP BEFORE any payment is collected — not after.
-// Taking payment first and verifying second meant a real customer whose OTP
-// failed to arrive (e.g. email restrictions) would pay and then have no way
-// to ever reach their license key, with no recourse. Verifying first means a
-// failed OTP costs nothing — the customer is blocked before paying, not after.
-type Step = 'identity' | 'otp' | 'payment' | 'processing' | 'done';
+// Identity is verified by creating a real password account up front, not by
+// a one-time code. This sidesteps email deliverability entirely (no code to
+// fail to deliver) and means the account is fully created and ready before
+// any payment is collected — a customer never pays without already having a
+// working way back into their account.
+type Step = 'identity' | 'payment' | 'processing' | 'done';
 type Method = 'mpesa' | 'card';
 
 const PRICE = 'KES 1,500';
@@ -22,20 +21,20 @@ export default function Checkout() {
 
   const [step, setStep] = useState<Step>('identity');
   const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [method, setMethod] = useState<Method>('mpesa');
   const [mpesaPhone, setMpesaPhone] = useState('');
   const [txRef, setTxRef] = useState('');
-  const [otp, setOtp] = useState('');
   const [licenseKey, setLicenseKey] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Handle the browser returning from IntaSend's hosted card checkout page.
+  // Handle the browser returning from IntaSend's hosted checkout page.
   // The component remounts fresh here — `identifier` (component state) is
-  // gone, so recover it from the session saved during OTP verification,
-  // which happened before the redirect and survives in localStorage.
+  // gone, so recover it from the session saved during signup, which
+  // happened before the redirect and survives in localStorage.
   useEffect(() => {
     const cardStep = searchParams.get('step');
     const txRefParam = searchParams.get('tx_ref');
@@ -70,25 +69,11 @@ export default function Checkout() {
     const val = identifier.trim();
     if (!val) return setError('Enter your email address.');
     if (!val.includes('@')) return setError('Enter a valid email address.');
+    if (password.length < 8) return setError('Password must be at least 8 characters.');
 
     setLoading(true);
     try {
-      await sendOtp(val);
-      setStep('otp');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not send code. Try again.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleOtpSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (otp.length < 6) return setError('Enter the full 6-digit code.');
-    setError('');
-    setLoading(true);
-    try {
-      const { token, user } = await verifyOtp(identifier, otp);
+      const { token, user } = await signup(val, password);
       saveSession(token, user);
       dispatchSessionChange();
 
@@ -100,7 +85,7 @@ export default function Checkout() {
 
       if (TESTING_PHASE) {
         // Free testing window — skip straight to granting access, no charge.
-        const result = await initiatePayment(identifier, 'free');
+        const result = await initiatePayment(val, 'free');
         setTxRef(result.txRef);
         await finishUpAfterPayment();
         return;
@@ -108,19 +93,13 @@ export default function Checkout() {
 
       setStep('payment');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid code.');
+      if (err instanceof ApiError && err.status === 409) {
+        setError('An account with this email already exists.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Could not create account. Try again.');
+      }
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function handleResendOtp() {
-    setError('');
-    try {
-      await sendOtp(identifier);
-      setError(''); // clear any prior error
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not resend code.');
     }
   }
 
@@ -177,8 +156,8 @@ export default function Checkout() {
         {/* Progress bar */}
         {step !== 'done' && (
           <div className="flex gap-1.5 mb-8">
-            {(['identity', 'otp', 'payment', 'processing'] as Step[]).map((s, i) => {
-              const steps: Step[] = ['identity', 'otp', 'payment', 'processing'];
+            {(['identity', 'payment', 'processing'] as Step[]).map((s, i) => {
+              const steps: Step[] = ['identity', 'payment', 'processing'];
               const current = steps.indexOf(step);
               const isDone = i < current;
               const isActive = i === current;
@@ -192,29 +171,36 @@ export default function Checkout() {
         {/* Card */}
         <div className="bg-background rounded-2xl border border-border shadow-sm p-8">
 
-          {/* ── Step 1: Identity ─────────────────────────────── */}
+          {/* ── Step 1: Identity (create account) ─────────────── */}
           {step === 'identity' && (
             <form onSubmit={handleIdentitySubmit}>
               <div className="text-xs uppercase tracking-[0.15em] text-primary mb-1">Get Orchestra-Core</div>
               <h1 className="font-serif text-3xl text-foreground mb-2">One payment. Lifetime access.</h1>
-              <p className="text-sm text-warm-muted mb-8">{PRICE} — enter your email address to continue.</p>
+              <p className="text-sm text-warm-muted mb-8">{PRICE} — create your account to continue.</p>
 
               <input
                 type="email"
                 value={identifier}
                 onChange={e => setIdentifier(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-primary transition mb-2"
+                className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-primary transition mb-3"
                 autoFocus
               />
-              <p className="text-xs text-faint mb-5">We'll send your verification code here — before any payment, so you know it works. No marketing, ever.</p>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Choose a password (min. 8 characters)"
+                className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-primary transition mb-2"
+              />
+              <p className="text-xs text-faint mb-5">Your account is created now — nothing's charged until you choose how to pay.</p>
 
               {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
 
               <button type="submit" disabled={loading}
                 className="w-full py-3 rounded-full bg-primary text-primary-foreground flex items-center justify-center gap-2 hover:opacity-90 transition disabled:opacity-60">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-                {loading ? 'Sending…' : 'Continue'}
+                {loading ? 'Creating account…' : 'Continue'}
               </button>
 
               <p className="text-xs text-faint text-center mt-4">
@@ -223,42 +209,7 @@ export default function Checkout() {
             </form>
           )}
 
-          {/* ── Step 2: OTP (verify identity before any charge) ──── */}
-          {step === 'otp' && (
-            <form onSubmit={handleOtpSubmit}>
-              <button type="button" onClick={() => { setStep('identity'); setOtp(''); setError(''); }}
-                className="flex items-center gap-1 text-sm text-warm-muted hover:text-foreground mb-6 -ml-1">
-                <ChevronLeft className="w-4 h-4" /> Back
-              </button>
-
-              <div className="text-center mb-8">
-                <div className="w-12 h-12 rounded-full bg-blush flex items-center justify-center mx-auto mb-4">
-                  <Check className="w-6 h-6 text-primary" />
-                </div>
-                <h2 className="font-serif text-2xl text-foreground mb-1">Check your inbox.</h2>
-                <p className="text-sm text-warm-muted">
-                  We sent a code to <span className="text-foreground">{identifier}</span> — nothing's been charged yet.
-                </p>
-              </div>
-
-              <OTPInput value={otp} onChange={setOtp} disabled={loading} />
-
-              {error && <p className="text-sm text-red-600 text-center mt-4">{error}</p>}
-
-              <button type="submit" disabled={loading || otp.length < 6}
-                className="w-full mt-6 py-3 rounded-full bg-primary text-primary-foreground flex items-center justify-center gap-2 hover:opacity-90 transition disabled:opacity-60">
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                {loading ? 'Verifying…' : 'Verify'}
-              </button>
-
-              <p className="text-xs text-faint text-center mt-4">
-                Didn't get it?{' '}
-                <button type="button" onClick={handleResendOtp} className="text-primary hover:underline">Resend code</button>
-              </p>
-            </form>
-          )}
-
-          {/* ── Step 3: Payment ──────────────────────────────── */}
+          {/* ── Step 2: Payment ──────────────────────────────── */}
           {step === 'payment' && (
             <form onSubmit={handlePaymentSubmit}>
               <div className="text-xs uppercase tracking-[0.15em] text-primary mb-1">Payment</div>
@@ -268,13 +219,13 @@ export default function Checkout() {
               <div className="grid grid-cols-2 gap-3 mb-6">
                 {([
                   { id: 'mpesa', icon: Smartphone, label: 'M-Pesa', sub: 'Lipa na M-Pesa' },
-                  { id: 'card', icon: CreditCard, label: 'Card', sub: 'Visa · Mastercard' },
+                  { id: 'card', icon: CreditCard, label: 'Other', sub: 'Card · GPay · Apple Pay · more' },
                 ] as const).map(opt => (
                   <button key={opt.id} type="button" onClick={() => setMethod(opt.id)}
                     className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition ${method === opt.id ? 'border-primary bg-blush' : 'border-border hover:border-primary/30'}`}>
                     <opt.icon className={`w-6 h-6 ${method === opt.id ? 'text-primary' : 'text-warm-muted'}`} />
                     <span className={`text-sm font-medium ${method === opt.id ? 'text-foreground' : 'text-warm-muted'}`}>{opt.label}</span>
-                    <span className="text-xs text-faint">{opt.sub}</span>
+                    <span className="text-xs text-faint text-center">{opt.sub}</span>
                   </button>
                 ))}
               </div>
@@ -295,7 +246,7 @@ export default function Checkout() {
 
               {method === 'card' && (
                 <div className="mb-5 p-4 rounded-xl bg-blush border border-border text-sm text-warm-muted">
-                  You'll be taken to a secure IntaSend checkout page to pay {PRICE} by card.
+                  You'll be taken to a secure IntaSend checkout page — pay {PRICE} by card, Google Pay, Apple Pay, Pesalink, bank transfer, Cash App, or PYUSD, whichever you prefer.
                 </div>
               )}
 
@@ -309,7 +260,7 @@ export default function Checkout() {
             </form>
           )}
 
-          {/* ── Step 4: Processing ───────────────────────────── */}
+          {/* ── Step 3: Processing ───────────────────────────── */}
           {step === 'processing' && (
             <div className="text-center py-4">
               <div className="w-12 h-12 rounded-full bg-blush flex items-center justify-center mx-auto mb-5">
@@ -331,7 +282,7 @@ export default function Checkout() {
             </div>
           )}
 
-          {/* ── Step 5: Done ─────────────────────────────────── */}
+          {/* ── Step 4: Done ─────────────────────────────────── */}
           {step === 'done' && (
             <div className="text-center">
               <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center mx-auto mb-5">

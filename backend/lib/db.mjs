@@ -39,6 +39,29 @@ export async function markUserPaid(userId, licenseKey) {
   if (error) throw error;
 }
 
+// Throws on a unique-constraint violation if the identifier already has an
+// account - that's the desired behavior (signup should fail, not silently
+// overwrite an existing account's password).
+export async function createUserWithPassword(identifier, passwordHash) {
+  const isEmail = identifier.includes('@');
+  const col = isEmail ? 'email' : 'phone';
+  const { data, error } = await supabase
+    .from('users')
+    .insert({ [col]: identifier, password_hash: passwordHash })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function setUserPassword(userId, passwordHash) {
+  const { error } = await supabase
+    .from('users')
+    .update({ password_hash: passwordHash })
+    .eq('id', userId);
+  if (error) throw error;
+}
+
 // ── otp_codes ──────────────────────────────────────────────────────────────
 
 export async function saveOtp(identifier, codeHash, expiresAt) {

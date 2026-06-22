@@ -1,4 +1,3 @@
-
 # Project: Orchestra-Core — AI Financial Literacy Coach
 
 > This file is the single source of truth for this project. It covers every major decision, everything built so far, and exactly what remains before the first sale. Update it whenever something meaningful changes.
@@ -267,34 +266,35 @@ Protocol: `orchestracore://auth?token=JWT_TOKEN`
 
 **New buyer:**
 1. Visits `/pricing` → clicks "Get Orchestra-Core" → goes to `/checkout`
-2. **Step 1 — Identity:** enters email (the identity/OTP field is email-only — a separate phone number field appears in Step 3, but only for the M-Pesa STK push, never for OTP delivery)
-3. **Step 2 — OTP (verified *before* any charge):** OTP sent via email (Resend) immediately → user enters 6-digit code → JWT issued (30-day), saved to localStorage, `paid: false`. Identity is deliberately verified before payment, not after — a customer whose OTP can't be delivered is blocked here, before any money moves, not stuck after paying with no way to reach their license key. If `verifyOtp` returns `paid: true` (already bought before), skip straight to `/account` — nothing to charge.
-4. **Step 3 — Payment:** chooses M-Pesa or card
+2. **Step 1 — Identity (password account, created *before* any charge):** enters email + password (min. 8 chars) → `POST /api/auth/signup` creates the account immediately (bcrypt-hashed password) and returns a JWT (30-day), saved to localStorage, `paid: false`. No OTP/email-code step anywhere in this flow — the account is fully real and accessible the moment it's created, which also sidesteps Resend's email-deliverability restriction entirely (no code ever needs to reach the customer's inbox to sign up or sign in). If the email already has a password-protected account, signup is rejected (409) and the user is pointed to `/login`. If signup returns `paid: true` (re-buying after already owning a licence), skip straight to `/account` — nothing to charge.
+3. **Step 2 — Payment:** chooses M-Pesa or "Other" (card, Google Pay, Apple Pay, Pesalink, KE bank transfer, Cash App, PYUSD — whichever IntaSend rails are enabled in the IntaSend dashboard; all surfaced automatically by IntaSend's hosted checkout page, no separate integration needed per method)
    - M-Pesa: enters M-Pesa number → backend calls IntaSend → STK push sent to phone → frontend polls `/api/payment/status/:txRef` every 3 seconds until confirmed
-   - Card: backend generates IntaSend hosted checkout link → user redirected → pays → redirected back to `/checkout?step=card-return&tx_ref=...`. The component remounts fresh here (component state is gone) — identity is recovered from the session saved in Step 2 (`getStoredUser()`), not from component state, which was a latent bug before the reorder.
-5. **Step 4 — Done:** payment confirmed → `GET /api/auth/me` fetches the freshly-generated license key → displayed, download link shown, deep link button to open app
+   - Other: backend generates IntaSend hosted checkout link → user redirected → pays with whichever method they choose on IntaSend's page → redirected back to `/checkout?step=card-return&tx_ref=...`. The component remounts fresh here (component state is gone) — identity is recovered from the session saved in Step 1 (`getStoredUser()`), not from component state.
+4. **Step 3 — Done:** payment confirmed → `GET /api/auth/me` fetches the freshly-generated license key → displayed, download link shown, deep link button to open app
 
-`TESTING_PHASE` (`VITE_TESTING_PHASE` on Vercel) skips Step 3 entirely after OTP verification — calls `/api/payment/initiate` with `method: 'free'` and goes straight to Done. Separate flag from the backend's `TESTING_FREE`.
+`TESTING_PHASE` (`VITE_TESTING_PHASE` on Vercel) skips Step 2 entirely after signup — calls `/api/payment/initiate` with `method: 'free'` and goes straight to Done. Separate flag from the backend's `TESTING_FREE`.
 
 **Returning buyer:**
-1. Visits `/login` → enters email or phone → OTP sent → enters code → redirected to `/account`
+1. Visits `/login` → enters email + password → `POST /api/auth/login` verifies the bcrypt hash → redirected to `/account`
 2. `/account` shows license key + download link
 
-**Testing mode:** `TESTING_FREE=true` on Render allows checkout to complete without real payment. Set to `false` before accepting real money.
+**Testing mode:** `TESTING_FREE=true` on Render allows checkout to complete without real payment. Set to `false` before accepting real money — already flipped to `false` as of this session; `PRICE_KES` env var can temporarily override the charged amount (e.g. `10`) for a cheap real end-to-end test before reverting to the real price.
 
 **Session storage:** JWT in `localStorage` under key `oc_token`. `useSession()` hook reads it and updates any component that cares (Nav, Download, Account). Sessions last 30 days.
+
+**OTP infrastructure (otp.mjs, send-otp/verify-otp routes) is still in the codebase but unused by any active flow** — kept in case a future feature (2FA, password reset) wants it, not wired into signup/login anymore. `OTPInput.tsx` was removed (moved to `recycle/`) since nothing renders it now.
 
 ### Backend API routes
 
 | Method | Path | What it does |
 |---|---|---|
 | GET | `/api/health` | Liveness check |
-| POST | `/api/auth/send-otp` | Generate OTP, send via SMS or email (rate-limited: 3/10min per IP) |
-| POST | `/api/auth/verify-otp` | Verify OTP → return JWT + user data (rate-limited: 8/10min) |
+| POST | `/api/auth/signup` | Create account with email + password (rate-limited: 10/10min) |
+| POST | `/api/auth/login` | Verify email + password → JWT + user data (rate-limited: 10/10min) |
 | GET | `/api/auth/me` | Validate JWT → return current user |
-| POST | `/api/payment/initiate` | Start IntaSend M-Pesa STK push OR generate card checkout link |
+| POST | `/api/payment/initiate` | Start IntaSend M-Pesa STK push OR generate hosted checkout link |
 | GET | `/api/payment/status/:txRef` | Poll payment status (pending/completed/failed) |
-| POST | `/api/payment/verify` | Verify card payment after redirect |
+| POST | `/api/payment/verify` | Verify card/other payment after redirect |
 | POST | `/api/payment/webhook` | IntaSend fires this on payment completion |
 
 ### Backend environment variables (on Render)
