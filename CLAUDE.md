@@ -224,7 +224,7 @@ Orchestra-Core/
 ├── .github/workflows/
 │   └── release.yml          — builds Windows + Mac + Linux + Android on git tag push
 ├── .env.local.example       — frontend env vars template
-└── package.json             — version: 1.2.4
+└── package.json             — version: 1.3.0
 ```
 
 ### IPC bridge (Electron preload → renderer)
@@ -499,7 +499,7 @@ Vercel URL.
 
 - Confirm `VITE_API_URL=https://orchestra-core.onrender.com`
 - Set `VITE_DOWNLOAD_URL_WIN` to the latest GitHub Release's `.exe` URL
-  (currently `https://github.com/Ivan19x/Orchestra-Core/releases/download/v1.2.4/Orchestra-Core.Setup.1.2.4.exe`
+  (currently `https://github.com/Ivan19x/Orchestra-Core/releases/download/v1.3.0/Orchestra-Core.Setup.1.3.0.exe`
   — grab whatever's actually latest when you do this) → redeploy. This makes
   the Download page show a real link for paid users — outstanding since
   early in the project.
