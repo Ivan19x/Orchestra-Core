@@ -278,7 +278,7 @@ Protocol: `orchestracore://auth?token=JWT_TOKEN`
 1. Visits `/login` → enters email + password → `POST /api/auth/login` verifies the bcrypt hash → redirected to `/account`
 2. `/account` shows license key + download link
 
-**Testing mode:** `TESTING_FREE=true` on Render allows checkout to complete without real payment. Set to `false` before accepting real money — already flipped to `false` as of this session; `PRICE_KES` env var can temporarily override the charged amount (e.g. `10`) for a cheap real end-to-end test before reverting to the real price.
+**Testing mode:** `TESTING_FREE=true` on Render allows checkout to complete without real payment. Set to `false` before accepting real money — still `true` as of this session (see go-live checklist step 6 below); `PRICE_KES` env var can temporarily override the charged amount (e.g. `10`) for a cheap real end-to-end test before reverting to the real price.
 
 **Session storage:** JWT in `localStorage` under key `oc_token`. `useSession()` hook reads it and updates any component that cares (Nav, Download, Account). Sessions last 30 days.
 
