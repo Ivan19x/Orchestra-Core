@@ -278,7 +278,7 @@ Protocol: `orchestracore://auth?token=JWT_TOKEN`
 1. Visits `/login` → enters email + password → `POST /api/auth/login` verifies the bcrypt hash → redirected to `/account`
 2. `/account` shows license key + download link
 
-**Testing mode:** `TESTING_FREE=true` on Render allows checkout to complete without real payment. Set to `false` before accepting real money — still `true` as of this session (see go-live checklist step 6 below); `PRICE_KES` env var can temporarily override the charged amount (e.g. `10`) for a cheap real end-to-end test before reverting to the real price.
+**Testing mode:** `TESTING_FREE=true` on Render allows checkout to complete without real payment. Set to `false` before accepting real money — still `true` as of this session (see go-live checklist step 4 below); `PRICE_KES` env var can temporarily override the charged amount (e.g. `10`) for a cheap real end-to-end test before reverting to the real price.
 
 **Session storage:** JWT in `localStorage` under key `oc_token`. `useSession()` hook reads it and updates any component that cares (Nav, Download, Account). Sessions last 30 days.
 
@@ -424,47 +424,14 @@ $utf8NoBOM = New-Object System.Text.UTF8Encoding $false
 ### ⏳ Go-live checklist (code is fully ready — only dashboard steps remain)
 
 BRS business name is registered. IntaSend application is approved for live
-payments. Every remaining step below is a dashboard action only the account
-owner can take (no API/CLI access available for any of these) — the code
-side is already done and waiting. Do them in this order:
+payments. Switching to password-based accounts (see "Payment & auth system"
+above) means a domain and Resend email-deliverability fix are no longer
+required to go live — see "Deferred, not blocking" below for why. Every
+remaining step below is a dashboard action only the account owner can take
+(no API/CLI access available for any of these) — the code side is already
+done and waiting. Do them in this order:
 
-#### 1. Buy a domain
-
-Any registrar, any TLD (e.g. Namecheap + `.com`, or KENIC + `.co.ke`). This
-unblocks everything else below — Resend can't verify a sender domain you
-don't own.
-
-#### 2. Verify the domain on Resend, fix email delivery
-
-**Why this matters:** confirmed by testing the Resend API directly — the
-current `EMAIL_FROM` uses Resend's shared `onboarding@resend.dev` sender,
-which Resend restricts to only deliver to the account owner's own verified
-email until a custom domain is verified. Every OTP sent to anyone else has
-silently failed since day one (the exact error: *"You can only send testing
-emails to your own email address... please verify a domain"*). Since every
-sign-in/checkout flow uses email-only OTP (the phone field in Checkout is
-only ever used for the M-Pesa STK push, never OTP), **this alone has blocked
-100% of real signups.**
-
-Steps:
-1. resend.com/domains → add your new domain → add the DNS records Resend
-   gives you at your registrar → wait for it to verify.
-2. Render → Orchestra-Core service → Environment → set `EMAIL_FROM` to
-   `Orchestra-Core <noreply@yourdomain.com>` → redeploy.
-3. That's the *only* code-adjacent value to change — `backend/routes/payment.mjs`'s
-   fallback customer email for M-Pesa-only signups now derives its domain
-   from `EMAIL_FROM` automatically (`FALLBACK_EMAIL_DOMAIN`), so there's
-   nothing else to update in code.
-4. Verify: send a real OTP to a non-owner email address and confirm it
-   actually arrives (not just that no error is thrown).
-
-Also already fixed in code regardless of domain status:
-`backend/lib/notify.mjs`'s `sendEmail()` now checks the Resend SDK's
-`{ data, error }` response and throws on failure — previously the error was
-silently ignored, so `/api/auth/send-otp` always returned `{ ok: true }` even
-when nothing was delivered.
-
-#### 3. Rotate IntaSend keys and configure the webhook
+#### 1. Rotate IntaSend keys and configure the webhook
 
 The live keys currently in use sat exposed in git history earlier (since
 purged, repo is now public) — rotate them before real money flows through:
@@ -478,16 +445,16 @@ purged, repo is now public) — rotate them before real money flows through:
    sandbox from the key prefix and already authenticates webhooks against
    `INTASEND_WEBHOOK_SECRET`.
 
-#### 4. Production environment variables on Render
+#### 2. Production environment variables on Render
 
 | Variable | Required value |
 |---|---|
 | `FRONTEND_URL` | `https://orchestra-core.vercel.app` |
 | `CORS_ORIGINS` | `https://orchestra-core.vercel.app` |
 | `NODE_ENV` | `production` |
-| `EMAIL_FROM` | set in step 2 above |
-| `INTASEND_*` | set in step 3 above |
-| `TESTING_FREE` | leave `true` until step 6 |
+| `EMAIL_FROM` | current shared `onboarding@resend.dev` sender is fine to leave as-is — see "Deferred, not blocking" below |
+| `INTASEND_*` | set in step 1 above |
+| `TESTING_FREE` | leave `true` until step 4 |
 
 Note: the backend's CORS config (`backend/index.mjs`) always allows
 `http://localhost:5175` (the Electron app's fixed local origin) in code
@@ -495,7 +462,7 @@ regardless of `CORS_ORIGINS` — so the *app* won't break even if this is
 still wrong, but the *website* will if `CORS_ORIGINS` doesn't include the
 Vercel URL.
 
-#### 5. Vercel environment variables
+#### 3. Vercel environment variables
 
 - Confirm `VITE_API_URL=https://orchestra-core.onrender.com`
 - Set `VITE_DOWNLOAD_URL_WIN` to the latest GitHub Release's `.exe` URL
@@ -504,21 +471,35 @@ Vercel URL.
   the Download page show a real link for paid users — outstanding since
   early in the project.
 
-#### 6. End-to-end live test, then go live
+#### 4. End-to-end live test, then go live
 
-With `TESTING_FREE` still `true`, confirm steps 2-5 above are all working
-(test OTP delivery especially). When ready: flip `TESTING_FREE=false` on
-Render, then go through `/checkout` for real — pay the actual KES 1,500
-yourself via M-Pesa as the live-mode test (IntaSend live mode has no fake
-sandbox once keys are live, so this is the standard way to validate a live
-integration). Confirm: payment completes, OTP email arrives, license key
-generates, `/account` shows it, `/download` works. If all of that passes,
-`TESTING_FREE` stays `false` — you're live.
+With `TESTING_FREE` still `true`, confirm steps 1-3 above are all working —
+sign up with a real email + password, confirm the license key shows on the
+Done screen and on `/account`, confirm `/download` works. When ready: flip
+`TESTING_FREE=false` on Render, then go through `/checkout` for real — pay
+the actual KES 1,500 yourself via M-Pesa as the live-mode test (IntaSend
+live mode has no fake sandbox once keys are live, so this is the standard
+way to validate a live integration). Confirm: payment completes, license
+key generates, `/account` shows it, `/download` works. If all of that
+passes, `TESTING_FREE` stays `false` — you're live.
 
 #### Deferred, not blocking
 
-- **Africa's Talking production KYC** — SMS stays sandbox; not blocking
-  since OTP is email-only in the current UI.
+- **Custom domain + Resend domain verification** — originally needed to fix
+  OTP delivery (Resend's shared `onboarding@resend.dev` sender only
+  delivers to the account's own verified email until a custom domain is
+  verified). Moot now: sign-in uses real passwords, not emailed codes, so
+  nothing in the active flow depends on email deliverability. The
+  post-purchase "here's your license key" confirmation email still goes
+  through Resend and will silently fail to reach anyone but the account
+  owner until a domain is verified (wrapped in `.catch`, so it never blocks
+  checkout — the license key already shows directly in the app). Worth
+  fixing later for polish/branding, not a blocker. No domain has been
+  purchased — deliberately deferred while every other piece of
+  infrastructure stays on a free tier with zero recurring cost.
+- **Africa's Talking production KYC** — SMS stays sandbox; fully unused
+  now (OTP-via-SMS was the only caller, and OTP is no longer wired into
+  any active flow).
 - **ODPC formal registration** — still correctly deferred until KES 5M
   turnover or 10+ staff.
 - **Single Business Permit** — county-level, separate from the BRS name
