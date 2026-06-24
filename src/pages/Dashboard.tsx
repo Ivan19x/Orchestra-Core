@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+import { Lock, ChevronRight } from 'lucide-react';
 import { StreakBadge } from '@/components/orchestra-core/StreakBadge';
 import { TodaysInsightCard } from '@/components/orchestra-core/TodaysInsightCard';
 import { BudgetBuilderCard } from '@/components/orchestra-core/BudgetBuilderCard';
@@ -5,6 +7,8 @@ import { WhatWouldTheyDoCard } from '@/components/orchestra-core/WhatWouldTheyDo
 import { MarketMoodCard } from '@/components/orchestra-core/MarketMoodCard';
 import { AskPanel } from '@/components/orchestra-core/AskPanel';
 import { SupportPanel } from '@/components/orchestra-core/SupportPanel';
+import { getAllLessons, lessonUrlSlug } from '@/lib/lessons';
+import { useSession } from '@/lib/session';
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -14,6 +18,9 @@ function greeting(): string {
 }
 
 export default function Dashboard() {
+  const session = useSession();
+  const paid = !!session?.paid;
+  const lessons = getAllLessons().slice(0, 6);
   return (
     <>
       <section className="bg-blush border-b border-border">
@@ -28,6 +35,36 @@ export default function Dashboard() {
 
       <section className="container-prose py-16 space-y-12">
         <TodaysInsightCard />
+
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-xs uppercase tracking-[0.18em] text-faint">Your lessons</div>
+            <Link to="/lessons" className="text-xs text-primary hover:underline">Browse all →</Link>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {lessons.map(l => {
+              const locked = !!l.premium && !paid;
+              return (
+                <Link
+                  key={l.slug ?? l.title}
+                  to={`/lessons/${lessonUrlSlug(l)}`}
+                  className="flex items-center gap-3 p-3 rounded-xl border border-border bg-background hover:bg-blush transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-blush flex items-center justify-center text-primary shrink-0">
+                    <l.icon className="w-4 h-4" strokeWidth={1.75} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[10px] uppercase tracking-[0.12em] text-faint">{l.seriesName} · {l.module}</div>
+                    <p className="text-sm text-foreground truncate">{l.title}</p>
+                  </div>
+                  {locked
+                    ? <Lock className="w-3.5 h-3.5 text-faint shrink-0" />
+                    : <ChevronRight className="w-4 h-4 text-faint shrink-0" />}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
 
         <div>
           <div className="text-xs uppercase tracking-[0.18em] text-faint mb-4">Quick tools</div>

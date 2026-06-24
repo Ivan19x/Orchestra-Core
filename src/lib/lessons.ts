@@ -179,3 +179,17 @@ export function getAllLessons(): FlatLesson[] {
     s.lessons.map((l) => ({ ...l, seriesId: s.id, seriesName: s.name }))
   );
 }
+
+// A clean, slash-free identifier for lesson URLs (/lessons/:slug). Series-1
+// slugs are already bare ("1-1-what-money-actually-is"); other series are
+// folder-prefixed ("smart-money/01-...") so we take the last path segment.
+// The leading segments differ per series, so last segments stay unique across
+// the curated library.
+export function lessonUrlSlug(l: Lesson): string {
+  const s = l.slug ?? '';
+  return s.includes('/') ? s.split('/').pop()! : s;
+}
+
+export function getLessonByUrlSlug(urlSlug: string): FlatLesson | undefined {
+  return getAllLessons().find((l) => lessonUrlSlug(l) === urlSlug);
+}

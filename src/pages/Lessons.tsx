@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
-import { series } from '@/lib/lessons';
+import { series, lessonUrlSlug } from '@/lib/lessons';
 import { LessonCard } from '@/components/orchestra-core/LessonCard';
 import { CTABand } from '@/components/orchestra-core/CTABand';
+import { useSession } from '@/lib/session';
 
 export default function Lessons() {
   const [q, setQ] = useState('');
+  const session = useSession();
+  const paid = !!session?.paid;
   return (
     <>
       <section className="bg-blush border-b border-border">
@@ -13,7 +16,7 @@ export default function Lessons() {
           <div className="text-xs uppercase tracking-[0.18em] text-primary mb-4">Lesson library</div>
           <h1 className="font-serif text-5xl md:text-6xl text-foreground mb-4">Every lesson, in one place.</h1>
           <p className="text-sm text-warm-muted max-w-md mx-auto mb-6">
-            You're browsing a preview of the library. Full lesson content, interactive learning, and your AI coach are all inside the Orchestra-Core app.
+            Read every lesson right here in your browser. Free lessons are open to everyone; the full library unlocks with Orchestra-Core.
           </p>
           <div className="relative max-w-md mx-auto">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-muted" />
@@ -62,7 +65,14 @@ export default function Lessons() {
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {filtered.map(l => <LessonCard key={l.title} {...l} />)}
+                {filtered.map(l => (
+                  <LessonCard
+                    key={l.title}
+                    {...l}
+                    to={`/lessons/${lessonUrlSlug(l)}`}
+                    locked={!!l.premium && !paid}
+                  />
+                ))}
               </div>
             </div>
           );

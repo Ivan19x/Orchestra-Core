@@ -8,6 +8,7 @@ import { SiteLayout } from "./components/orchestra-core/SiteLayout";
 import Home from "./pages/Home";
 import HowItWorks from "./pages/HowItWorks";
 import Lessons from "./pages/Lessons";
+import Lesson from "./pages/Lesson";
 import Try from "./pages/Try";
 import Ask from "./pages/Ask";
 import Dashboard from "./pages/Dashboard";
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/" element={isMobileApp ? <Navigate to="/app" replace /> : <Home />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/lessons" element={<Lessons />} />
+            <Route path="/lessons/:slug" element={<Lesson />} />
             <Route path="/try" element={<Try />} />
             <Route path="/ask" element={<Ask />} />
             <Route path="/dashboard" element={<Dashboard />} />

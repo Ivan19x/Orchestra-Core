@@ -59,7 +59,8 @@ Four-stage visitor journey: **Home → Explore → Try → Get Orchestra-Core**
 |---|---|
 | `/` | Hero, value props, sample lesson preview, pricing teaser, support teaser, closing CTA |
 | `/how-it-works` | Sample chat, local-first privacy, lesson structure |
-| `/lessons` | Searchable library across 3 series (Money basics / Smart money / Kenya money) |
+| `/lessons` | Searchable library across 3 series (Money basics / Smart money / Kenya money). Cards are now clickable and open a full in-browser reader. **Free lessons are readable by anyone; premium lessons are gated** behind `session.paid` (per-lesson `premium` flag in `lessons.ts`). Cards show a "Free"/"Premium" badge accordingly. |
+| `/lessons/:slug` | Single-lesson reader (`Lesson.tsx`) — renders the lesson's markdown in the browser via the shared `LessonArticle` component. A premium lesson shows a purchase gate (title + summary + "Get Orchestra-Core") instead of the body unless `session.paid`. `:slug` is the last path segment of the lesson's content key — see `lessonUrlSlug()`/`getLessonByUrlSlug()` in `lessons.ts`. |
 | `/try` | No-signup static chat demo, 4-5 pre-loaded example questions |
 | `/pricing` | Single card — KES 2,000 one-time, benefits, FAQ |
 | `/checkout` | Full payment flow (see Payment system below) |
@@ -71,7 +72,7 @@ Four-stage visitor journey: **Home → Explore → Try → Get Orchestra-Core**
 | `/privacy` | Privacy Policy (DPA compliance) |
 | `/terms` | Terms of Service |
 | `/ask` | Live AI chat panel (dev-only, not in nav) |
-| `/dashboard` | **The actual product now** — lessons, AI chat, and learning tools, all in-browser. Despite still being absent from the public nav `links` array, it's where every paid session is actually routed: `Nav.tsx`'s CTA button shows "Open dashboard" → `/dashboard` instead of "Get Orchestra-Core" whenever `session?.paid` is true, and it's the primary destination from Checkout's "done" screen and from `/download`'s paused message. |
+| `/dashboard` | **The actual product now** — lessons, AI chat, and learning tools, all in-browser. Includes a "Your lessons" section listing the first lessons, each linking into the `/lessons/:slug` reader. Despite still being absent from the public nav `links` array, it's where every paid session is actually routed: `Nav.tsx`'s CTA button shows "Open dashboard" → `/dashboard` instead of "Get Orchestra-Core" whenever `session?.paid` is true, and it's the primary destination from Checkout's "done" screen and from `/download`'s paused message. |
 | `/app` | Electron/Android app shell — not a website page, only loaded inside the apps |
 
 Global nav: sticky white header, Logo (Orbit icon + "Orchestra**-Core**" wordmark), nav links center. Right side swaps based on session: signed out → "Get Orchestra-Core" → `/checkout`; signed in but unpaid → same button, "Sign in"/"Account" link added; signed in and paid → "Open dashboard" → `/dashboard`. Collapses to hamburger on mobile, CTA always visible.
@@ -135,7 +136,7 @@ The downloadable Electron app (and Android APK) loads `/app` — a full shell se
 
 **AI chat (`AppAI`):** Shows `AskPanel` in Electron. Shows "AI runs on desktop" message with download link on Android. The AI's role is explicitly *not* to be the primary teaching content — the lessons are the course. The AI explains lesson topics further, does live research via `web_search`/`web_fetch` tools when a question needs current information, and helps with practical account setup (M-Pesa, SACCOs, bank/brokerage accounts, CDS registration) as guidance, not personalized advice. Responds in Kiswahili when addressed in Kiswahili.
 
-**Lesson browser (`AppLessons`):** Full series browser. Clicking a lesson card opens a full in-app reader (`LessonReader`) with the lesson's actual markdown content rendered — not just a summary. "Ask about this" remains as a secondary action to jump into AI Coach with the lesson pre-filled.
+**Lesson browser (`AppLessons`):** Full series browser. Clicking a lesson card opens a full in-app reader (`LessonReader`) with the lesson's actual markdown content rendered — not just a summary. `LessonReader` now renders the body via the shared `LessonArticle` component (same one the website's `/lessons/:slug` reader uses), so the two stay visually identical. "Ask about this" remains as a secondary action to jump into AI Coach with the lesson pre-filled.
 
 **Account (`AppAccount`):** Shows session info + password sign-in if not logged in.
 
@@ -188,6 +189,7 @@ Orchestra-Core/
 ├── src/
 │   ├── pages/
 │   │   ├── Home, HowItWorks, Lessons, Try, Pricing, Download, Support, About
+│   │   ├── Lesson.tsx       — single-lesson in-browser reader (/lessons/:slug), premium-gated
 │   │   ├── Privacy.tsx, Terms.tsx
 │   │   ├── Ask.tsx          — live AI chat (dev-only)
 │   │   ├── Dashboard.tsx    — product dashboard (dev-only)
@@ -200,6 +202,7 @@ Orchestra-Core/
 │   │   ├── Footer.tsx
 │   │   ├── Logo.tsx         — Orbit icon + wordmark, mobile monogram
 │   │   ├── AskPanel.tsx     — reusable chat UI (used in /ask, /dashboard, AppShell)
+│   │   ├── LessonArticle.tsx — shared lesson header + markdown body (web /lessons/:slug reader + AppShell's in-app reader), renders tables via remark-gfm
 │   │   ├── SetupStatus.tsx  — sidebar setup checklist (Electron-only), multi-model progress
 │   │   ├── DownloadPanel.tsx — single download button + what's-included info (no device scan)
 │   │   ├── ThinkingIndicator.tsx

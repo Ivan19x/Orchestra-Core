@@ -1,10 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
 import {
   Brain, BookOpen, Heart, User, LogOut, Orbit,
   Clock, ChevronRight, ChevronLeft, Download, ExternalLink,
 } from 'lucide-react';
 import { AskPanel } from '@/components/orchestra-core/AskPanel';
+import { LessonArticle } from '@/components/orchestra-core/LessonArticle';
 import { SetupStatus } from '@/components/orchestra-core/SetupStatus';
 import { useSession, saveSession, clearSession, dispatchSessionChange } from '@/lib/session';
 import { isElectron } from '@/lib/platform';
@@ -333,19 +333,13 @@ function LessonReader({ lesson, onBack, onAsk }: {
         <ChevronLeft className="w-4 h-4" /> Back to lessons
       </button>
 
-      <div className="text-[10px] uppercase tracking-[0.12em] text-faint mb-1">{lesson.seriesName} · {lesson.module}</div>
-      <h1 className="font-serif text-3xl text-foreground mb-2 leading-tight">{lesson.title}</h1>
-      <span className="inline-flex items-center gap-1 text-xs text-faint mb-8">
-        <Clock className="w-3 h-3" /> {lesson.readTime}
-      </span>
-
-      {content ? (
-        <div className="prose prose-sm max-w-none prose-headings:font-serif prose-headings:font-medium prose-headings:text-foreground prose-p:text-foreground prose-li:text-foreground prose-strong:text-foreground prose-a:text-primary">
-          <ReactMarkdown>{content.body}</ReactMarkdown>
-        </div>
-      ) : (
-        <p className="text-sm text-warm-muted">This lesson's full content isn't available yet — check back soon.</p>
-      )}
+      <LessonArticle
+        seriesName={lesson.seriesName}
+        module={lesson.module}
+        title={lesson.title}
+        readTime={lesson.readTime}
+        body={content?.body}
+      />
 
       <div className="mt-10 pt-6 border-t border-border">
         <button
