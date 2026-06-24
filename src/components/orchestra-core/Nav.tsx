@@ -2,6 +2,7 @@ import { NavLink, Link } from 'react-router-dom';
 import { Menu, X, UserCircle } from 'lucide-react';
 import { useState } from 'react';
 import { Logo } from './Logo';
+import { ThemeToggle } from './ThemeToggle';
 import { useSession } from '@/lib/session';
 
 const links = [
@@ -30,6 +31,7 @@ export function Nav() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           {session ? (
             <Link to="/account"
               className="hidden md:inline-flex items-center gap-1.5 text-sm text-warm-muted hover:text-foreground transition">

@@ -38,6 +38,8 @@ An AI-powered financial literacy and education app. A local LLM (via Ollama) plu
 
 Typography: clean sans-serif throughout (Inter-style); headings medium weight (500), never heavy/bold. Optional serif for hero headline only. Overall vibe: warm, academic-premium rather than typical fintech blue.
 
+**Dark mode:** the site has a warm dark theme (opt-in via the sun/moon toggle in `Nav`). It's driven entirely by the CSS-variable tokens above — `.dark` in `src/index.css` redefines them (warm near-black background, off-white text, the maroon lightened to stay legible, blush/cream → subtly-raised dark surfaces). Because every component uses semantic tokens (`bg-background`, `bg-blush`, `text-foreground`, `text-warm-muted`, `border-border`, …), dark mode cascades automatically — keep using those tokens, never hardcode `bg-white`/hex, or new UI won't theme. Default is light; the choice persists in `localStorage` (`oc_theme`) and is applied pre-paint by an inline script in `index.html` to avoid a flash. Hook: `src/lib/theme.ts` (`useTheme`); toggle: `ThemeToggle.tsx`.
+
 ---
 
 ## Live deployments
@@ -140,7 +142,7 @@ The downloadable Electron app (and Android APK) loads `/app` — a full shell se
 
 **Auto sign-in from website:** The deep link `orchestracore://auth?token=JWT` opens the app (if installed) and signs the user in automatically — no OTP needed in the app at all. Two entry points fire it: the checkout "done" screen (right after a fresh purchase) and a "Connect to desktop app" button on `/account` (for anyone already signed in on the website who wants to link an existing or newly-installed app, e.g. after reinstalling). The app's own Account tab leads with "Open my account on the website" pointing at this, with email+password kept only as a fallback. Single-instance lock ensures the token is delivered even if the app was already open.
 
-**AI chat (`AppAI`):** Shows `AskPanel` in Electron. Shows "AI runs on desktop" message with download link on Android. The AI's role is explicitly *not* to be the primary teaching content — the lessons are the course. The AI explains lesson topics further, does live research via `web_search`/`web_fetch` tools when a question needs current information, and helps with practical account setup (M-Pesa, SACCOs, bank/brokerage accounts, CDS registration) as guidance, not personalized advice. Responds in Kiswahili when addressed in Kiswahili.
+**AI chat (`AppAI`):** Shows `AskPanel` in Electron. Shows "AI runs on desktop" message with download link on Android. The AI's role is explicitly *not* to be the primary teaching content — the lessons are the course. The AI explains lesson topics further, does live research via `web_search`/`web_fetch` tools when a question needs current information, and helps with practical account setup (M-Pesa, SACCOs, bank/brokerage accounts, CDS registration) as guidance, not personalized advice. Mirrors the user's language — replies in whatever language they write in (Kiswahili/Sheng, English, or any other), per the "## Languages" rule in `content/system-prompt.md` / `orchestraCore.ts`'s `SYSTEM_PROMPT` (note: the local model follows this better for high-resource languages than for low-resource ones).
 
 **Lesson browser (`AppLessons`):** Full series browser. Clicking a lesson card opens a full in-app reader (`LessonReader`) with the lesson's actual markdown content rendered — not just a summary. `LessonReader` now renders the body via the shared `LessonArticle` component (same one the website's `/lessons/:slug` reader uses), so the two stay visually identical. "Ask about this" remains as a secondary action to jump into AI Coach with the lesson pre-filled.
 
@@ -210,6 +212,7 @@ Orchestra-Core/
 │   │   ├── AskPanel.tsx     — reusable chat UI (used in /ask, /dashboard, AppShell)
 │   │   ├── LessonArticle.tsx — shared lesson header + markdown body (web /lessons/:slug reader + AppShell's in-app reader), renders tables via remark-gfm
 │   │   ├── AiSetupPanel.tsx — website "Set up AI coach" flow: checks local Ollama + downloads the 3 models via its HTTP API (laptops only; phones told to keep reading)
+│   │   ├── ThemeToggle.tsx  — sun/moon light/dark toggle in the Nav
 │   │   ├── SetupStatus.tsx  — sidebar setup checklist (Electron-only), multi-model progress
 │   │   ├── DownloadPanel.tsx — single download button + what's-included info (no device scan)
 │   │   ├── ThinkingIndicator.tsx
@@ -223,7 +226,8 @@ Orchestra-Core/
 │   │   ├── api.ts           — typed fetch wrapper for backend API
 │   │   ├── session.ts       — JWT localStorage management, useSession hook
 │   │   ├── platform.ts      — isElectron, isCapacitor, isMobileApp, getPlatform(), isLikelyMobileDevice()
-│   │   └── ollamaSetup.ts   — browser→local-Ollama HTTP client: checkOllama() (/api/tags) + pullModel() (/api/pull, streamed). REQUIRED_MODELS lives here for the website
+│   │   ├── ollamaSetup.ts   — browser→local-Ollama HTTP client: checkOllama() (/api/tags) + pullModel() (/api/pull, streamed). REQUIRED_MODELS lives here for the website
+│   │   └── theme.ts         — useTheme() light/dark hook (toggles `dark` class on <html>, persists to localStorage)
 │   └── hooks/
 │       └── use-toast.ts     — toast notifications (Toaster/Sonner)
 ├── backend/                 — payment + auth API (deployed on Render)

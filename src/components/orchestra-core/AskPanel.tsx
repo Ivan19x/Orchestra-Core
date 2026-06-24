@@ -171,6 +171,13 @@ export function AskPanel({ initialQuestion, compact = false, ready = true }: Ask
         </p>
       )}
 
+      {ready && (
+        <p className="mt-3 text-[11px] text-faint text-center leading-relaxed">
+          Heads up — the AI runs locally on your own computer, so replies can be slow. It's still working even when it
+          seems quiet; please be patient and give it a moment.
+        </p>
+      )}
+
       <div className="mt-4 flex items-center gap-2">
         <input
           value={input}

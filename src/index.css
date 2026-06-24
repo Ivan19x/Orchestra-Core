@@ -40,6 +40,42 @@
 
     --radius: 0.75rem;
   }
+
+  .dark {
+    /* Orchestra-Core — warm dark palette. Same maroon hero accent, lightened
+       so it stays legible on dark; whites become warm off-whites, blush/cream
+       sections become subtly-raised dark surfaces. */
+    --background: 20 14% 9%;            /* warm near-black */
+    --foreground: 28 22% 91%;           /* warm off-white */
+
+    --card: 20 13% 12%;
+    --card-foreground: 28 22% 91%;
+
+    --popover: 20 13% 12%;
+    --popover-foreground: 28 22% 91%;
+
+    --primary: 350 62% 54%;             /* maroon, lightened for dark */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 20 12% 16%;
+    --secondary-foreground: 28 22% 91%;
+
+    --muted: 20 12% 16%;
+    --muted-foreground: 24 11% 64%;
+
+    --accent: 350 62% 54%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 52%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 20 12% 20%;
+    --input: 20 12% 22%;
+    --ring: 350 62% 54%;
+
+    --blush: 20 13% 15%;                /* dark stand-in for blush/cream */
+    --faint: 24 9% 56%;
+  }
 }
 
 @layer base {
