@@ -42,7 +42,12 @@
       "Bash(unzip -l Curriculum/files.zip)",
       "Read(//c/Users/Chwey/AppData/Local/Programs/Ollama/**)",
       "Read(//c/Program Files/Ollama/**)",
-      "Bash(curl -s -X POST http://localhost:3001/api/auth/signup -H \"Content-Type: application/json\" -d '{\"identifier\":\"claude-test-verify@example.com\",\"password\":\"testpass123\"}')"
+      "Bash(curl -s -X POST http://localhost:3001/api/auth/signup -H \"Content-Type: application/json\" -d '{\"identifier\":\"claude-test-verify@example.com\",\"password\":\"testpass123\"}')",
+      "Bash(mv Curriculum recycle/Curriculum)",
+      "Bash(mv company-documentation.txt recycle/company-documentation.txt)",
+      "Bash(mv technical-documentation.txt recycle/technical-documentation.txt)",
+      "Bash(mv plan.txt recycle/plan.txt)",
+      "Bash(mv server-test *)"
     ]
   }
 }

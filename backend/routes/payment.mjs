@@ -16,7 +16,7 @@ const initiateLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, message: { e
 // Overridable via PRICE_KES on Render — e.g. set to 10 for a real cheap
 // end-to-end test purchase, then remove the variable (or set back to 1500)
 // once you're done. Defaults to the real price if unset.
-const PRICE_KES = Number(process.env.PRICE_KES) || 1500;
+const PRICE_KES = Number(process.env.PRICE_KES) || 2000;
 const TESTING_FREE = process.env.TESTING_FREE === 'true';
 
 // IntaSend's API requires an email even for M-Pesa-only customers who signed

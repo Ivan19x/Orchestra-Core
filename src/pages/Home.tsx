@@ -81,13 +81,13 @@ export default function Home() {
               <h2 className="font-serif text-5xl md:text-6xl text-foreground mb-3">Free</h2>
               <p className="text-warm-muted mb-2">Access every lesson at no cost during the testing phase.</p>
               {countdown && (
-                <p className="text-sm text-faint mb-8">Paid access (KES 1,500) returns in {formatCountdown(countdown)}</p>
+                <p className="text-sm text-faint mb-8">Paid access (KES 2,000) returns in {formatCountdown(countdown)}</p>
               )}
             </>
           ) : (
             <>
               <div className="text-xs uppercase tracking-[0.18em] text-primary mb-4">No subscriptions. Ever.</div>
-              <h2 className="font-serif text-5xl md:text-6xl text-foreground mb-3">KES 1,500</h2>
+              <h2 className="font-serif text-5xl md:text-6xl text-foreground mb-3">KES 2,000</h2>
               <p className="text-warm-muted mb-8">One-time. Access to every lesson and every update, for as long as Orchestra-Core operates.</p>
             </>
           )}

@@ -5,7 +5,7 @@ export default function Terms() {
         <div className="container-narrow py-20 text-center">
           <div className="text-xs uppercase tracking-[0.18em] text-primary mb-4">Legal</div>
           <h1 className="font-serif text-5xl md:text-6xl text-foreground">Terms of Service</h1>
-          <p className="text-sm text-warm-muted mt-4">Effective date: 16 June 2026 · Last updated: 16 June 2026</p>
+          <p className="text-sm text-warm-muted mt-4">Effective date: 16 June 2026 · Last updated: 23 June 2026</p>
         </div>
       </section>
 
@@ -28,7 +28,7 @@ export default function Terms() {
           <div>
             <h2 className="font-serif text-2xl text-foreground mb-3">2. What you are buying</h2>
             <p className="text-warm-muted">
-              For a one-time payment of KES 1,500 you receive a non-exclusive, non-transferable licence to use the Orchestra-Core desktop application for personal, non-commercial learning. This licence is for individual use only — it may not be shared, resold, or used to provide services to others. Your licence includes all current lessons and all future lesson updates for as long as Orchestra-Core operates.
+              For a one-time payment of KES 2,000 you receive a non-exclusive, non-transferable licence to use Orchestra-Core for personal, non-commercial learning, currently delivered through the website (orchestra-core.vercel.app) — sign in to your dashboard to read lessons and use your AI coach. A downloadable desktop application is part of your licence and will return once it's ready; no separate payment will be required for it. This licence is for individual use only — it may not be shared, resold, or used to provide services to others. Your licence includes all current lessons and all future lesson updates for as long as Orchestra-Core operates.
             </p>
           </div>
 
@@ -66,7 +66,7 @@ export default function Terms() {
             </p>
             <ul className="list-disc list-inside text-warm-muted space-y-2 ml-2">
               <li>If you have not yet received your license key due to a technical failure on our end, you are entitled to a full refund.</li>
-              <li>If the product does not work on your device despite meeting the stated system requirements (Ollama installed, Windows or Mac), contact us within 14 days of purchase for a full refund.</li>
+              <li>If the website doesn't work on your device despite using a modern, supported browser, contact us within 14 days of purchase for a full refund.</li>
               <li>If you believe you were misled about what Orchestra-Core provides, contact us to discuss.</li>
             </ul>
             <p className="text-warm-muted mt-3">
@@ -77,7 +77,7 @@ export default function Terms() {
           <div>
             <h2 className="font-serif text-2xl text-foreground mb-3">6. Internet agreements (Consumer Protection Act 2012, Part IV)</h2>
             <p className="text-warm-muted">
-              This is an internet agreement under Kenya's Consumer Protection Act 2012 (ss.31–33). Before completing your purchase, the checkout page discloses: the product description, the price (KES 1,500), the payment method, and your contact information. A copy of this agreement is available at any time at this URL (/terms). Ambiguities are construed in your favour.
+              This is an internet agreement under Kenya's Consumer Protection Act 2012 (ss.31–33). Before completing your purchase, the checkout page discloses: the product description, the price (KES 2,000), the payment method, and your contact information. A copy of this agreement is available at any time at this URL (/terms). Ambiguities are construed in your favour.
             </p>
           </div>
 
@@ -91,7 +91,7 @@ export default function Terms() {
           <div>
             <h2 className="font-serif text-2xl text-foreground mb-3">8. Limitation of liability</h2>
             <p className="text-warm-muted">
-              To the maximum extent permitted by Kenyan law, Orchestra-Core and its operator are not liable for any financial loss, investment loss, or other damage arising from your use of or reliance on Orchestra-Core content or AI responses. Our liability is in any event limited to the amount you paid for your licence (KES 1,500). We do not exclude liability for death or personal injury caused by negligence, or for fraud.
+              To the maximum extent permitted by Kenyan law, Orchestra-Core and its operator are not liable for any financial loss, investment loss, or other damage arising from your use of or reliance on Orchestra-Core content or AI responses. Our liability is in any event limited to the amount you paid for your licence (KES 2,000). We do not exclude liability for death or personal injury caused by negligence, or for fraud.
             </p>
           </div>
 

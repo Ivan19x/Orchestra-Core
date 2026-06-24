@@ -29,7 +29,7 @@ export default function Support() {
           <ul className="space-y-3 text-sm text-warm-muted">
             <li className="flex gap-3"><span className="text-primary shrink-0">→</span> Writing and researching new lessons across the 9-series curriculum</li>
             <li className="flex gap-3"><span className="text-primary shrink-0">→</span> Hosting costs for the backend API and database</li>
-            <li className="flex gap-3"><span className="text-primary shrink-0">→</span> Eventually: a free hosted tier so learners who cannot pay KES 1,500 can still access the basics</li>
+            <li className="flex gap-3"><span className="text-primary shrink-0">→</span> Eventually: a free hosted tier so learners who cannot pay KES 2,000 can still access the basics</li>
           </ul>
           <p className="text-xs text-faint mt-6">Contributions are voluntary and non-refundable. They do not constitute an investment or equity stake. Orchestra-Core is a sole-proprietorship business name registered in Kenya.</p>
         </div>

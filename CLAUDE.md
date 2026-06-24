@@ -61,20 +61,52 @@ Four-stage visitor journey: **Home → Explore → Try → Get Orchestra-Core**
 | `/how-it-works` | Sample chat, local-first privacy, lesson structure |
 | `/lessons` | Searchable library across 3 series (Money basics / Smart money / Kenya money) |
 | `/try` | No-signup static chat demo, 4-5 pre-loaded example questions |
-| `/pricing` | Single card — KES 1,500 one-time, benefits, FAQ |
+| `/pricing` | Single card — KES 2,000 one-time, benefits, FAQ |
 | `/checkout` | Full payment flow (see Payment system below) |
-| `/login` | Returning user OTP sign-in |
-| `/account` | License key display, download link, sign out |
-| `/download` | Single download button + what's-included info (gated: shown only if paid). No device scanning — every install gets the same fixed model lineup. |
+| `/login` | Returning user password sign-in |
+| `/account` | License key display, dashboard link, desktop-app connect (deep link) + download (paused) cards, sign out |
+| `/download` | **Desktop app downloads are paused** (see "Desktop app on pause" below) — page always shows a paused message regardless of session, with a CTA to `/dashboard` (paid) or `/checkout` (not paid). `DownloadPanel.tsx` is unused while paused, not deleted. |
 | `/support` | M-Pesa Till, Buy Me a Coffee, progress bar, supporter names |
 | `/about` | Founder story, mission |
 | `/privacy` | Privacy Policy (DPA compliance) |
 | `/terms` | Terms of Service |
 | `/ask` | Live AI chat panel (dev-only, not in nav) |
-| `/dashboard` | Full product dashboard (dev-only, not in nav) |
+| `/dashboard` | **The actual product now** — lessons, AI chat, and learning tools, all in-browser. Despite still being absent from the public nav `links` array, it's where every paid session is actually routed: `Nav.tsx`'s CTA button shows "Open dashboard" → `/dashboard` instead of "Get Orchestra-Core" whenever `session?.paid` is true, and it's the primary destination from Checkout's "done" screen and from `/download`'s paused message. |
 | `/app` | Electron/Android app shell — not a website page, only loaded inside the apps |
 
-Global nav: sticky white header, Logo (Orbit icon + "Orchestra**-Core**" wordmark), nav links center, "Get Orchestra-Core" → `/checkout` button right. Shows "Sign in" or "Account" link based on session state. Collapses to hamburger on mobile, CTA always visible.
+Global nav: sticky white header, Logo (Orbit icon + "Orchestra**-Core**" wordmark), nav links center. Right side swaps based on session: signed out → "Get Orchestra-Core" → `/checkout`; signed in but unpaid → same button, "Sign in"/"Account" link added; signed in and paid → "Open dashboard" → `/dashboard`. Collapses to hamburger on mobile, CTA always visible.
+
+---
+
+## Desktop app on pause — focus is the website (as of 23 June 2026)
+
+The downloadable Electron/Android app still exists in full (code untouched,
+CI still builds it on every tag) but is **not currently being offered or
+linked anywhere as the way to access a purchase**. Decision: the local-AI
+experience inside the app "isn't working well" yet (founder's words) and is
+being set aside for later — right now, focus is entirely on the website:
+buying, lesson content, and pricing, which are far faster to iterate on than
+an Electron release cycle. AI chat is acknowledged as still under
+construction wherever it's offered (in-browser via `/dashboard`'s `AskPanel`,
+same as the app — same `localhost:11434` Ollama dependency, see "AI chat"
+below), but lesson reading on the website is fully real and is the priority
+right now.
+
+Concretely:
+- `/download` always shows a paused message (not gated by `session.paid`
+  the way it used to be) — see the website pages table above.
+- Checkout's "done" screen and `/account`'s desktop-app card both point at
+  `/dashboard` first; the app deep-link button (`orchestracore://auth?...`)
+  was removed from Checkout's done screen specifically (still present on
+  `/account` for anyone who already has the app installed from before the
+  pause — that case is still real and still works).
+- Nothing about pricing, licensing, or what a purchase includes changed —
+  the desktop app is still part of what a buyer's licence covers (see
+  Terms.tsx Section 2), it's just not the delivery mechanism right now.
+  No separate purchase will be needed when it returns.
+- This is reversible by re-adding the relevant links/CTAs — nothing about
+  the app itself was removed or disabled, only its visibility on the
+  website.
 
 ---
 
@@ -97,13 +129,15 @@ The downloadable Electron app (and Android APK) loads `/app` — a full shell se
 
 **Setup runs in background** — the app shows full content immediately. There is no blocking setup screen. If someone opens AI Coach and tries to chat before setup finishes, the input is disabled with "Currently setting up the model, kindly wait…" instead of a failed request.
 
-**Auto sign-in from website:** The deep link `orchestracore://auth?token=JWT` opens the app (if installed) and signs the user in automatically — no OTP needed in the app at all. Two entry points fire it: the checkout "done" screen (right after a fresh purchase) and a "Connect to desktop app" button on `/account` (for anyone already signed in on the website who wants to link an existing or newly-installed app, e.g. after reinstalling). The app's own Account tab leads with "Open my account on the website" pointing at this, with email+OTP kept only as a fallback. Single-instance lock ensures the token is delivered even if the app was already open.
+**Model downloads survive interruption** (`runSetup()` in `electron/main.cjs`): each of the 3 required models gets its own retry budget (3 attempts, with a backoff sleep between retries) — one model failing doesn't block the others from being attempted. `ollama pull` resumes from its local blob cache rather than restarting at 0%, so a retry (or the user simply reopening the app after closing it mid-download) picks up where it left off instead of re-downloading from scratch. If a model still fails after all retries, the error message tells the user it'll auto-resume next time they open the app — which is true, since `runSetup()` re-checks `hasModel()` for each model on every launch and only pulls what's still missing.
+
+**Auto sign-in from website:** The deep link `orchestracore://auth?token=JWT` opens the app (if installed) and signs the user in automatically — no OTP needed in the app at all. Two entry points fire it: the checkout "done" screen (right after a fresh purchase) and a "Connect to desktop app" button on `/account` (for anyone already signed in on the website who wants to link an existing or newly-installed app, e.g. after reinstalling). The app's own Account tab leads with "Open my account on the website" pointing at this, with email+password kept only as a fallback. Single-instance lock ensures the token is delivered even if the app was already open.
 
 **AI chat (`AppAI`):** Shows `AskPanel` in Electron. Shows "AI runs on desktop" message with download link on Android. The AI's role is explicitly *not* to be the primary teaching content — the lessons are the course. The AI explains lesson topics further, does live research via `web_search`/`web_fetch` tools when a question needs current information, and helps with practical account setup (M-Pesa, SACCOs, bank/brokerage accounts, CDS registration) as guidance, not personalized advice. Responds in Kiswahili when addressed in Kiswahili.
 
 **Lesson browser (`AppLessons`):** Full series browser. Clicking a lesson card opens a full in-app reader (`LessonReader`) with the lesson's actual markdown content rendered — not just a summary. "Ask about this" remains as a secondary action to jump into AI Coach with the lesson pre-filled.
 
-**Account (`AppAccount`):** Shows session info + OTP sign-in if not logged in.
+**Account (`AppAccount`):** Shows session info + password sign-in if not logged in.
 
 ### Content corpus — three series, 12+ lessons
 
@@ -130,7 +164,7 @@ All lesson content lives in `content/lessons/` as Markdown with frontmatter. Sam
 | Mobile | Capacitor 8 wrapping the same React build as an Android APK |
 | Payment backend | Express API (`backend/`) — deployed on Render |
 | Database | Supabase (managed PostgreSQL) |
-| Auth | OTP via SMS/email → 30-day JWT in localStorage |
+| Auth | Password (bcrypt-hashed) → 30-day JWT in localStorage |
 | Payments | IntaSend (M-Pesa STK push + card) |
 | SMS | Africa's Talking REST API (sandbox for now, production requires KYC) |
 | Email | Resend |
@@ -158,7 +192,7 @@ Orchestra-Core/
 │   │   ├── Ask.tsx          — live AI chat (dev-only)
 │   │   ├── Dashboard.tsx    — product dashboard (dev-only)
 │   │   ├── Checkout.tsx     — 4-step payment flow
-│   │   ├── Login.tsx        — returning user OTP sign-in
+│   │   ├── Login.tsx        — returning user password sign-in
 │   │   ├── Account.tsx      — license key + download link
 │   │   └── AppShell.tsx     — Electron/Android app shell (loads at /app)
 │   ├── components/orchestra-core/
@@ -168,7 +202,6 @@ Orchestra-Core/
 │   │   ├── AskPanel.tsx     — reusable chat UI (used in /ask, /dashboard, AppShell)
 │   │   ├── SetupStatus.tsx  — sidebar setup checklist (Electron-only), multi-model progress
 │   │   ├── DownloadPanel.tsx — single download button + what's-included info (no device scan)
-│   │   ├── OTPInput.tsx     — 6-digit code entry with paste support
 │   │   ├── ThinkingIndicator.tsx
 │   │   ├── StreakBadge.tsx
 │   │   └── SupportPanel.tsx
@@ -365,7 +398,7 @@ $utf8NoBOM = New-Object System.Text.UTF8Encoding $false
 
 ## Business model
 
-**Price:** KES 1,500 one-time (~$11). No subscriptions.
+**Price:** KES 2,000 one-time (~$15). No subscriptions.
 
 **Revenue layers:**
 1. Direct sales (primary)
@@ -373,6 +406,8 @@ $utf8NoBOM = New-Object System.Text.UTF8Encoding $false
 3. B2B later — SACCOs, employers, universities (Phase 5)
 
 **Support/donation feature:** "Support Orchestra-Core" — transparent progress bar, M-Pesa Till (Kenya), Buy Me a Coffee (international). Not equity crowdfunding.
+
+**Infrastructure cost discipline:** every piece of infrastructure (Vercel, Render, Supabase, Resend, IntaSend, GitHub) runs on a genuinely free tier — zero recurring monthly or annual cost. This is a hard constraint while solo-bootstrapping, not a preference: check whether a free-tier path exists before adding or recommending any paid service or domain. It's also why password-based accounts replaced OTP rather than buying a domain to fix Resend's sender restriction — the domain would have worked but cost money, so the free engineering fix was chosen instead. The first place real infrastructure spend is planned is the eventual local-AI-to-hosted-AI migration, funded by revenue at that point — not before.
 
 ---
 
@@ -412,7 +447,7 @@ $utf8NoBOM = New-Object System.Text.UTF8Encoding $false
 - **Fixed model lineup** — every install pulls `qwen2.5:7b` + `moondream` + `nomic-embed-text`, no device scanning or tiering (`DownloadPanel.tsx` on the website, `REQUIRED_MODELS` in `electron/main.cjs`)
 - **AI tool-calling** — `web_search`/`web_fetch` tools the model can call itself when a question needs current information, via `server/index.mjs`'s `/api/web-search` and `/api/web-fetch`
 - **Logo / wordmark** — `Logo.tsx`, Orbit icon, "Orchestra**-Core**" split colour, "OC" monogram
-- **Payment + auth system** — IntaSend M-Pesa + card, OTP via SMS/Resend, JWT sessions, license keys
+- **Payment + auth system** — IntaSend (M-Pesa, card, Google Pay, Apple Pay, Pesalink, KE bank, Cash App, PYUSD), password-based accounts (bcrypt), JWT sessions, license keys
 - **Checkout flow** — `/checkout` (4 steps) + `/login` + `/account`
 - **Website** — all pages live at https://orchestra-core.vercel.app, auto-deploys on push
 - **Backend** — deployed on Render at https://orchestra-core.onrender.com, `TESTING_FREE=true`
@@ -454,7 +489,8 @@ purged, repo is now public) — rotate them before real money flows through:
 | `NODE_ENV` | `production` |
 | `EMAIL_FROM` | current shared `onboarding@resend.dev` sender is fine to leave as-is — see "Deferred, not blocking" below |
 | `INTASEND_*` | set in step 1 above |
-| `TESTING_FREE` | leave `true` until step 4 |
+| `PRICE_KES` | set to `2000` (the real price) or remove the variable entirely — `payment.mjs`'s code default is now `2000`, so unset behaves the same as `2000` |
+| `TESTING_FREE` | **set to `false`** — this is the official-launch switch, not a testing one. Leave `true` only for a deliberate short test window. |
 
 Note: the backend's CORS config (`backend/index.mjs`) always allows
 `http://localhost:5175` (the Electron app's fixed local origin) in code
@@ -465,23 +501,26 @@ Vercel URL.
 #### 3. Vercel environment variables
 
 - Confirm `VITE_API_URL=https://orchestra-core.onrender.com`
-- Set `VITE_DOWNLOAD_URL_WIN` to the latest GitHub Release's `.exe` URL
-  (currently `https://github.com/Ivan19x/Orchestra-Core/releases/download/v1.3.0/Orchestra-Core.Setup.1.3.0.exe`
-  — grab whatever's actually latest when you do this) → redeploy. This makes
-  the Download page show a real link for paid users — outstanding since
-  early in the project.
+- **Set `VITE_TESTING_PHASE` to `false` or remove it entirely** — this is
+  the frontend half of going live (separate flag from the backend's
+  `TESTING_FREE`, both must be off). Leaving it `true` shows "0 KES, free
+  during testing" on `/` and `/pricing` regardless of what the backend
+  charges.
+- `VITE_DOWNLOAD_URL_WIN` no longer needs to be set — desktop downloads
+  are paused (see "Desktop app on pause" above), so `/download` doesn't
+  use this variable right now. Revisit when downloads resume.
 
 #### 4. End-to-end live test, then go live
 
-With `TESTING_FREE` still `true`, confirm steps 1-3 above are all working —
-sign up with a real email + password, confirm the license key shows on the
-Done screen and on `/account`, confirm `/download` works. When ready: flip
-`TESTING_FREE=false` on Render, then go through `/checkout` for real — pay
-the actual KES 1,500 yourself via M-Pesa as the live-mode test (IntaSend
-live mode has no fake sandbox once keys are live, so this is the standard
-way to validate a live integration). Confirm: payment completes, license
-key generates, `/account` shows it, `/download` works. If all of that
-passes, `TESTING_FREE` stays `false` — you're live.
+Sign up with a real email + password, confirm the license key shows on
+the Done screen and on `/account`, confirm `/dashboard` works (lessons +
+AI chat). When ready: flip `TESTING_FREE=false` on Render and
+`VITE_TESTING_PHASE=false` on Vercel (step 2/3 above), then go through
+`/checkout` for real — pay the actual KES 2,000 yourself via M-Pesa as
+the live-mode test (IntaSend live mode has no fake sandbox once keys are
+live, so this is the standard way to validate a live integration).
+Confirm: payment completes at the real price, license key generates,
+`/account` and `/dashboard` both work. If all of that passes, you're live.
 
 #### Deferred, not blocking
 

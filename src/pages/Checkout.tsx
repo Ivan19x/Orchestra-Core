@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Check, Loader2, Smartphone, CreditCard, ArrowRight, Copy } from 'lucide-react';
 import { signup, getMe, initiatePayment, getPaymentStatus, verifyCardPayment, ApiError } from '@/lib/api';
-import { saveSession, getStoredUser, getToken, dispatchSessionChange } from '@/lib/session';
+import { saveSession, getStoredUser, dispatchSessionChange } from '@/lib/session';
 import { TESTING_PHASE } from '@/lib/testingPhase';
 
 // Identity is verified by creating a real password account up front, not by
@@ -13,7 +13,7 @@ import { TESTING_PHASE } from '@/lib/testingPhase';
 type Step = 'identity' | 'payment' | 'processing' | 'done';
 type Method = 'mpesa' | 'card';
 
-const PRICE = 'KES 1,500';
+const PRICE = 'KES 2,000';
 
 export default function Checkout() {
   const [searchParams] = useSearchParams();
@@ -303,18 +303,10 @@ export default function Checkout() {
                 </div>
               )}
 
-              <Link to="/download"
+              <Link to="/dashboard"
                 className="block w-full py-3 rounded-full bg-primary text-primary-foreground text-center hover:opacity-90 transition mb-3">
-                Download Orchestra-Core
+                Go to your dashboard
               </Link>
-              {getToken() && (
-                <a
-                  href={`orchestracore://auth?token=${encodeURIComponent(getToken() || '')}`}
-                  className="block w-full py-3 rounded-full border border-primary text-primary text-center hover:bg-blush transition mb-3 text-sm"
-                >
-                  Open in Orchestra-Core app (if installed)
-                </a>
-              )}
               <Link to="/account" className="block text-sm text-primary hover:underline">
                 View your account
               </Link>

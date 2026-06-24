@@ -68,7 +68,7 @@ export default function Account() {
           ) : !session.paid ? (
             <Link to="/checkout"
               className="inline-flex items-center px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition">
-              Buy Orchestra-Core — KES 1,500
+              Buy Orchestra-Core — KES 2,000
             </Link>
           ) : null}
         </div>
@@ -108,7 +108,7 @@ export default function Account() {
         {session.paid && (
           <div className="bg-background rounded-2xl border border-border p-6 md:p-8">
             <h2 className="font-serif text-xl text-foreground mb-1">Download desktop app</h2>
-            <p className="text-sm text-warm-muted mb-5">Get the standalone Orchestra-Core app for Windows, Mac, or Linux.</p>
+            <p className="text-sm text-warm-muted mb-5">Downloads are paused while we focus on the website — use your dashboard above in the meantime.</p>
             <Link to="/download"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-primary text-primary text-sm hover:bg-primary hover:text-primary-foreground transition">
               <Download className="w-4 h-4" /> Go to Download page

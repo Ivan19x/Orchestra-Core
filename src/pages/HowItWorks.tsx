@@ -58,7 +58,7 @@ export default function HowItWorks() {
               Orchestra-Core is organized into series, each covering a distinct area of financial life. Three series are live now — <strong className="text-foreground font-medium">Money basics</strong>, <strong className="text-foreground font-medium">Smart money</strong>, and <strong className="text-foreground font-medium">Kenya money</strong> — with six more in development. Each series has lessons you can actually finish.
             </p>
             <p className="text-warm-muted leading-relaxed">
-              You can browse the full lesson library here as a preview. All lesson content, interactive learning, and your AI coach are inside the Orchestra-Core app — one payment gets you everything.
+              You can browse the full lesson library here as a preview. All lesson content, interactive learning, and your AI coach are available in your dashboard the moment you sign in — one payment gets you everything, directly on the website.
             </p>
           </div>
           <div className="p-6 rounded-2xl border border-border bg-background space-y-3">

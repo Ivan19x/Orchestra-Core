@@ -6,15 +6,15 @@ import { TESTING_PHASE, useCountdown, formatCountdown } from '@/lib/testingPhase
 const benefits = [
   'Full lesson library, forever',
   'Ask Orchestra-Core, your private AI coach',
-  'Works offline — your learning data stays on your device',
+  'Use it directly on the website — no install needed',
   'Every future lesson and update, for as long as Orchestra-Core operates',
   'No subscriptions, no tracking, no upsells',
 ];
 
 const faqs = [
   { q: 'Is this financial advice?', a: 'No. Orchestra-Core is financial education. It teaches you how money, markets, and institutions work so you can make better decisions — but it never tells you what to buy or sell.' },
-  { q: 'What if my phone is older?', a: 'Orchestra-Core is built to run on modest hardware. On the Download page we detect your device and recommend the version that will run best for you.' },
-  { q: 'Do I need internet?', a: 'Only to download Orchestra-Core and pull lesson updates. Day-to-day reading and chatting with your coach works fully offline.' },
+  { q: 'Do I need to install anything?', a: 'No. Right now Orchestra-Core runs directly on the website — sign in to your dashboard to read lessons and chat with your AI coach, no download required. A downloadable desktop app is coming back later.' },
+  { q: 'Do I need internet?', a: 'Yes, currently — Orchestra-Core runs on the website, so you need an internet connection to use it. A fully offline desktop app is on the way.' },
   { q: 'What exactly do I get for one payment?', a: 'Every lesson across Money basics, Smart money, and Kenya money — current and future. Unlimited use of your private AI coach. Forever.' },
   { q: 'Why do I need to give my phone or email?', a: 'We link your payment to a contact so you can re-download if you switch devices, without paying again. We store nothing else — your learning data never leaves your device.' },
   { q: 'Is the AI coach a real person?', a: 'No. The coach is a local AI language model (Qwen2.5) that runs entirely on your computer — not a human and not connected to any financial institution. It explains concepts; it does not give personalized financial advice.' },
@@ -46,14 +46,14 @@ export default function Pricing() {
                 <p className="text-sm text-warm-muted mb-1">Free during testing</p>
                 {countdown && (
                   <p className="text-xs text-faint">
-                    Paid access (KES 1,500) returns in {formatCountdown(countdown)}
+                    Paid access (KES 2,000) returns in {formatCountdown(countdown)}
                   </p>
                 )}
               </>
             ) : (
               <>
                 <div className="text-xs uppercase tracking-[0.18em] text-primary mb-3">No subscriptions</div>
-                <div className="font-serif text-6xl text-primary mb-2">KES 1,500</div>
+                <div className="font-serif text-6xl text-primary mb-2">KES 2,000</div>
                 <p className="text-sm text-warm-muted">paid once · roughly $11</p>
               </>
             )}
