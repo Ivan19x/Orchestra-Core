@@ -87,11 +87,17 @@ linked anywhere as the way to access a purchase**. Decision: the local-AI
 experience inside the app "isn't working well" yet (founder's words) and is
 being set aside for later — right now, focus is entirely on the website:
 buying, lesson content, and pricing, which are far faster to iterate on than
-an Electron release cycle. AI chat is acknowledged as still under
-construction wherever it's offered (in-browser via `/dashboard`'s `AskPanel`,
-same as the app — same `localhost:11434` Ollama dependency, see "AI chat"
-below), but lesson reading on the website is fully real and is the priority
-right now.
+an Electron release cycle. The website's AI chat (`/dashboard`'s `AskPanel`)
+now has a real **"Set up AI coach"** flow (`AiSetupPanel` + `lib/ollamaSetup.ts`):
+on a laptop it checks for a locally-running Ollama and downloads the three
+models via Ollama's HTTP API (`/api/tags` + `/api/pull`), with progress bars;
+on phones/tablets it shows a "the AI runs on a computer — keep reading" message
+instead (Ollama doesn't run on phones). **Caveat:** for the deployed HTTPS site
+to reach `localhost:11434`, the user must start Ollama allowing this origin —
+`OLLAMA_ORIGINS=https://orchestra-core.vercel.app ollama serve` (localhost→
+localhost dev works without it); Chrome Private-Network-Access rules may still
+block it on some versions, so the desktop app stays the friction-free AI path.
+Lesson reading on the website is fully real and is the priority right now.
 
 Concretely:
 - `/download` always shows a paused message (not gated by `session.paid`
@@ -203,6 +209,7 @@ Orchestra-Core/
 │   │   ├── Logo.tsx         — Orbit icon + wordmark, mobile monogram
 │   │   ├── AskPanel.tsx     — reusable chat UI (used in /ask, /dashboard, AppShell)
 │   │   ├── LessonArticle.tsx — shared lesson header + markdown body (web /lessons/:slug reader + AppShell's in-app reader), renders tables via remark-gfm
+│   │   ├── AiSetupPanel.tsx — website "Set up AI coach" flow: checks local Ollama + downloads the 3 models via its HTTP API (laptops only; phones told to keep reading)
 │   │   ├── SetupStatus.tsx  — sidebar setup checklist (Electron-only), multi-model progress
 │   │   ├── DownloadPanel.tsx — single download button + what's-included info (no device scan)
 │   │   ├── ThinkingIndicator.tsx
@@ -215,7 +222,8 @@ Orchestra-Core/
 │   │   ├── quickTools.ts    — Smart Money / market mood prompts
 │   │   ├── api.ts           — typed fetch wrapper for backend API
 │   │   ├── session.ts       — JWT localStorage management, useSession hook
-│   │   └── platform.ts      — isElectron, isCapacitor, isMobileApp, getPlatform()
+│   │   ├── platform.ts      — isElectron, isCapacitor, isMobileApp, getPlatform(), isLikelyMobileDevice()
+│   │   └── ollamaSetup.ts   — browser→local-Ollama HTTP client: checkOllama() (/api/tags) + pullModel() (/api/pull, streamed). REQUIRED_MODELS lives here for the website
 │   └── hooks/
 │       └── use-toast.ts     — toast notifications (Toaster/Sonner)
 ├── backend/                 — payment + auth API (deployed on Render)

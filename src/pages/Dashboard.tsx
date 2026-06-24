@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Lock, ChevronRight } from 'lucide-react';
+import { AiSetupPanel } from '@/components/orchestra-core/AiSetupPanel';
 import { StreakBadge } from '@/components/orchestra-core/StreakBadge';
 import { TodaysInsightCard } from '@/components/orchestra-core/TodaysInsightCard';
 import { BudgetBuilderCard } from '@/components/orchestra-core/BudgetBuilderCard';
@@ -21,6 +23,7 @@ export default function Dashboard() {
   const session = useSession();
   const paid = !!session?.paid;
   const lessons = getAllLessons().slice(0, 6);
+  const [aiReady, setAiReady] = useState(false);
   return (
     <>
       <section className="bg-blush border-b border-border">
@@ -77,7 +80,10 @@ export default function Dashboard() {
 
         <div>
           <div className="text-xs uppercase tracking-[0.18em] text-faint mb-4">Ask Orchestra-Core</div>
-          <AskPanel compact />
+          <div className="space-y-4">
+            <AiSetupPanel onReady={setAiReady} />
+            {aiReady && <AskPanel compact ready />}
+          </div>
         </div>
 
         <SupportPanel />
