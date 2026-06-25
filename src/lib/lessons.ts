@@ -44,19 +44,19 @@ export const series: Series[] = [
       },
       {
         id: '1-2', module: 'Module 2', slug: '1-2-how-banks-create-money',
-        title: 'How banks create money', readTime: '6 min read', icon: Building2,
+        title: 'How banks create money', readTime: '6 min read', icon: Building2, premium: true,
         summary: "Banks don't just store your money — they multiply it. Here's the mechanism that runs the entire financial world.",
         tags: ['banks', 'money creation', 'beginners'],
       },
       {
         id: '1-3', module: 'Module 3', slug: '1-3-the-50-30-20-rule',
-        title: 'The 50/30/20 rule', readTime: '5 min read', icon: Wallet,
+        title: 'The 50/30/20 rule', readTime: '5 min read', icon: Wallet, premium: true,
         summary: 'The simplest budgeting framework in existence — and how to adapt it to a Kenyan salary.',
         tags: ['budgeting', 'practical', 'beginners'],
       },
       {
         id: '1-4', module: 'Module 4', slug: '1-4-compound-interest-the-eighth-wonder',
-        title: 'Compound interest — the eighth wonder', readTime: '7 min read', icon: TrendingUp,
+        title: 'Compound interest — the eighth wonder', readTime: '7 min read', icon: TrendingUp, premium: true,
         summary: 'The one concept that makes the difference between being comfortable at 50 and struggling.',
         tags: ['compound interest', 'saving', 'investing', 'beginners'],
       },
@@ -122,7 +122,7 @@ export const series: Series[] = [
     color: '#854F0B',
     lessons: [
       { module: 'Module 1', title: 'M-Pesa fees demystified', readTime: '5 min read', icon: Smartphone, slug: 'kenya-money/01-mpesa-fees-demystified' },
-      { module: 'Module 2', title: 'SACCOs vs banks — which is better for you?', readTime: '8 min read', icon: Building2, slug: 'kenya-money/02-saccos-vs-banks' },
+      { module: 'Module 2', title: 'SACCOs vs banks — which is better for you?', readTime: '8 min read', icon: Building2, premium: true, slug: 'kenya-money/02-saccos-vs-banks' },
       { module: 'Module 3', title: 'Buying NSE shares step-by-step', readTime: '10 min read', icon: LineChart, premium: true, slug: 'kenya-money/03-buying-nse-shares' },
       { module: 'Module 4', title: 'T-Bills via CBK DhowCSD', readTime: '9 min read', icon: Landmark, premium: true, slug: 'kenya-money/04-tbills-dhowcsd' },
     ],

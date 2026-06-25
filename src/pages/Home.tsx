@@ -3,6 +3,7 @@ import { BookOpen, Brain, Shield, FileText, Heart, ArrowRight, Clock } from 'luc
 import { LessonCard } from '@/components/orchestra-core/LessonCard';
 import { CTABand } from '@/components/orchestra-core/CTABand';
 import { TESTING_PHASE, useCountdown, formatCountdown } from '@/lib/testingPhase';
+import { PRICE_LABEL } from '@/lib/pricing';
 
 export default function Home() {
   const countdown = useCountdown();
@@ -20,8 +21,8 @@ export default function Home() {
             Orchestra-Core is a private AI coach and curriculum that teaches you how smart money actually thinks — in plain language, one payment, no subscriptions.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to="/pricing" className="inline-flex items-center justify-center px-7 py-3 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition">
-              Get Orchestra-Core — one-time payment
+            <Link to="/signup" className="inline-flex items-center justify-center px-7 py-3 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition">
+              Get started — free
             </Link>
             <Link to="/how-it-works" className="inline-flex items-center justify-center px-7 py-3 rounded-full border border-primary text-primary hover:bg-blush transition">
               See how it works
@@ -87,7 +88,7 @@ export default function Home() {
           ) : (
             <>
               <div className="text-xs uppercase tracking-[0.18em] text-primary mb-4">No subscriptions. Ever.</div>
-              <h2 className="font-serif text-5xl md:text-6xl text-foreground mb-3">KES 2,000</h2>
+              <h2 className="font-serif text-5xl md:text-6xl text-foreground mb-3">{PRICE_LABEL}</h2>
               <p className="text-warm-muted mb-8">One-time. Access to every lesson and every update, for as long as Orchestra-Core operates.</p>
             </>
           )}

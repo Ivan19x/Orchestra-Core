@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Lock, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Lock, ChevronRight, Brain } from 'lucide-react';
 import { AiSetupPanel } from '@/components/orchestra-core/AiSetupPanel';
 import { StreakBadge } from '@/components/orchestra-core/StreakBadge';
 import { TodaysInsightCard } from '@/components/orchestra-core/TodaysInsightCard';
@@ -11,6 +11,7 @@ import { AskPanel } from '@/components/orchestra-core/AskPanel';
 import { SupportPanel } from '@/components/orchestra-core/SupportPanel';
 import { getAllLessons, lessonUrlSlug } from '@/lib/lessons';
 import { useSession } from '@/lib/session';
+import { PRICE_LABEL } from '@/lib/pricing';
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -21,9 +22,18 @@ function greeting(): string {
 
 export default function Dashboard() {
   const session = useSession();
+  const navigate = useNavigate();
   const paid = !!session?.paid;
   const lessons = getAllLessons().slice(0, 6);
   const [aiReady, setAiReady] = useState(false);
+
+  // The dashboard is the signed-in product surface — send anonymous visitors
+  // to create a free account first.
+  useEffect(() => {
+    if (!session) navigate('/signup', { replace: true });
+  }, [session, navigate]);
+  if (!session) return null;
+
   return (
     <>
       <section className="bg-blush border-b border-border">
@@ -80,10 +90,25 @@ export default function Dashboard() {
 
         <div>
           <div className="text-xs uppercase tracking-[0.18em] text-faint mb-4">Ask Orchestra-Core</div>
-          <div className="space-y-4">
-            <AiSetupPanel onReady={setAiReady} />
-            {aiReady && <AskPanel compact ready />}
-          </div>
+          {paid ? (
+            <div className="space-y-4">
+              <AiSetupPanel onReady={setAiReady} />
+              {aiReady && <AskPanel compact ready />}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-border bg-blush p-8 text-center">
+              <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center text-primary mx-auto mb-5">
+                <Brain className="w-5 h-5" strokeWidth={1.75} />
+              </div>
+              <h3 className="font-serif text-2xl text-foreground mb-2">Your AI coach is part of full access</h3>
+              <p className="text-sm text-warm-muted mb-6 max-w-sm mx-auto leading-relaxed">
+                Unlock the private AI coach — plus every lesson — with a single one-time purchase. No subscription.
+              </p>
+              <Link to="/checkout" className="inline-flex items-center px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition">
+                Get full access — {PRICE_LABEL}
+              </Link>
+            </div>
+          )}
         </div>
 
         <SupportPanel />

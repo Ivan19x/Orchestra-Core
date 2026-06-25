@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Copy, Check, Download, LogOut, Brain, Link2 } from 'lucide-react';
 import { useSession, clearSession, dispatchSessionChange, getToken } from '@/lib/session';
 import { getMe } from '@/lib/api';
+import { PRICE_LABEL } from '@/lib/pricing';
 
 export default function Account() {
   const navigate = useNavigate();
@@ -68,10 +69,24 @@ export default function Account() {
           ) : !session.paid ? (
             <Link to="/checkout"
               className="inline-flex items-center px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition">
-              Buy Orchestra-Core — KES 2,000
+              Get full access — {PRICE_LABEL}
             </Link>
           ) : null}
         </div>
+
+        {/* Dashboard (free users) — read the free starter lessons */}
+        {!session.paid && (
+          <div className="bg-background rounded-2xl border border-border p-6 md:p-8">
+            <h2 className="font-serif text-xl text-foreground mb-1">Your dashboard</h2>
+            <p className="text-sm text-warm-muted mb-5">
+              Read the free starter lesson in each series. Unlock every lesson and your AI coach with full access.
+            </p>
+            <Link to="/dashboard"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition">
+              <Brain className="w-4 h-4" /> Open dashboard
+            </Link>
+          </div>
+        )}
 
         {/* AI Coach (browser) */}
         {session.paid && (

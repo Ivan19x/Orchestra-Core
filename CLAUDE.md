@@ -61,12 +61,15 @@ Four-stage visitor journey: **Home → Explore → Try → Get Orchestra-Core**
 |---|---|
 | `/` | Hero, value props, sample lesson preview, pricing teaser, support teaser, closing CTA |
 | `/how-it-works` | Sample chat, local-first privacy, lesson structure |
-| `/lessons` | Searchable library across 3 series (Money basics / Smart money / Kenya money). Cards are now clickable and open a full in-browser reader. **Free lessons are readable by anyone; premium lessons are gated** behind `session.paid` (per-lesson `premium` flag in `lessons.ts`). Cards show a "Free"/"Premium" badge accordingly. |
-| `/lessons/:slug` | Single-lesson reader (`Lesson.tsx`) — renders the lesson's markdown in the browser via the shared `LessonArticle` component. A premium lesson shows a purchase gate (title + summary + "Get Orchestra-Core") instead of the body unless `session.paid`. `:slug` is the last path segment of the lesson's content key — see `lessonUrlSlug()`/`getLessonByUrlSlug()` in `lessons.ts`. |
+| `/lessons` | Searchable library across 3 series (Money basics / Smart money / Kenya money). Cards are clickable and open a full in-browser reader. **Access model: reading any lesson requires a (free) account; premium lessons additionally require `session.paid`.** One free lesson per series (the starter: `1-1`, smart-money `01`, kenya-money `01`); everything else is `premium` in `lessons.ts`. Cards show a "Free"/"Premium" badge. |
+| `/lessons/:slug` | Single-lesson reader (`Lesson.tsx`). Three gates: not signed in → "create a free account" (`SignupGate`); signed in + premium + unpaid → upgrade gate (`LockedLesson`); otherwise the full `LessonArticle`. `:slug` is the last path segment of the lesson's content key — see `lessonUrlSlug()`/`getLessonByUrlSlug()` in `lessons.ts`. |
 | `/try` | No-signup static chat demo, 4-5 pre-loaded example questions |
-| `/pricing` | Single card — KES 2,000 one-time, benefits, FAQ |
-| `/checkout` | Full payment flow (see Payment system below) |
-| `/login` | Returning user password sign-in |
+| `/pricing` | Single card — one-time price (`PRICE_LABEL`), benefits, FAQ |
+| `/checkout` | Payment flow. Skips the identity step entirely when already signed in (goes straight to payment); anonymous buyers get `SignupForm` (email + password + confirm + T&C) inline. |
+| `/signup` | Create a **free** account (`SignupForm`: email + password + confirm + agree to T&C) → `/dashboard`. The funnel entry for new visitors (Nav "Get started — free", Home hero). |
+| `/forgot-password` | Request a password-reset link (emailed, 10-min expiry). |
+| `/reset-password` | Set a new password from the emailed token (`?token=`), then auto-signed-in → `/dashboard`. |
+| `/login` | Returning user password sign-in → `/dashboard`. Links to `/forgot-password` and `/signup`. |
 | `/account` | License key display, dashboard link, desktop-app connect (deep link) + download (paused) cards, sign out |
 | `/download` | **Desktop app downloads are paused** (see "Desktop app on pause" below) — page always shows a paused message regardless of session, with a CTA to `/dashboard` (paid) or `/checkout` (not paid). `DownloadPanel.tsx` is unused while paused, not deleted. |
 | `/support` | M-Pesa Till, Buy Me a Coffee, progress bar, supporter names |
@@ -352,9 +355,12 @@ Protocol: `orchestracore://auth?token=JWT_TOKEN`
 | `JWT_SECRET` | 64-byte random hex |
 | `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_SERVICE_KEY` | Supabase service_role key |
-| `RESEND_API_KEY` | Resend API key (`re_...`) |
+| `RESEND_API_KEY` | Resend API key (`re_...`) — fallback only; see `GMAIL_*` below |
 | `EMAIL_FROM` | `Orchestra-Core <onboarding@resend.dev>` |
+| `GMAIL_USER` | Gmail address that sends reset/license emails (e.g. `chweyaivan@gmail.com`) |
+| `GMAIL_APP_PASSWORD` | 16-char Gmail **app password** (needs 2FA on the account). When `GMAIL_*` are set, `notify.mjs`'s `sendEmail` uses Gmail SMTP — which delivers to ANY recipient, unlike Resend's shared sender — and only falls back to Resend if unset. |
 | `AT_API_KEY` | Africa's Talking API key |
+| `PRICE_KES` | Amount charged, in KES. Default 2000. **Set to `10` for cheap live testing**, then back to `2000`. |
 | `AT_USERNAME` | `sandbox` (testing) → production username when KYC approved |
 | `INTASEND_PUBLISHABLE_KEY` | IntaSend publishable key |
 | `INTASEND_SECRET_KEY` | IntaSend secret key |
@@ -521,6 +527,11 @@ Vercel URL.
   `TESTING_FREE`, both must be off). Leaving it `true` shows "0 KES, free
   during testing" on `/` and `/pricing` regardless of what the backend
   charges.
+- `VITE_PRICE_KES` — the **displayed** price (`src/lib/pricing.ts` →
+  `PRICE_LABEL`, used on `/`, `/pricing`, `/checkout`, `/account`, lesson
+  gates). Default 2000. Keep it in sync with the backend's `PRICE_KES` —
+  set BOTH to `10` for a cheap live test, both back to `2000` after. It's a
+  build-time var, so changing it needs a fresh Vercel deploy to take effect.
 - `VITE_DOWNLOAD_URL_WIN` no longer needs to be set — desktop downloads
   are paused (see "Desktop app on pause" above), so `/download` doesn't
   use this variable right now. Revisit when downloads resume.

@@ -25,7 +25,7 @@ export default function Login() {
       const { token, user } = await login(val, password);
       saveSession(token, user);
       dispatchSessionChange();
-      navigate('/account');
+      navigate('/dashboard');
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         setError('Incorrect email or password.');
@@ -46,8 +46,8 @@ export default function Login() {
             <h1 className="font-serif text-3xl text-foreground mb-2">Welcome back.</h1>
             <p className="text-sm text-warm-muted mb-8">
               {reason === 'already_paid'
-                ? 'This account already has a licence. Sign in to access your download.'
-                : 'Enter the email and password you used when you bought Orchestra-Core.'}
+                ? 'This account already has a licence. Sign in to access it.'
+                : 'Enter your email and password to continue.'}
             </p>
 
             <input
@@ -75,8 +75,11 @@ export default function Login() {
             </button>
 
             <p className="text-xs text-faint text-center mt-4">
+              <Link to="/forgot-password" className="text-primary hover:underline">Forgot your password?</Link>
+            </p>
+            <p className="text-xs text-faint text-center mt-2">
               Don't have an account?{' '}
-              <Link to="/checkout" className="text-primary hover:underline">Buy Orchestra-Core</Link>
+              <Link to="/signup" className="text-primary hover:underline">Create a free account</Link>
             </p>
           </form>
         </div>

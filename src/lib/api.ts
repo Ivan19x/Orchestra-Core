@@ -49,6 +49,18 @@ export function getMe() {
   return request<{ id: string; identifier: string; paid: boolean; licenseKey?: string }>('/api/auth/me');
 }
 
+export function requestReset(identifier: string) {
+  return request<{ ok: boolean }>('/api/auth/request-reset', {
+    method: 'POST', body: JSON.stringify({ identifier }),
+  });
+}
+
+export function resetPassword(token: string, password: string) {
+  return request<AuthResult>('/api/auth/reset-password', {
+    method: 'POST', body: JSON.stringify({ token, password }),
+  });
+}
+
 // ── payment ────────────────────────────────────────────────────────────────
 
 export function initiatePayment(identifier: string, method: 'mpesa' | 'card' | 'free', mpesaPhone?: string) {

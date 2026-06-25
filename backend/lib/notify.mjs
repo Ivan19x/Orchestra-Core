@@ -1,6 +1,19 @@
 import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Gmail SMTP (via an app password) delivers to ANY recipient on the free tier,
+// unlike Resend's shared onboarding@resend.dev sender which only reaches the
+// account owner until a custom domain is verified. Prefer Gmail when the
+// GMAIL_* env vars are set; otherwise fall back to Resend.
+const gmailUser = process.env.GMAIL_USER;
+const gmailTransport = (gmailUser && process.env.GMAIL_APP_PASSWORD)
+  ? nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: gmailUser, pass: process.env.GMAIL_APP_PASSWORD },
+    })
+  : null;
 
 // ── SMS via Africa's Talking REST API ─────────────────────────────────────
 
@@ -33,6 +46,10 @@ export async function sendSms(phone, message) {
 // ── Email via Resend ───────────────────────────────────────────────────────
 
 export async function sendEmail(to, subject, html) {
+  if (gmailTransport) {
+    await gmailTransport.sendMail({ from: `Orchestra-Core <${gmailUser}>`, to, subject, html });
+    return;
+  }
   // The Resend SDK does NOT throw on API-level failures (e.g. the shared
   // onboarding@resend.dev sender can only email the account's own address
   // until a custom domain is verified) - it resolves with { data, error }.
@@ -46,6 +63,24 @@ export async function sendEmail(to, subject, html) {
   if (error) {
     throw new Error(`Resend email failed: ${error.message || error.name || JSON.stringify(error)}`);
   }
+}
+
+// ── Password reset ─────────────────────────────────────────────────────────
+
+export async function sendPasswordReset(email, link) {
+  await sendEmail(email, 'Reset your Orchestra-Core password', resetEmailHtml(link));
+}
+
+function resetEmailHtml(link) {
+  return `
+    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:40px 24px">
+      <p style="font-size:12px;letter-spacing:0.15em;text-transform:uppercase;color:#7A2330;margin-bottom:24px">Orchestra-Core</p>
+      <h1 style="font-size:28px;color:#2B2320;margin:0 0 16px">Reset your password</h1>
+      <p style="color:#7A6C68;margin-bottom:28px">Click the button below to set a new password. This link expires in 10 minutes and can only be used once.</p>
+      <a href="${link}" style="display:inline-block;padding:14px 28px;background:#7A2330;color:#fff;text-decoration:none;border-radius:100px;font-size:15px">Set a new password</a>
+      <p style="font-size:13px;color:#A39590;margin-top:32px">If you didn't request this, you can safely ignore this email — your password won't change.</p>
+    </div>
+  `;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────

@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { Check, Loader2, Smartphone, CreditCard, ArrowRight, Copy } from 'lucide-react';
-import { signup, getMe, initiatePayment, getPaymentStatus, verifyCardPayment, ApiError } from '@/lib/api';
-import { saveSession, getStoredUser, dispatchSessionChange } from '@/lib/session';
+import { Check, Loader2, Smartphone, CreditCard, Copy } from 'lucide-react';
+import { getMe, initiatePayment, getPaymentStatus, verifyCardPayment, ApiError } from '@/lib/api';
+import { getStoredUser, type SessionUser } from '@/lib/session';
+import { SignupForm } from '@/components/orchestra-core/SignupForm';
+import { PRICE_LABEL } from '@/lib/pricing';
 import { TESTING_PHASE } from '@/lib/testingPhase';
 
 // Identity is verified by creating a real password account up front, not by
@@ -13,7 +15,7 @@ import { TESTING_PHASE } from '@/lib/testingPhase';
 type Step = 'identity' | 'payment' | 'processing' | 'done';
 type Method = 'mpesa' | 'card';
 
-const PRICE = 'KES 2,000';
+const PRICE = PRICE_LABEL;
 
 export default function Checkout() {
   const [searchParams] = useSearchParams();
@@ -21,7 +23,6 @@ export default function Checkout() {
 
   const [step, setStep] = useState<Step>('identity');
   const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
   const [method, setMethod] = useState<Method>('mpesa');
   const [mpesaPhone, setMpesaPhone] = useState('');
   const [txRef, setTxRef] = useState('');
@@ -48,6 +49,16 @@ export default function Checkout() {
       verifyCardPayment(txRefParam, invoiceId)
         .then(() => finishUpAfterPayment())
         .catch(e => { setError(e.message); setStep('payment'); });
+      return;
+    }
+
+    // Already signed in → skip the identity step, go straight to payment (or to
+    // their account if they've already paid). No re-entering email/password.
+    const stored = getStoredUser();
+    if (stored) {
+      if (stored.paid) { navigate('/account'); return; }
+      setIdentifier(stored.identifier);
+      setStep('payment');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -63,44 +74,23 @@ export default function Checkout() {
     setStep('done');
   }
 
-  async function handleIdentitySubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-    const val = identifier.trim();
-    if (!val) return setError('Enter your email address.');
-    if (!val.includes('@')) return setError('Enter a valid email address.');
-    if (password.length < 8) return setError('Password must be at least 8 characters.');
-
-    setLoading(true);
-    try {
-      const { token, user } = await signup(val, password);
-      saveSession(token, user);
-      dispatchSessionChange();
-
-      if (user.paid) {
-        // Already bought previously — nothing to charge, send them to their account.
-        navigate('/account');
-        return;
-      }
-
-      if (TESTING_PHASE) {
-        // Free testing window — skip straight to granting access, no charge.
-        const result = await initiatePayment(val, 'free');
-        setTxRef(result.txRef);
-        await finishUpAfterPayment();
-        return;
-      }
-
-      setStep('payment');
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        setError('An account with this email already exists.');
-      } else {
-        setError(err instanceof Error ? err.message : 'Could not create account. Try again.');
-      }
-    } finally {
-      setLoading(false);
+  // SignupForm already created the account + saved the session; we just decide
+  // where to go next.
+  async function handleSignupSuccess(user: SessionUser) {
+    setIdentifier(user.identifier);
+    if (user.paid) {
+      // Already bought previously — nothing to charge.
+      navigate('/account');
+      return;
     }
+    if (TESTING_PHASE) {
+      // Free testing window — grant access with no charge.
+      const result = await initiatePayment(user.identifier, 'free');
+      setTxRef(result.txRef);
+      await finishUpAfterPayment();
+      return;
+    }
+    setStep('payment');
   }
 
   async function handlePaymentSubmit(e: React.FormEvent) {
@@ -173,40 +163,17 @@ export default function Checkout() {
 
           {/* ── Step 1: Identity (create account) ─────────────── */}
           {step === 'identity' && (
-            <form onSubmit={handleIdentitySubmit}>
+            <div>
               <div className="text-xs uppercase tracking-[0.15em] text-primary mb-1">Get Orchestra-Core</div>
               <h1 className="font-serif text-3xl text-foreground mb-2">One payment. Lifetime access.</h1>
-              <p className="text-sm text-warm-muted mb-8">{PRICE} — create your account to continue.</p>
+              <p className="text-sm text-warm-muted mb-8">{PRICE} — create your account to continue. Nothing's charged until you choose how to pay.</p>
 
-              <input
-                type="email"
-                value={identifier}
-                onChange={e => setIdentifier(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-primary transition mb-3"
-                autoFocus
-              />
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="Choose a password (min. 8 characters)"
-                className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-primary transition mb-2"
-              />
-              <p className="text-xs text-faint mb-5">Your account is created now — nothing's charged until you choose how to pay.</p>
-
-              {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
-
-              <button type="submit" disabled={loading}
-                className="w-full py-3 rounded-full bg-primary text-primary-foreground flex items-center justify-center gap-2 hover:opacity-90 transition disabled:opacity-60">
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-                {loading ? 'Creating account…' : 'Continue'}
-              </button>
+              <SignupForm onSuccess={handleSignupSuccess} submitLabel="Continue" />
 
               <p className="text-xs text-faint text-center mt-4">
-                Already bought? <Link to="/login" className="text-primary hover:underline">Sign in instead</Link>
+                Already have an account? <Link to="/login" className="text-primary hover:underline">Sign in</Link>
               </p>
-            </form>
+            </div>
           )}
 
           {/* ── Step 2: Payment ──────────────────────────────── */}

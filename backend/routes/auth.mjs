@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { findUserByIdentifier, upsertUser, createUserWithPassword, setUserPassword } from '../lib/db.mjs';
 import { issueOtp, verifyOtp } from '../lib/otp.mjs';
-import { sendOtp } from '../lib/notify.mjs';
+import { sendOtp, sendPasswordReset } from '../lib/notify.mjs';
 import { hashPassword, verifyPassword, validatePasswordStrength } from '../lib/password.mjs';
 
 const router = Router();
@@ -125,6 +126,76 @@ router.post('/verify-otp', verifyLimit, async (req, res) => {
   } catch (err) {
     console.error('verify-otp error', err);
     res.status(500).json({ error: 'Verification failed. Try again.' });
+  }
+});
+
+// ── Password reset (emailed 10-min link) ─────────────────────────────────────
+const resetLimit = rateLimit({ windowMs: 10 * 60 * 1000, max: 5, message: { error: 'Too many reset requests. Wait 10 minutes.' } });
+
+// A reset token is a short-lived JWT bound to a fingerprint of the user's
+// CURRENT password hash. Once the password changes, that fingerprint changes,
+// so the link becomes single-use without needing any DB state.
+function passwordFingerprint(passwordHash) {
+  return crypto.createHash('sha256').update(passwordHash || 'none').digest('hex').slice(0, 16);
+}
+
+// POST /api/auth/request-reset — Body: { identifier }
+// Always responds 200 so it can't be used to probe which emails have accounts.
+router.post('/request-reset', resetLimit, async (req, res) => {
+  const { identifier: raw } = req.body;
+  if (!raw) return res.status(400).json({ error: 'identifier required' });
+
+  const identifier = normalise(raw);
+  try {
+    if (identifier.includes('@')) {
+      const user = await findUserByIdentifier(identifier);
+      if (user) {
+        const token = jwt.sign(
+          { sub: user.id, identifier, purpose: 'reset', pf: passwordFingerprint(user.password_hash) },
+          process.env.JWT_SECRET,
+          { expiresIn: '10m' },
+        );
+        const link = `${process.env.FRONTEND_URL}/reset-password?token=${encodeURIComponent(token)}`;
+        await sendPasswordReset(identifier, link).catch(err => console.error('reset email failed', err));
+      }
+    }
+  } catch (err) {
+    console.error('request-reset error', err);
+  }
+  res.json({ ok: true });
+});
+
+// POST /api/auth/reset-password — Body: { token, password }
+// Verifies the link, sets the new password, and signs the user in.
+router.post('/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) return res.status(400).json({ error: 'token and password required' });
+
+  const strengthError = validatePasswordStrength(password);
+  if (strengthError) return res.status(400).json({ error: strengthError });
+
+  let payload;
+  try {
+    payload = jwt.verify(token, process.env.JWT_SECRET);
+  } catch {
+    return res.status(400).json({ error: 'This reset link is invalid or has expired. Request a new one.' });
+  }
+  if (payload.purpose !== 'reset') return res.status(400).json({ error: 'Invalid reset link.' });
+
+  try {
+    const user = await findUserByIdentifier(payload.identifier);
+    if (!user) return res.status(400).json({ error: 'Invalid reset link.' });
+    if (payload.pf !== passwordFingerprint(user.password_hash)) {
+      return res.status(400).json({ error: 'This reset link has already been used. Request a new one.' });
+    }
+
+    const passwordHash = await hashPassword(password);
+    await setUserPassword(user.id, passwordHash);
+    const updated = { ...user, password_hash: passwordHash };
+    res.json({ token: issueToken(updated, payload.identifier), user: userResponse(updated, payload.identifier) });
+  } catch (err) {
+    console.error('reset-password error', err);
+    res.status(500).json({ error: 'Could not reset password. Try again.' });
   }
 });
 

@@ -2,6 +2,7 @@ import { Check, Clock } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Link } from 'react-router-dom';
 import { TESTING_PHASE, useCountdown, formatCountdown } from '@/lib/testingPhase';
+import { PRICE_LABEL } from '@/lib/pricing';
 
 const benefits = [
   'Full lesson library, forever',
@@ -53,8 +54,8 @@ export default function Pricing() {
             ) : (
               <>
                 <div className="text-xs uppercase tracking-[0.18em] text-primary mb-3">No subscriptions</div>
-                <div className="font-serif text-6xl text-primary mb-2">KES 2,000</div>
-                <p className="text-sm text-warm-muted">paid once · roughly $11</p>
+                <div className="font-serif text-6xl text-primary mb-2">{PRICE_LABEL}</div>
+                <p className="text-sm text-warm-muted">paid once · no subscription</p>
               </>
             )}
           </div>
