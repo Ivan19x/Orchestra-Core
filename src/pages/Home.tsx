@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Brain, Shield, FileText, Heart, ArrowRight, Clock } from 'lucide-react';
+import { BookOpen, Landmark, Shield, Heart, ArrowRight, Clock } from 'lucide-react';
 import { LessonCard } from '@/components/orchestra-core/LessonCard';
 import { CTABand } from '@/components/orchestra-core/CTABand';
 import { TESTING_PHASE, useCountdown, formatCountdown } from '@/lib/testingPhase';
@@ -13,12 +13,12 @@ export default function Home() {
       {/* Hero */}
       <section className="bg-blush border-b border-border">
         <div className="container-narrow py-24 md:py-32 text-center fade-in">
-          <div className="text-xs uppercase tracking-[0.18em] text-primary mb-6">Private AI coach · Curriculum-based</div>
+          <div className="text-xs uppercase tracking-[0.18em] text-primary mb-6">Financial education · Kenya-first</div>
           <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl text-foreground leading-[1.05] mb-6">
-            Understanding Money.
+            Understand your money.
           </h1>
           <p className="text-lg text-warm-muted max-w-xl mx-auto mb-10 leading-relaxed">
-            Orchestra-Core is a private AI coach and curriculum that teaches you how smart money actually thinks — in plain language, one payment, no subscriptions.
+            Orchestra-Core teaches you how money actually works — clear, practical lessons built for the Kenyan reality. Read them at your own pace. One payment, no subscriptions, yours to keep.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/signup" className="inline-flex items-center justify-center px-7 py-3 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition">
@@ -39,9 +39,9 @@ export default function Home() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { icon: BookOpen, title: 'Learn at your pace', body: 'A real curriculum — not an infinite chat window. Series, modules, and lessons you can actually finish.' },
-            { icon: Brain, title: 'Think like smart money', body: 'Read filings, balance sheets, and market moves the way the people who move markets do.' },
-            { icon: Shield, title: 'Private by design', body: 'Orchestra-Core runs on your device. Your financial questions and learning data never leave it. No tracking, no analytics on what you read or ask.' },
+            { icon: BookOpen, title: 'A real curriculum', body: 'Series, modules, and lessons you can actually finish — written to a book-quality standard, not an endless feed.' },
+            { icon: Landmark, title: 'Built for Kenya', body: 'M-Pesa, SACCOs, the NSE, mobile loans, taxes — real shillings and real habits, then the universal principles behind them.' },
+            { icon: Shield, title: 'Honest by design', body: 'Education, not advice. We never tell you what to buy, never touch your money, and never sell your data.' },
           ].map(f => (
             <div key={f.title} className="p-7 rounded-xl border border-border bg-background">
               <div className="w-11 h-11 rounded-lg bg-blush flex items-center justify-center text-primary mb-5">
@@ -61,7 +61,7 @@ export default function Home() {
           <h2 className="font-serif text-4xl text-foreground">A taste of what's inside.</h2>
         </div>
         <div className="max-w-md mx-auto">
-          <LessonCard icon={FileText} title="How Warren Buffett reads a balance sheet" module="Smart money · Module 1" readTime="12 min read" />
+          <LessonCard icon={BookOpen} title="What Money Actually Is" module="Money Basics · Module 1" readTime="22 min read" premium={false} to="/lessons/S1M1" />
         </div>
         <div className="text-center mt-8">
           <Link to="/lessons" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">

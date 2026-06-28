@@ -1,195 +1,162 @@
+// File-driven lesson catalogue.
+//
+// Every lesson is a single Markdown file in src/content/lessons/ named
+// S<series>M<module>.md (e.g. S1M1.md) with YAML frontmatter on top. This
+// module auto-discovers them all at build time via import.meta.glob — there is
+// NO array to register, no code to touch. Drop a file in, commit, and it
+// appears: series sort by number, modules by number, free/locked from the
+// `free` field. See CONTENT-README.md.
+//
+// Frontmatter parsing uses a tiny custom splitter rather than gray-matter on
+// purpose: gray-matter pulls in a Node `Buffer` reference that doesn't exist in
+// the browser/Electron-renderer build and crashed the app when it was used here
+// before. Our frontmatter is simple `key: value` lines, so a 20-line parser is
+// both safer and lighter.
+
 import {
-  Wallet, TrendingUp, TrendingDown, FileText, Shield, BookOpen, BarChart3,
-  Briefcase, Building2, Smartphone, Landmark, LineChart, CreditCard,
-  Home, Brain, Rocket, Heart, Activity, Receipt, type LucideIcon,
+  BookOpen, Briefcase, BarChart3, Landmark, Rocket, Brain, Home, TrendingUp,
+  Heart, type LucideIcon,
 } from 'lucide-react';
 
 export interface Lesson {
-  id?: string;
+  code: string;        // "S1M1"
+  series: number;
+  module: number;
+  seriesTitle: string;
   title: string;
-  module: string;
-  readTime: string;
-  summary?: string;
-  premium?: boolean;
-  icon: LucideIcon;
-  slug?: string;
-  tags?: string[];
+  free: boolean;
+  estMinutes: number;
+  summary: string;
+  body: string;        // markdown body, leading "# Title" stripped
 }
 
 export interface Series {
-  id: string;
-  name: string;
-  tagline: string;
-  icon: LucideIcon;
-  color: string;
-  lessons: Lesson[];
-  comingSoon?: boolean;
+  series: number;
+  title: string;
+  lessons: Lesson[];   // sorted by module
 }
 
-export interface FlatLesson extends Lesson { seriesId: string; seriesName: string }
+// ── Frontmatter parser ───────────────────────────────────────────────────────
+type FieldValue = string | number | boolean;
 
-export const series: Series[] = [
-  {
-    id: 'series-1-money-basics',
-    name: 'Money basics',
-    tagline: 'The foundation. Free to everyone.',
-    icon: BookOpen,
-    color: '#7A2330',
-    lessons: [
-      {
-        id: '1-1', module: 'Module 1', slug: '1-1-what-money-actually-is',
-        title: 'What money actually is', readTime: '5 min read', icon: Wallet,
-        summary: "Money isn't what most people think it is — and understanding the truth changes how you use it.",
-        tags: ['foundation', 'money', 'beginners'],
-      },
-      {
-        id: '1-2', module: 'Module 2', slug: '1-2-how-banks-create-money',
-        title: 'How banks create money', readTime: '6 min read', icon: Building2, premium: true,
-        summary: "Banks don't just store your money — they multiply it. Here's the mechanism that runs the entire financial world.",
-        tags: ['banks', 'money creation', 'beginners'],
-      },
-      {
-        id: '1-3', module: 'Module 3', slug: '1-3-the-50-30-20-rule',
-        title: 'The 50/30/20 rule', readTime: '5 min read', icon: Wallet, premium: true,
-        summary: 'The simplest budgeting framework in existence — and how to adapt it to a Kenyan salary.',
-        tags: ['budgeting', 'practical', 'beginners'],
-      },
-      {
-        id: '1-4', module: 'Module 4', slug: '1-4-compound-interest-the-eighth-wonder',
-        title: 'Compound interest — the eighth wonder', readTime: '7 min read', icon: TrendingUp, premium: true,
-        summary: 'The one concept that makes the difference between being comfortable at 50 and struggling.',
-        tags: ['compound interest', 'saving', 'investing', 'beginners'],
-      },
-      {
-        id: '1-5', module: 'Module 5', slug: '1-5-good-debt-vs-bad-debt',
-        title: 'Good debt vs bad debt', readTime: '6 min read', icon: CreditCard, premium: true,
-        summary: "Not all debt is the enemy. The difference between debt that builds wealth and debt that destroys it.",
-        tags: ['debt', 'loans', 'credit'],
-      },
-      {
-        id: '1-6', module: 'Module 6', slug: '1-6-inflation-why-your-kes-shrinks',
-        title: "Inflation — why your KES 1,000 shrinks", readTime: '6 min read', icon: TrendingDown, premium: true,
-        summary: 'Inflation is the invisible tax on your savings. Understanding it changes how you think about holding cash.',
-        tags: ['inflation', 'macro', 'purchasing power'],
-      },
-      {
-        id: '1-7', module: 'Module 7', slug: '1-7-emergency-fund-the-boring-secret',
-        title: 'The emergency fund — the boring secret', readTime: '5 min read', icon: Shield, premium: true,
-        summary: "The most unsexy financial move that protects every other financial decision you'll ever make.",
-        tags: ['emergency fund', 'saving', 'financial security'],
-      },
-      {
-        id: '1-8', module: 'Module 8', slug: '1-8-net-worth-how-to-measure-yourself',
-        title: 'Net worth — how to measure yourself', readTime: '6 min read', icon: BarChart3, premium: true,
-        summary: 'Your salary tells you what you earn. Your net worth tells you where you actually stand.',
-        tags: ['net worth', 'assets', 'liabilities'],
-      },
-      {
-        id: '1-9', module: 'Module 9', slug: '1-9-reading-a-payslip',
-        title: 'Reading a payslip line by line', readTime: '5 min read', icon: Receipt, premium: true,
-        summary: 'Gross pay, net pay, and the deductions in between — PAYE, NSSF, SHIF, and the Housing Levy explained simply.',
-        tags: ['payslip', 'tax', 'paye', 'nssf', 'shif', 'kenya'],
-      },
-    ],
-  },
-  {
-    id: 'series-2-adult-life-money',
-    name: 'Adult life money',
-    tagline: "Everything you'll pay for that nobody told you about.",
-    icon: Activity,
-    color: '#185FA5',
-    comingSoon: true,
-    lessons: [],
-  },
-  {
-    id: 'series-3-smart-money',
-    name: 'Smart money',
-    tagline: 'How the people who move markets actually think.',
-    icon: BarChart3,
-    color: '#0F6E56',
-    lessons: [
-      { module: 'Module 1', title: 'How Warren Buffett reads a balance sheet', readTime: '12 min read', icon: FileText, slug: 'smart-money/01-buffett-balance-sheet' },
-      { module: 'Module 2', title: 'What a 13F filing tells you', readTime: '9 min read', icon: Briefcase, premium: true, slug: 'smart-money/02-13f-filings' },
-      { module: 'Module 3', title: 'Why hedge funds short stocks', readTime: '10 min read', icon: LineChart, premium: true, slug: 'smart-money/03-why-hedge-funds-short' },
-      { module: 'Module 4', title: 'How market-movers think about risk', readTime: '11 min read', icon: TrendingUp, premium: true, slug: 'smart-money/04-how-market-movers-think-about-risk' },
-    ],
-  },
-  {
-    id: 'series-4-kenya-money',
-    name: 'Kenya money',
-    tagline: 'The local financial landscape nobody maps for you.',
-    icon: Landmark,
-    color: '#854F0B',
-    lessons: [
-      { module: 'Module 1', title: 'M-Pesa fees demystified', readTime: '5 min read', icon: Smartphone, slug: 'kenya-money/01-mpesa-fees-demystified' },
-      { module: 'Module 2', title: 'SACCOs vs banks — which is better for you?', readTime: '8 min read', icon: Building2, premium: true, slug: 'kenya-money/02-saccos-vs-banks' },
-      { module: 'Module 3', title: 'Buying NSE shares step-by-step', readTime: '10 min read', icon: LineChart, premium: true, slug: 'kenya-money/03-buying-nse-shares' },
-      { module: 'Module 4', title: 'T-Bills via CBK DhowCSD', readTime: '9 min read', icon: Landmark, premium: true, slug: 'kenya-money/04-tbills-dhowcsd' },
-    ],
-  },
-  {
-    id: 'series-5-teenager-to-adult',
-    name: 'Teenager to adult',
-    tagline: 'The guide you should have been given at 18.',
-    icon: Rocket,
-    color: '#993556',
-    comingSoon: true,
-    lessons: [],
-  },
-  {
-    id: 'series-6-psychology-of-money',
-    name: 'Psychology of money',
-    tagline: 'Why smart people make terrible money decisions.',
-    icon: Brain,
-    color: '#3C3489',
-    comingSoon: true,
-    lessons: [],
-  },
-  {
-    id: 'series-7-home-household',
-    name: 'Home & household money',
-    tagline: 'Renting, owning, and running a home without going broke.',
-    icon: Home,
-    color: '#3B6D11',
-    comingSoon: true,
-    lessons: [],
-  },
-  {
-    id: 'series-8-investing-saving',
-    name: 'Investing & saving',
-    tagline: 'Making your money work while you sleep.',
-    icon: TrendingUp,
-    color: '#185FA5',
-    comingSoon: true,
-    lessons: [],
-  },
-  {
-    id: 'series-9-family-parenting',
-    name: 'Family & parenting money',
-    tagline: 'Raising financially smart children — and a stable home.',
-    icon: Heart,
-    color: '#993556',
-    comingSoon: true,
-    lessons: [],
-  },
-];
+function parseFrontmatter(raw: string): { data: Record<string, FieldValue>; body: string } | null {
+  // Frontmatter must be the very first thing in the file.
+  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+  if (!match) return null;
 
-export function getAllLessons(): FlatLesson[] {
-  return series.flatMap((s) =>
-    s.lessons.map((l) => ({ ...l, seriesId: s.id, seriesName: s.name }))
-  );
+  const body = raw.slice(match[0].length);
+  const data: Record<string, FieldValue> = {};
+
+  for (const line of match[1].split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const idx = line.indexOf(':');
+    if (idx === -1) continue;
+    const key = line.slice(0, idx).trim();
+    let val = line.slice(idx + 1).trim();
+
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      data[key] = val.slice(1, -1);
+    } else if (val === 'true' || val === 'false') {
+      data[key] = val === 'true';
+    } else if (val !== '' && !Number.isNaN(Number(val))) {
+      data[key] = Number(val);
+    } else {
+      data[key] = val;
+    }
+  }
+  return { data, body };
 }
 
-// A clean, slash-free identifier for lesson URLs (/lessons/:slug). Series-1
-// slugs are already bare ("1-1-what-money-actually-is"); other series are
-// folder-prefixed ("smart-money/01-...") so we take the last path segment.
-// The leading segments differ per series, so last segments stay unique across
-// the curated library.
-export function lessonUrlSlug(l: Lesson): string {
-  const s = l.slug ?? '';
-  return s.includes('/') ? s.split('/').pop()! : s;
+function stripLeadingH1(body: string): string {
+  // The reader renders the title from frontmatter, so drop a leading "# Title"
+  // line to avoid showing it twice.
+  return body.replace(/^\s*#\s+.+(\r?\n)+/, '').trim();
 }
 
-export function getLessonByUrlSlug(urlSlug: string): FlatLesson | undefined {
-  return getAllLessons().find((l) => lessonUrlSlug(l) === urlSlug);
+// ── Auto-discovery ───────────────────────────────────────────────────────────
+const files = import.meta.glob('/src/content/lessons/*.md', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+}) as Record<string, string>;
+
+function buildLessons(): Lesson[] {
+  const lessons: Lesson[] = [];
+
+  for (const [path, raw] of Object.entries(files)) {
+    const parsed = parseFrontmatter(raw);
+    if (!parsed) {
+      console.warn(`[lessons] ${path}: missing or malformed frontmatter — skipped.`);
+      continue;
+    }
+    const d = parsed.data;
+    const missing = (['title', 'series', 'module', 'seriesTitle'] as const).filter(
+      (k) => d[k] === undefined || d[k] === '',
+    );
+    if (missing.length) {
+      console.warn(`[lessons] ${path}: missing required field(s): ${missing.join(', ')} — skipped.`);
+      continue;
+    }
+    if (typeof d.series !== 'number' || typeof d.module !== 'number') {
+      console.warn(`[lessons] ${path}: 'series' and 'module' must be plain numbers — skipped.`);
+      continue;
+    }
+
+    lessons.push({
+      code: `S${d.series}M${d.module}`,
+      series: d.series,
+      module: d.module,
+      seriesTitle: String(d.seriesTitle),
+      title: String(d.title),
+      free: d.free === true,
+      estMinutes: typeof d.estMinutes === 'number' ? d.estMinutes : 0,
+      summary: d.summary !== undefined ? String(d.summary) : '',
+      body: stripLeadingH1(parsed.body),
+    });
+  }
+
+  // Never rely on filesystem order — always sort by series, then module.
+  lessons.sort((a, b) => a.series - b.series || a.module - b.module);
+  return lessons;
+}
+
+const LESSONS: Lesson[] = buildLessons();
+
+// ── Public API ───────────────────────────────────────────────────────────────
+export function getAllLessons(): Lesson[] {
+  return LESSONS;
+}
+
+export function getAllSeries(): Series[] {
+  const map = new Map<number, Series>();
+  for (const l of LESSONS) {
+    if (!map.has(l.series)) map.set(l.series, { series: l.series, title: l.seriesTitle, lessons: [] });
+    map.get(l.series)!.lessons.push(l);
+  }
+  return [...map.values()].sort((a, b) => a.series - b.series);
+}
+
+export function getLesson(series: number, module: number): Lesson | undefined {
+  return LESSONS.find((l) => l.series === series && l.module === module);
+}
+
+export function getLessonByCode(code: string): Lesson | undefined {
+  return LESSONS.find((l) => l.code.toLowerCase() === code.toLowerCase());
+}
+
+export function lessonHref(l: Pick<Lesson, 'code'>): string {
+  return `/lessons/${l.code}`;
+}
+
+// ── Optional per-series visual theming (presentation only, never lesson data) ──
+// Lessons always come from files; this just gives each series an icon for the
+// cards. Unmapped series fall back to BookOpen — nothing breaks without it.
+const SERIES_ICONS: Record<number, LucideIcon> = {
+  1: BookOpen, 2: Briefcase, 3: BarChart3, 4: Landmark,
+  5: Rocket, 6: Brain, 7: Home, 8: TrendingUp, 9: Heart,
+};
+
+export function seriesIcon(series: number): LucideIcon {
+  return SERIES_ICONS[series] ?? BookOpen;
 }

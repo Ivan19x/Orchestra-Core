@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Copy, Check, Download, LogOut, Brain, Link2 } from 'lucide-react';
+import { Copy, Check, Download, LogOut, BookOpen, Link2 } from 'lucide-react';
 import { useSession, clearSession, dispatchSessionChange, getToken } from '@/lib/session';
 import { getMe } from '@/lib/api';
 import { PRICE_LABEL } from '@/lib/pricing';
@@ -79,25 +79,25 @@ export default function Account() {
           <div className="bg-background rounded-2xl border border-border p-6 md:p-8">
             <h2 className="font-serif text-xl text-foreground mb-1">Your dashboard</h2>
             <p className="text-sm text-warm-muted mb-5">
-              Read the free starter lesson in each series. Unlock every lesson and your AI coach with full access.
+              Read the free starter lesson in each series. Unlock every lesson across all series with full access.
             </p>
             <Link to="/dashboard"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition">
-              <Brain className="w-4 h-4" /> Open dashboard
+              <BookOpen className="w-4 h-4" /> Open dashboard
             </Link>
           </div>
         )}
 
-        {/* AI Coach (browser) */}
+        {/* Dashboard (browser) */}
         {session.paid && (
           <div className="bg-background rounded-2xl border border-border p-6 md:p-8">
-            <h2 className="font-serif text-xl text-foreground mb-1">AI Coach</h2>
+            <h2 className="font-serif text-xl text-foreground mb-1">Your dashboard</h2>
             <p className="text-sm text-warm-muted mb-5">
-              Open the full dashboard — lessons, AI chat, and your learning tools. Requires Ollama running on this device.
+              Open your learning dashboard — every lesson across all series, plus your budgeting tools.
             </p>
             <Link to="/dashboard"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition">
-              <Brain className="w-4 h-4" /> Open dashboard
+              <BookOpen className="w-4 h-4" /> Open dashboard
             </Link>
           </div>
         )}

@@ -9,8 +9,7 @@ import { SetupStatus } from '@/components/orchestra-core/SetupStatus';
 import { useSession, saveSession, clearSession, dispatchSessionChange } from '@/lib/session';
 import { isElectron } from '@/lib/platform';
 import { login } from '@/lib/api';
-import { series, type FlatLesson } from '@/lib/lessons';
-import { getLessonContent } from '@/lib/lessonContent';
+import { getAllSeries, seriesIcon, type Lesson } from '@/lib/lessons';
 
 type Tab = 'ai' | 'lessons' | 'support' | 'account';
 
@@ -141,7 +140,7 @@ export default function AppShell() {
         <div className={tab === 'ai' ? 'contents' : 'hidden'}>
           <AppAI key={aiKey} initialQuestion={aiQuestion} ready={aiReady} />
         </div>
-        {tab === 'lessons' && <AppLessons onAsk={openAI} />}
+        {tab === 'lessons' && <AppLessons />}
         {tab === 'support' && <AppSupport />}
         {tab === 'account' && <AppAccount user={user} />}
       </main>
@@ -207,30 +206,29 @@ function AppAI({ initialQuestion, ready }: { initialQuestion: string; ready: boo
 }
 
 // ── Lessons tab ───────────────────────────────────────────────────────────────
-function AppLessons({ onAsk }: { onAsk: (q: string) => void }) {
-  const [reading, setReading] = useState<FlatLesson | null>(null);
-  const active = series.filter(s => !s.comingSoon && s.lessons.length > 0);
+function AppLessons() {
+  const [reading, setReading] = useState<Lesson | null>(null);
+  const allSeries = getAllSeries();
 
   if (reading) {
-    return <LessonReader lesson={reading} onBack={() => setReading(null)} onAsk={onAsk} />;
+    return <LessonReader lesson={reading} onBack={() => setReading(null)} />;
   }
 
-  const firstSeries = active[0];
-  const firstLesson = firstSeries?.lessons[0];
+  const firstLesson = allSeries[0]?.lessons[0];
 
   return (
     <div className="px-8 py-8">
       <h1 className="font-serif text-2xl text-foreground mb-1">Lessons</h1>
       <p className="text-sm text-warm-muted mb-8">Your full curriculum — tap any lesson to read it.</p>
 
-      {firstSeries && firstLesson && (
+      {firstLesson && (
         <button
-          onClick={() => setReading({ ...firstLesson, seriesId: firstSeries.id, seriesName: firstSeries.name })}
+          onClick={() => setReading(firstLesson)}
           className="w-full flex items-center justify-between gap-4 p-5 rounded-2xl bg-primary text-primary-foreground mb-10 hover:opacity-90 transition text-left"
         >
           <div>
             <div className="text-[10px] uppercase tracking-[0.15em] text-primary-foreground/70 mb-1">New here? Start with the basics</div>
-            <p className="text-base font-medium">{firstSeries.name}, {firstLesson.module} — {firstLesson.title}</p>
+            <p className="text-base font-medium">{firstLesson.seriesTitle}, Module {firstLesson.module} — {firstLesson.title}</p>
           </div>
           <span className="inline-flex items-center gap-1 text-sm shrink-0">
             Start learning <ChevronRight className="w-4 h-4" />
@@ -239,91 +237,59 @@ function AppLessons({ onAsk }: { onAsk: (q: string) => void }) {
       )}
 
       <div className="space-y-10">
-        {active.map(s => (
-          <div key={s.id}>
-            <div className="flex items-center gap-3 mb-4">
-              <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                style={{ backgroundColor: `${s.color}18`, color: s.color }}
-              >
-                <s.icon className="w-3.5 h-3.5" strokeWidth={1.75} />
+        {allSeries.map(s => {
+          const Icon = seriesIcon(s.series);
+          return (
+            <div key={s.series}>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-7 h-7 rounded-lg bg-blush flex items-center justify-center text-primary shrink-0">
+                  <Icon className="w-3.5 h-3.5" strokeWidth={1.75} />
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-widest text-faint">Series {s.series}</div>
+                  <h2 className="text-base font-medium text-foreground">{s.title}</h2>
+                </div>
               </div>
-              <div>
-                <h2 className="text-base font-medium text-foreground">{s.name}</h2>
-                <p className="text-xs text-warm-muted">{s.tagline}</p>
-              </div>
-            </div>
 
-            <div className="grid gap-3">
-              {s.lessons.map((lesson, idx) => (
-                <div
-                  key={lesson.id ?? idx}
-                  onClick={() => setReading({ ...lesson, seriesId: s.id, seriesName: s.name })}
-                  className="flex items-start gap-4 p-4 rounded-2xl border border-border bg-background hover:bg-blush transition-colors cursor-pointer"
-                >
+              <div className="grid gap-3">
+                {s.lessons.map(lesson => (
                   <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
-                    style={{ backgroundColor: `${s.color}12`, color: s.color }}
+                    key={lesson.code}
+                    onClick={() => setReading(lesson)}
+                    className="flex items-start gap-4 p-4 rounded-2xl border border-border bg-background hover:bg-blush transition-colors cursor-pointer"
                   >
-                    <lesson.icon className="w-4 h-4" strokeWidth={1.75} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[10px] uppercase tracking-[0.12em] text-faint mb-0.5">{lesson.module}</div>
-                    <p className="text-sm font-medium text-foreground leading-snug">{lesson.title}</p>
-                    {lesson.summary && (
-                      <p className="text-xs text-warm-muted mt-1 leading-relaxed">{lesson.summary}</p>
-                    )}
-                    <div className="flex items-center gap-3 mt-2.5">
-                      <span className="inline-flex items-center gap-1 text-[10px] text-faint">
-                        <Clock className="w-3 h-3" />
-                        {lesson.readTime}
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-[10px] text-primary">
-                        Read lesson <ChevronRight className="w-3 h-3" />
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAsk(`Tell me about the lesson "${lesson.title}" — explain it in plain English with an example.`);
-                        }}
-                        className="inline-flex items-center gap-1 text-[10px] text-warm-muted hover:text-primary hover:underline"
-                      >
-                        Ask about this
-                      </button>
+                    <div className="w-9 h-9 rounded-xl bg-blush flex items-center justify-center text-primary shrink-0 mt-0.5">
+                      <Icon className="w-4 h-4" strokeWidth={1.75} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] uppercase tracking-[0.12em] text-faint mb-0.5">Module {lesson.module}</div>
+                      <p className="text-sm font-medium text-foreground leading-snug">{lesson.title}</p>
+                      {lesson.summary && (
+                        <p className="text-xs text-warm-muted mt-1 leading-relaxed">{lesson.summary}</p>
+                      )}
+                      <div className="flex items-center gap-3 mt-2.5">
+                        <span className="inline-flex items-center gap-1 text-[10px] text-faint">
+                          <Clock className="w-3 h-3" />
+                          {lesson.estMinutes} min read
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[10px] text-primary">
+                          Read lesson <ChevronRight className="w-3 h-3" />
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-
-        {/* Coming soon */}
-        <div>
-          <h2 className="text-sm font-medium text-faint mb-3 uppercase tracking-[0.12em]">Coming soon</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {series.filter(s => s.comingSoon).map(s => (
-              <div key={s.id} className="flex items-center gap-3 p-3 rounded-xl border border-border bg-background opacity-50">
-                <s.icon className="w-4 h-4 text-faint shrink-0" strokeWidth={1.75} />
-                <div>
-                  <p className="text-xs font-medium text-foreground">{s.name}</p>
-                  <p className="text-[10px] text-faint">{s.tagline}</p>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
 // ── Lesson reader ────────────────────────────────────────────────────────────
-function LessonReader({ lesson, onBack, onAsk }: {
-  lesson: FlatLesson; onBack: () => void; onAsk: (q: string) => void;
-}) {
-  const content = lesson.slug ? getLessonContent(lesson.slug) : undefined;
-
+function LessonReader({ lesson, onBack }: { lesson: Lesson; onBack: () => void }) {
   return (
     <div className="px-8 py-8 max-w-2xl">
       <button
@@ -334,21 +300,12 @@ function LessonReader({ lesson, onBack, onAsk }: {
       </button>
 
       <LessonArticle
-        seriesName={lesson.seriesName}
-        module={lesson.module}
+        seriesName={lesson.seriesTitle}
+        module={`Module ${lesson.module}`}
         title={lesson.title}
-        readTime={lesson.readTime}
-        body={content?.body}
+        readTime={`${lesson.estMinutes} min read`}
+        body={lesson.body}
       />
-
-      <div className="mt-10 pt-6 border-t border-border">
-        <button
-          onClick={() => onAsk(`Tell me about the lesson "${lesson.title}" — explain it in plain English with an example.`)}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition"
-        >
-          <Brain className="w-4 h-4" /> Discuss this with your AI coach
-        </button>
-      </div>
     </div>
   );
 }

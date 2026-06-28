@@ -50,10 +50,10 @@ export function Nav() {
               Open dashboard
             </Link>
           ) : (
-            <Link to="/signup"
+            <Link to="/lessons"
               className="inline-flex items-center px-4 sm:px-5 py-2 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition">
-              <span className="sm:hidden">Get started</span>
-              <span className="hidden sm:inline">Get started — free</span>
+              <span className="sm:hidden">Lessons</span>
+              <span className="hidden sm:inline">Read the lessons</span>
             </Link>
           )}
           <button className="md:hidden p-2 text-foreground" onClick={() => setOpen(!open)} aria-label="Menu">
@@ -84,9 +84,9 @@ export function Nav() {
                 Open dashboard
               </Link>
             ) : (
-              <Link to="/signup" onClick={() => setOpen(false)}
+              <Link to="/lessons" onClick={() => setOpen(false)}
                 className="mt-2 inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm">
-                Get started — free
+                Read the lessons
               </Link>
             )}
           </div>

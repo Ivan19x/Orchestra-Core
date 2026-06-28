@@ -8,7 +8,7 @@ export function Footer() {
       <div className="container-prose py-14 grid grid-cols-1 md:grid-cols-4 gap-10">
         <div>
           <Logo />
-          <p className="mt-3 text-sm text-warm-muted max-w-xs">A private AI coach for understanding money — built for clarity, not hype.</p>
+          <p className="mt-3 text-sm text-warm-muted max-w-xs">Clear, practical financial education — built for Kenya, built for clarity, not hype.</p>
         </div>
 
         <FooterCol title="Product" links={[
@@ -20,7 +20,7 @@ export function Footer() {
         <FooterCol title="Company" links={[
           ['About', '/about'],
           ['Support', '/support'],
-          ['Try Orchestra-Core', '/try'],
+          ['Lessons', '/lessons'],
         ]} />
         <FooterCol title="Legal" links={[
           ['Terms of Service', '/terms'],

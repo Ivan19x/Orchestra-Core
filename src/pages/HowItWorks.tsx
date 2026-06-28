@@ -1,4 +1,5 @@
-import { Smartphone, Lock, BookOpen } from 'lucide-react';
+import { Landmark, Shield, BookOpen } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { CTABand } from '@/components/orchestra-core/CTABand';
 
 export default function HowItWorks() {
@@ -11,77 +12,79 @@ export default function HowItWorks() {
         </div>
       </section>
 
-      {/* Meet your coach */}
+      {/* A real curriculum */}
       <section className="container-prose py-24 border-b border-border">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
-            <div className="text-xs uppercase tracking-[0.18em] text-faint mb-3">01 · Meet your coach</div>
-            <h2 className="font-serif text-4xl text-foreground mb-4">A coach in your pocket who actually explains things.</h2>
+            <div className="text-xs uppercase tracking-[0.18em] text-faint mb-3">01 · A real curriculum</div>
+            <h2 className="font-serif text-4xl text-foreground mb-4">Lessons you can actually finish.</h2>
             <p className="text-warm-muted leading-relaxed">
-              Ask Orchestra-Core anything — from "what's a P/E ratio" to "why did the market drop today" — and get a plain-English answer with the reasoning shown. No jargon dumps. No "consult a financial advisor" cop-outs.
-            </p>
-          </div>
-          <div className="p-6 rounded-2xl bg-blush border border-border space-y-3">
-            <Bubble who="you">Why do markets drop?</Bubble>
-            <Bubble who="coach">Markets usually fall for one of a few reasons: central banks signal rates staying high (which reduces the value of future earnings), a big company misses expectations and drags sentiment, or a geopolitical event shifts risk appetite. Often it's several things stacking. I don't have live data — but I can walk you through exactly how each of those mechanisms works.</Bubble>
-          </div>
-        </div>
-      </section>
-
-      {/* Private */}
-      <section className="container-prose py-24 border-b border-border">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          <div className="order-2 md:order-1 flex items-center justify-center">
-            <div className="relative w-56 h-80 rounded-3xl border-2 border-foreground bg-background flex items-center justify-center">
-              <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-16 h-1.5 rounded-full bg-foreground" />
-              <Lock className="w-16 h-16 text-primary" strokeWidth={1.5} />
-              <Smartphone className="absolute -bottom-4 -right-4 w-10 h-10 text-warm-muted bg-background p-1.5 rounded-full border border-border" />
-            </div>
-          </div>
-          <div className="order-1 md:order-2">
-            <div className="text-xs uppercase tracking-[0.18em] text-faint mb-3">02 · Built to stay private</div>
-            <h2 className="font-serif text-4xl text-foreground mb-4">Your money questions never leave your device.</h2>
-            <p className="text-warm-muted leading-relaxed">
-              Orchestra-Core runs locally on your computer. Your learning data and financial questions never leave your device — no server logs what you ask, no analytics tracks what you read. You buy once through a secure payment page; after that, nothing you do in the app touches the internet unless you turn on the optional Deep Dive web research toggle.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Lessons */}
-      <section className="container-prose py-24">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          <div>
-            <div className="text-xs uppercase tracking-[0.18em] text-faint mb-3">03 · How lessons work</div>
-            <h2 className="font-serif text-4xl text-foreground mb-4">A curriculum, not an endless feed.</h2>
-            <p className="text-warm-muted leading-relaxed mb-4">
-              Orchestra-Core is organized into series, each covering a distinct area of financial life. Three series are live now — <strong className="text-foreground font-medium">Money basics</strong>, <strong className="text-foreground font-medium">Smart money</strong>, and <strong className="text-foreground font-medium">Kenya money</strong> — with six more in development. Each series has lessons you can actually finish.
-            </p>
-            <p className="text-warm-muted leading-relaxed">
-              You can browse the full lesson library here as a preview. All lesson content, interactive learning, and your AI coach are available in your dashboard the moment you sign in — one payment gets you everything, directly on the website.
+              Orchestra-Core is organised into series, each covering a distinct area of financial life — money basics,
+              adult-life money, the Kenyan financial system, investing, the psychology of money, and more. Every
+              series is broken into short modules written in plain language, to a book-quality standard. You read at
+              your own pace, not in an endless feed.
             </p>
           </div>
           <div className="p-6 rounded-2xl border border-border bg-background space-y-3">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-blush">
-              <BookOpen className="w-5 h-5 text-primary" />
-              <div className="flex-1">
-                <div className="text-sm text-foreground">Money basics</div>
-                <div className="text-xs text-warm-muted">8 lessons · Preview available</div>
+            {[
+              ['Series 1 · Money Basics', 'What money is, budgeting, saving, debt, inflation…'],
+              ['Series 2 · Adult Life Money', 'Payslips, rent, loans, insurance, taxes, scams…'],
+              ['Series 4 · Kenya Money', 'M-Pesa, SACCOs, the NSE, T-bills, land, chamas…'],
+            ].map(([t, s]) => (
+              <div key={t} className="flex items-center gap-3 p-3 rounded-lg bg-blush">
+                <BookOpen className="w-5 h-5 text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm text-foreground">{t}</div>
+                  <div className="text-xs text-warm-muted truncate">{s}</div>
+                </div>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Built for Kenya */}
+      <section className="container-prose py-24 border-b border-border">
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="order-2 md:order-1 flex items-center justify-center">
+            <div className="w-56 h-56 rounded-3xl border-2 border-foreground bg-background flex items-center justify-center">
+              <Landmark className="w-20 h-20 text-primary" strokeWidth={1.5} />
             </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-blush">
-              <BookOpen className="w-5 h-5 text-primary" />
-              <div className="flex-1">
-                <div className="text-sm text-foreground">Smart money</div>
-                <div className="text-xs text-warm-muted">4 modules · Preview available</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-blush">
-              <BookOpen className="w-5 h-5 text-primary" />
-              <div className="flex-1">
-                <div className="text-sm text-foreground">Kenya money</div>
-                <div className="text-xs text-warm-muted">4 modules · Preview available</div>
-              </div>
+          </div>
+          <div className="order-1 md:order-2">
+            <div className="text-xs uppercase tracking-[0.18em] text-faint mb-3">02 · Built for Kenya</div>
+            <h2 className="font-serif text-4xl text-foreground mb-4">Real shillings, real habits.</h2>
+            <p className="text-warm-muted leading-relaxed">
+              Every lesson uses the financial world you actually live in — M-Pesa fees and Fuliza, SACCOs and the NSE,
+              PAYE and SHIF on your payslip, mobile loans and the CRB. We teach the universal principles of money
+              through Kenyan examples first, so the knowledge is immediately usable — then it travels anywhere.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* One payment */}
+      <section className="container-prose py-24">
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <div className="text-xs uppercase tracking-[0.18em] text-faint mb-3">03 · Yours to keep</div>
+            <h2 className="font-serif text-4xl text-foreground mb-4">One payment. Owned forever.</h2>
+            <p className="text-warm-muted leading-relaxed mb-4">
+              The starter lesson in each series is free to read. One payment unlocks the full library — every current
+              and future lesson — with no subscription, ever. Read it all directly in your browser, nothing to install.
+            </p>
+            <p className="text-warm-muted leading-relaxed">
+              Orchestra-Core is <strong className="text-foreground font-medium">education, not advice</strong>: we teach
+              you how money works so you can decide for yourself. We never tell you what to buy, never touch your
+              money, and never sell your data.
+            </p>
+            <Link to="/lessons" className="inline-flex items-center mt-6 text-sm text-primary hover:underline">
+              Browse the lessons →
+            </Link>
+          </div>
+          <div className="p-6 rounded-2xl border border-border bg-blush flex items-center justify-center">
+            <div className="w-40 h-40 rounded-3xl border-2 border-foreground bg-background flex items-center justify-center">
+              <Shield className="w-16 h-16 text-primary" strokeWidth={1.5} />
             </div>
           </div>
         </div>
@@ -89,16 +92,5 @@ export default function HowItWorks() {
 
       <CTABand />
     </>
-  );
-}
-
-function Bubble({ who, children }: { who: 'you' | 'coach'; children: React.ReactNode }) {
-  const isYou = who === 'you';
-  return (
-    <div className={`flex ${isYou ? 'justify-end' : 'justify-start'}`}>
-      <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${isYou ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-background border border-border text-foreground rounded-bl-sm'}`}>
-        {children}
-      </div>
-    </div>
   );
 }

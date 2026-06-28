@@ -41,7 +41,7 @@ const App = () => (
             <Route path="/" element={isMobileApp ? <Navigate to="/app" replace /> : <Home />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/lessons" element={<Lessons />} />
-            <Route path="/lessons/:slug" element={<Lesson />} />
+            <Route path="/lessons/:code" element={<Lesson />} />
             <Route path="/try" element={<Try />} />
             <Route path="/ask" element={<Ask />} />
             <Route path="/dashboard" element={<Dashboard />} />
