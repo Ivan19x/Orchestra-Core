@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
-import { getAllSeries, seriesIcon, lessonHref } from '@/lib/lessons';
+import { CURRICULUM } from '@/lib/curriculum';
+import { getLesson, seriesIcon, lessonHref } from '@/lib/lessons';
 import { LessonCard } from '@/components/orchestra-core/LessonCard';
 import { CTABand } from '@/components/orchestra-core/CTABand';
 import { useSession } from '@/lib/session';
@@ -9,7 +10,7 @@ export default function Lessons() {
   const [q, setQ] = useState('');
   const session = useSession();
   const paid = !!session?.paid;
-  const series = getAllSeries();
+  const query = q.trim().toLowerCase();
 
   return (
     <>
@@ -18,8 +19,8 @@ export default function Lessons() {
           <div className="text-xs uppercase tracking-[0.18em] text-primary mb-4">Lesson library</div>
           <h1 className="font-serif text-5xl md:text-6xl text-foreground mb-4">Learn how money actually works.</h1>
           <p className="text-sm text-warm-muted max-w-md mx-auto mb-6">
-            Clear, practical, Kenya-first lessons you read at your own pace. The starter lesson in each series is free
-            with a free account; one payment unlocks the full library.
+            The full programme — nine series, built Kenya-first. We're adding lessons all the time; the starter lesson
+            in each series is free with a free account.
           </p>
           <div className="relative max-w-md mx-auto">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-muted" />
@@ -34,14 +35,19 @@ export default function Lessons() {
       </section>
 
       <section className="container-prose py-16 space-y-16">
-        {series.length === 0 && (
-          <p className="text-center text-warm-muted">Lessons are being written — check back soon.</p>
-        )}
-
-        {series.map(s => {
+        {CURRICULUM.map(s => {
           const Icon = seriesIcon(s.series);
-          const filtered = s.lessons.filter(l => l.title.toLowerCase().includes(q.toLowerCase()));
-          if (q && filtered.length === 0) return null;
+          // Merge the plan with whatever content files exist: a module with a
+          // matching S<series>M<module>.md is live; the rest show as "Soon".
+          const modules = s.modules
+            .map(m => {
+              const lesson = getLesson(s.series, m.module);
+              return { module: m.module, title: lesson ? lesson.title : m.title, lesson };
+            })
+            .filter(m => !query || m.title.toLowerCase().includes(query));
+          if (query && modules.length === 0) return null;
+          const liveCount = s.modules.filter(m => getLesson(s.series, m.module)).length;
+
           return (
             <div key={s.series}>
               <div className="flex items-start gap-4 p-5 rounded-xl bg-blush border border-border mb-6">
@@ -51,19 +57,23 @@ export default function Lessons() {
                 <div>
                   <div className="text-[10px] uppercase tracking-widest text-faint mb-0.5">Series {s.series}</div>
                   <h2 className="font-serif text-2xl text-foreground">{s.title}</h2>
+                  <p className="text-xs text-warm-muted mt-0.5">
+                    {liveCount > 0 ? `${liveCount} of ${s.modules.length} lessons available` : 'Coming soon'}
+                  </p>
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {filtered.map(l => (
+                {modules.map(m => (
                   <LessonCard
-                    key={l.code}
+                    key={m.module}
                     icon={Icon}
-                    title={l.title}
-                    module={`Module ${l.module}`}
-                    readTime={`${l.estMinutes} min read`}
-                    premium={!l.free}
-                    to={lessonHref(l)}
-                    locked={!l.free && !paid}
+                    title={m.title}
+                    module={`Module ${m.module}`}
+                    readTime={m.lesson ? `${m.lesson.estMinutes} min read` : 'Coming soon'}
+                    premium={m.lesson ? !m.lesson.free : undefined}
+                    to={m.lesson ? lessonHref(m.lesson) : undefined}
+                    locked={m.lesson ? (!m.lesson.free && !paid) : undefined}
+                    comingSoon={!m.lesson}
                   />
                 ))}
               </div>

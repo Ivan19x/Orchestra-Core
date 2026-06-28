@@ -85,8 +85,13 @@ The file name and the frontmatter numbers should match (`S4M7.md` has
   — never by when you added the file.
 - **Gaps are fine.** If `S1M3` exists but `S1M2` doesn't yet, the site still
   shows what exists.
-- **A new series appears on its own.** The first time you add a file with a new
-  `series` number, that series shows up — using the `seriesTitle` from the file.
+- **The whole programme is already on the site.** All nine series and every
+  planned module show on the lessons page from day one — the ones without a
+  content file yet appear greyed out as "Soon". The moment you drop in the
+  matching `S<series>M<module>.md` file, that module becomes openable
+  automatically. You only touch `src/lib/curriculum.ts` to change the *plan*
+  itself (rename a planned module, add one beyond the list, reorder) — never to
+  publish a lesson.
 - **A bad file is skipped, not fatal.** If a file is missing required fields,
   the site logs a warning naming that file and skips just it; everything else
   keeps working.
