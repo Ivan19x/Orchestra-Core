@@ -70,8 +70,9 @@ export default function HowItWorks() {
             <div className="text-xs uppercase tracking-[0.18em] text-faint mb-3">03 · Yours to keep</div>
             <h2 className="font-serif text-4xl text-foreground mb-4">One payment. Owned forever.</h2>
             <p className="text-warm-muted leading-relaxed mb-4">
-              The starter lesson in each series is free to read. One payment unlocks the full library — every current
-              and future lesson — with no subscription, ever. Read it all directly in your browser, nothing to install.
+              The starter lesson in each series is free to read with a free account. One payment unlocks the full
+              library — every current and future lesson — with no subscription, ever. Read it all directly in your
+              browser, nothing to install.
             </p>
             <p className="text-warm-muted leading-relaxed">
               Orchestra-Core is <strong className="text-foreground font-medium">education, not advice</strong>: we teach

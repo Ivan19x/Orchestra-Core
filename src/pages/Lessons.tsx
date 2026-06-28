@@ -19,7 +19,7 @@ export default function Lessons() {
           <h1 className="font-serif text-5xl md:text-6xl text-foreground mb-4">Learn how money actually works.</h1>
           <p className="text-sm text-warm-muted max-w-md mx-auto mb-6">
             Clear, practical, Kenya-first lessons you read at your own pace. The starter lesson in each series is free
-            to everyone.
+            with a free account; one payment unlocks the full library.
           </p>
           <div className="relative max-w-md mx-auto">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-muted" />

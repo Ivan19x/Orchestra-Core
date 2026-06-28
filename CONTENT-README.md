@@ -53,7 +53,7 @@ A paragraph of explanation. Just write naturally.
 | `series` | Which series (1–9). Just the number, no quotes. |
 | `module` | Which lesson within that series. Just the number. |
 | `seriesTitle` | The human name of the series, e.g. `"Money Basics"`. In `"quotes"`. |
-| `free` | `true` = anyone can read it. `false` = needs a paid account. No quotes. |
+| `free` | `true` = a free starter lesson (readable with a free account). `false` = needs a paid account. No quotes. |
 | `estMinutes` | Rough reading time in minutes. Just the number. |
 | `summary` | One sentence shown on the lesson cards/lists. In `"quotes"`. |
 
