@@ -1,12 +1,16 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Landmark, Shield, Heart, ArrowRight, Clock } from 'lucide-react';
+import { BookOpen, Landmark, Shield, ArrowRight, Smartphone } from 'lucide-react';
 import { LessonCard } from '@/components/orchestra-core/LessonCard';
 import { CTABand } from '@/components/orchestra-core/CTABand';
-import { TESTING_PHASE, useCountdown, formatCountdown } from '@/lib/testingPhase';
+import { getAllLessons, seriesIcon, lessonHref } from '@/lib/lessons';
 import { PRICE_LABEL } from '@/lib/pricing';
 
 export default function Home() {
-  const countdown = useCountdown();
+  const lessons = getAllLessons();
+  const freeCount = lessons.filter(l => l.free).length;
+  // Show the three free starter lessons — the ones a visitor can actually read
+  // the moment they make an account, so the preview is never a tease.
+  const preview = lessons.filter(l => l.free).slice(0, 3);
 
   return (
     <>
@@ -18,16 +22,20 @@ export default function Home() {
             Understand your money.
           </h1>
           <p className="text-lg text-warm-muted max-w-xl mx-auto mb-10 leading-relaxed">
-            Orchestra-Core teaches you how money actually works — clear, practical lessons built for the Kenyan reality. Read them at your own pace. One payment, no subscriptions, yours to keep.
+            Orchestra-Core teaches you how money actually works — clear, practical lessons built for the Kenyan
+            reality. Read them at your own pace, in your browser. One payment, no subscriptions, yours to keep.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/signup" className="inline-flex items-center justify-center px-7 py-3 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition">
               Get started — free
             </Link>
-            <Link to="/how-it-works" className="inline-flex items-center justify-center px-7 py-3 rounded-full border border-primary text-primary hover:bg-blush transition">
-              See how it works
+            <Link to="/lessons" className="inline-flex items-center justify-center px-7 py-3 rounded-full border border-primary text-primary hover:bg-background transition">
+              Browse the lessons
             </Link>
           </div>
+          <p className="text-xs text-faint mt-6">
+            {freeCount} lessons free with an account · {lessons.length} published so far
+          </p>
         </div>
       </section>
 
@@ -54,63 +62,50 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Sample lesson */}
-      <section className="container-prose py-12 pb-24">
-        <div className="text-center mb-10">
-          <div className="text-xs uppercase tracking-[0.18em] text-faint mb-3">Sample lesson</div>
-          <h2 className="font-serif text-4xl text-foreground">A taste of what's inside.</h2>
-        </div>
-        <div className="max-w-md mx-auto">
-          <LessonCard icon={BookOpen} title="What Money Actually Is" module="Money Basics · Module 1" readTime="22 min read" premium={false} to="/lessons/S1M1" />
-        </div>
-        <div className="text-center mt-8">
-          <Link to="/lessons" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
-            Browse all lessons <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      </section>
+      {/* Free starter lessons */}
+      {preview.length > 0 && (
+        <section className="container-prose py-12 pb-24">
+          <div className="text-center mb-10">
+            <div className="text-xs uppercase tracking-[0.18em] text-faint mb-3">Start here — free</div>
+            <h2 className="font-serif text-4xl text-foreground">A taste of what's inside.</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+            {preview.map(l => (
+              <LessonCard
+                key={l.code}
+                icon={seriesIcon(l.series)}
+                title={l.title}
+                module={`${l.seriesTitle} · Module ${l.module}`}
+                readTime={`${l.estMinutes} min read`}
+                premium={false}
+                to={lessonHref(l)}
+              />
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <Link to="/lessons" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+              Browse all lessons <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Pricing teaser */}
       <section className="bg-blush border-y border-border">
         <div className="container-narrow py-24 text-center">
-          {TESTING_PHASE ? (
-            <>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium mb-4">
-                <Clock className="w-3 h-3" />
-                Testing phase
-              </div>
-              <h2 className="font-serif text-5xl md:text-6xl text-foreground mb-3">Free</h2>
-              <p className="text-warm-muted mb-2">Access every lesson at no cost during the testing phase.</p>
-              {countdown && (
-                <p className="text-sm text-faint mb-8">Paid access (KES 2,000) returns in {formatCountdown(countdown)}</p>
-              )}
-            </>
-          ) : (
-            <>
-              <div className="text-xs uppercase tracking-[0.18em] text-primary mb-4">No subscriptions. Ever.</div>
-              <h2 className="font-serif text-5xl md:text-6xl text-foreground mb-3">{PRICE_LABEL}</h2>
-              <p className="text-warm-muted mb-8">One-time. Access to every lesson and every update, for as long as Orchestra-Core operates.</p>
-            </>
-          )}
-          <Link to="/pricing" className="inline-flex items-center px-7 py-3 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition">
-            {TESTING_PHASE ? 'Get free access' : 'Get Orchestra-Core'}
-          </Link>
-        </div>
-      </section>
-
-      {/* Support teaser */}
-      <section className="container-prose py-24">
-        <div className="max-w-2xl mx-auto text-center">
-          <div className="w-12 h-12 rounded-full bg-blush flex items-center justify-center text-primary mx-auto mb-5">
-            <Heart className="w-5 h-5" strokeWidth={1.75} />
-          </div>
-          <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-4">Support keeps Orchestra-Core free for those who can't pay.</h2>
-          <p className="text-warm-muted mb-6 leading-relaxed">
-            Contributions help Orchestra-Core grow — more lessons, more series, and eventually a free hosted tier for learners who can't pay. Built by a student in Nairobi, Kenya.
+          <div className="text-xs uppercase tracking-[0.18em] text-primary mb-4">No subscriptions. Ever.</div>
+          <h2 className="font-serif text-5xl md:text-6xl text-foreground mb-3">{PRICE_LABEL}</h2>
+          <p className="text-warm-muted mb-3">
+            One-time. Unlocks every lesson in every series — current and future — for as long as Orchestra-Core operates.
           </p>
-          <Link to="/support" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
-            Learn how to contribute <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          <p className="inline-flex items-center gap-1.5 text-sm text-warm-muted mb-8">
+            <Smartphone className="w-3.5 h-3.5 text-primary" /> Pay with M-Pesa
+          </p>
+          <div>
+            <Link to="/pricing" className="inline-flex items-center px-7 py-3 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition">
+              See what's included
+            </Link>
+          </div>
         </div>
       </section>
 

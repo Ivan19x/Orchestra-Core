@@ -1,28 +1,50 @@
-import { Check, Clock } from 'lucide-react';
+import { Check, Smartphone } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Link } from 'react-router-dom';
-import { TESTING_PHASE, useCountdown, formatCountdown } from '@/lib/testingPhase';
 import { PRICE_LABEL } from '@/lib/pricing';
+import { getAllLessons } from '@/lib/lessons';
 
 const benefits = [
-  'The full lesson library across all nine series — forever',
-  'Read everything in your browser — no install needed',
+  'Every lesson in every series — unlocked forever',
+  'Every future lesson and update, at no extra cost',
+  'Read it all in your browser — nothing to install',
   'Kenya-first, written to a book-quality standard',
-  'Every future lesson and update, for as long as Orchestra-Core operates',
   'No subscriptions, no tracking, no upsells',
 ];
 
 const faqs = [
-  { q: 'Is this financial advice?', a: 'No. Orchestra-Core is financial education. It teaches you how money, markets, and institutions work so you can make better decisions — but it never tells you what to buy or sell, and we never touch your money.' },
-  { q: 'Do I need to install anything?', a: 'No. Orchestra-Core runs directly on the website — sign in and read every lesson in your browser, no download required.' },
-  { q: 'Do I need internet?', a: 'Yes — Orchestra-Core runs on the website, so you need a connection to read your lessons.' },
-  { q: 'What exactly do I get for one payment?', a: 'Lifetime access to the full written curriculum — every lesson across all nine series, current and future. One payment, owned forever, no subscription.' },
-  { q: 'Why do I need to give my email?', a: 'We link your payment to your email so you can sign back in and keep your access if you switch devices, without paying again. We store nothing else and never sell your data.' },
-  { q: 'Is there an AI tutor?', a: 'Not yet. An AI tutor is planned for later — once Orchestra-Core runs it on its own infrastructure — and it will be a separate, optional add-on. The written lessons are the product today, and they stay a one-time purchase, forever.' },
+  {
+    q: 'Is this financial advice?',
+    a: 'No. Orchestra-Core is financial education. It teaches you how money, markets, and institutions work so you can make better decisions — but it never tells you what to buy or sell, and we never touch your money.',
+  },
+  {
+    q: 'How do I pay?',
+    a: 'With M-Pesa. Enter your Safaricom number at checkout and you\'ll get the usual prompt on your phone — enter your PIN and your account unlocks straight away. We never see your PIN.',
+  },
+  {
+    q: 'Do I need to install anything?',
+    a: 'No. Orchestra-Core runs entirely on the website. Create an account, sign in, and read.',
+  },
+  {
+    q: 'What exactly do I get for one payment?',
+    a: 'Lifetime access to the full written curriculum — every lesson across every series, current and future. One payment, owned forever, no subscription.',
+  },
+  {
+    q: 'Can I read anything before paying?',
+    a: 'Yes. The starter lesson in each series is free to read with a free account — no payment details needed. Read those first and decide afterwards.',
+  },
+  {
+    q: 'Why do you need my email?',
+    a: 'To link your purchase to you, so you can sign back in from any device without paying again. We store nothing else and never sell your data.',
+  },
+  {
+    q: 'What if my payment fails?',
+    a: 'Nothing is charged unless the M-Pesa prompt is completed. If money left your account but access didn\'t unlock, email us with your M-Pesa confirmation code and we\'ll sort it out.',
+  },
 ];
 
 export default function Pricing() {
-  const countdown = useCountdown();
+  const lessons = getAllLessons();
 
   return (
     <>
@@ -30,35 +52,20 @@ export default function Pricing() {
         <div className="container-narrow py-24 text-center">
           <div className="text-xs uppercase tracking-[0.18em] text-primary mb-4">Pricing</div>
           <h1 className="font-serif text-5xl md:text-6xl text-foreground mb-4">One payment. Lifetime access.</h1>
-          <p className="text-warm-muted max-w-lg mx-auto">Most money apps charge you every month. Orchestra-Core charges you once.</p>
+          <p className="text-warm-muted max-w-lg mx-auto">
+            Most money apps charge you every month. Orchestra-Core charges you once.
+          </p>
         </div>
       </section>
 
       <section className="container-prose py-20">
         <div className="max-w-md mx-auto p-8 md:p-10 rounded-2xl border border-border bg-background shadow-sm">
           <div className="text-center mb-8">
-            {TESTING_PHASE ? (
-              <>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium mb-3">
-                  <Clock className="w-3 h-3" />
-                  Testing phase
-                </div>
-                <div className="font-serif text-6xl text-primary mb-2">0 KES</div>
-                <p className="text-sm text-warm-muted mb-1">Free during testing</p>
-                {countdown && (
-                  <p className="text-xs text-faint">
-                    Paid access (KES 2,000) returns in {formatCountdown(countdown)}
-                  </p>
-                )}
-              </>
-            ) : (
-              <>
-                <div className="text-xs uppercase tracking-[0.18em] text-primary mb-3">No subscriptions</div>
-                <div className="font-serif text-6xl text-primary mb-2">{PRICE_LABEL}</div>
-                <p className="text-sm text-warm-muted">paid once · no subscription</p>
-              </>
-            )}
+            <div className="text-xs uppercase tracking-[0.18em] text-primary mb-3">No subscriptions</div>
+            <div className="font-serif text-6xl text-primary mb-2">{PRICE_LABEL}</div>
+            <p className="text-sm text-warm-muted">paid once · unlocks all {lessons.length} lessons and everything to come</p>
           </div>
+
           <ul className="space-y-3 mb-8">
             {benefits.map(b => (
               <li key={b} className="flex gap-3 text-sm text-foreground">
@@ -67,16 +74,21 @@ export default function Pricing() {
               </li>
             ))}
           </ul>
+
           <Link to="/checkout"
             className="block text-center px-7 py-3 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition">
-            {TESTING_PHASE ? 'Get free access' : 'Get Orchestra-Core'}
+            Get Orchestra-Core
           </Link>
-          <p className="text-xs text-faint text-center mt-4">
-            {TESTING_PHASE
-              ? 'Testing phase — no payment required. Access resets when paid mode returns.'
-              : 'Pay with M-Pesa or card via IntaSend.'}
+
+          <p className="flex items-center justify-center gap-1.5 text-xs text-faint mt-4">
+            <Smartphone className="w-3 h-3" /> Pay with M-Pesa · secure prompt straight to your phone
           </p>
         </div>
+
+        <p className="text-center text-sm text-warm-muted mt-8">
+          Not ready? <Link to="/signup" className="text-primary hover:underline">Create a free account</Link> and read
+          the starter lesson in each series first.
+        </p>
       </section>
 
       <section className="container-narrow pb-24">

@@ -2,227 +2,177 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { randomUUID } from 'crypto';
 import {
-  upsertUser, getUserById, createPayment,
-  getPaymentByTxRef, getPaymentByExternalId,
-  updatePaymentExternalId, completePayment, failPayment, markUserPaid,
+  findUserByIdentifier, getUserById, createPayment,
+  getPaymentByTxRef, getPaymentByCheckoutId,
+  attachCheckoutIds, completePayment, failPayment, markUserPaid,
 } from '../lib/db.mjs';
 import { generateLicenseKey } from '../lib/license.mjs';
-import { sendLicenseConfirmation } from '../lib/notify.mjs';
+import { sendAccessConfirmation } from '../lib/notify.mjs';
+import { stkPush, stkQuery, parseCallback, normalizeMsisdn, darajaConfigured } from '../lib/daraja.mjs';
 
 const router = Router();
 
-const initiateLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, message: { error: 'Too many payment attempts. Try again later.' } });
+const initiateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 8,
+  message: { error: 'Too many payment attempts. Try again in an hour.' },
+});
 
-// Overridable via PRICE_KES on Render — e.g. set to 10 for a real cheap
-// end-to-end test purchase, then remove the variable (or set back to 1500)
-// once you're done. Defaults to the real price if unset.
-const PRICE_KES = Number(process.env.PRICE_KES) || 2000;
-const TESTING_FREE = process.env.TESTING_FREE === 'true';
+// The single source of truth for what we charge. Keep VITE_PRICE_KES on Vercel
+// in sync so the displayed price matches the charged one.
+const PRICE_KES = Number(process.env.PRICE_KES) || 200;
 
-// IntaSend's API requires an email even for M-Pesa-only customers who signed
-// up with a phone number. Derived from EMAIL_FROM rather than hardcoded, so
-// switching to a real domain (just by updating EMAIL_FROM) updates this too -
-// one source of truth instead of two places to remember.
-const FALLBACK_EMAIL_DOMAIN = process.env.EMAIL_FROM?.match(/@([\w.-]+)/)?.[1] || 'example.com';
-
-// Live keys contain "_live_"; test keys contain "_test_"
-const IS_BASE = (process.env.INTASEND_PUBLISHABLE_KEY ?? '').includes('_live_')
-  ? 'https://payment.intasend.com/api/v1'
-  : 'https://sandbox.intasend.com/api/v1';
-
-function isHeaders() {
-  return {
-    Authorization: `Bearer ${process.env.INTASEND_SECRET_KEY}`,
-    'Content-Type': 'application/json',
-  };
-}
-
-function normalizePhone(phone) {
-  const digits = phone.replace(/\D/g, '');
-  if (digits.startsWith('254') && digits.length === 12) return digits;   // +254XXXXXXXXX
-  if (digits.startsWith('0') && digits.length === 10) return `254${digits.slice(1)}`; // 07XXXXXXXX
-  if (digits.length === 9) return `254${digits}`;                         // 7XXXXXXXX
-  return digits;
-}
-
-// POST /api/payment/initiate
-// Body: { identifier, method: 'mpesa' | 'card', mpesaPhone? }
+// ── POST /api/payment/initiate ─────────────────────────────────────────────
+// Body: { identifier, phone }
+// Sends the M-Pesa PIN prompt to `phone` and returns a txRef the frontend polls.
 router.post('/initiate', initiateLimit, async (req, res) => {
-  const { identifier, method, mpesaPhone } = req.body;
-  if (!identifier || !method) return res.status(400).json({ error: 'identifier and method required' });
-  const validMethods = TESTING_FREE ? ['mpesa', 'card', 'free'] : ['mpesa', 'card'];
-  if (!validMethods.includes(method)) return res.status(400).json({ error: 'method must be mpesa or card' });
+  const { identifier, phone } = req.body;
+  if (!identifier) return res.status(400).json({ error: 'identifier required' });
+
+  const msisdn = normalizeMsisdn(phone);
+  if (!msisdn) {
+    return res.status(400).json({ error: 'Enter a valid Safaricom number, e.g. 0712 345 678.' });
+  }
+
+  if (!darajaConfigured()) {
+    console.error('payment/initiate: Daraja env vars are not fully configured');
+    return res.status(503).json({ error: 'Payments are temporarily unavailable. Please try again later.' });
+  }
 
   try {
-    const user = await upsertUser(identifier);
-    if (user.has_paid) return res.status(409).json({ error: 'already_paid', message: 'This account already has a licence. Sign in to access your download.' });
+    // Only an existing account can pay — the checkout flow creates the account
+    // first, so there is never a payment with no one to attach it to.
+    const user = await findUserByIdentifier(identifier);
+    if (!user) return res.status(404).json({ error: 'No account found. Please sign up first.' });
+    if (user.has_paid) {
+      return res.status(409).json({ error: 'already_paid', message: 'This account already has full access. Just sign in.' });
+    }
 
     const txRef = `OC-${randomUUID()}`;
-    await createPayment(user.id, txRef, TESTING_FREE ? 0 : PRICE_KES, 'KES', method);
-
-    // Testing phase: skip payment entirely and grant access immediately
-    if (TESTING_FREE) {
-      await handlePaymentSuccess({ user_id: user.id }, txRef, 'testing-free');
-      return res.json({ ok: true, method: 'free', txRef });
-    }
-
-    const isEmail = identifier.includes('@');
-    const customerEmail = isEmail ? identifier : `customer@${FALLBACK_EMAIL_DOMAIN}`;
-    const customerPhone = normalizePhone(mpesaPhone || (!isEmail ? identifier : ''));
-    const redirectUrl = `${process.env.FRONTEND_URL}/checkout?step=card-return&tx_ref=${txRef}`;
-
-    if (method === 'mpesa') {
-      const body = {
-        public_key: process.env.INTASEND_PUBLISHABLE_KEY,
-        currency: 'KES',
-        email: customerEmail,
-        first_name: 'Customer',
-        last_name: '',
-        phone_number: customerPhone,
-        amount: PRICE_KES,
-        narrative: 'Orchestra-Core Lifetime Access',
-      };
-      const r = await fetch(`${IS_BASE}/payment/mpesa-stk-push/`, {
-        method: 'POST', headers: isHeaders(), body: JSON.stringify(body),
-      });
-      const data = await r.json();
-      console.log('IntaSend STK response:', JSON.stringify(data));
-      if (!data.invoice?.invoice_id) {
-        await failPayment(txRef);
-        const msg = data.details?.[0] || data.detail || data.message || 'M-Pesa request failed. Check the number and try again.';
-        return res.status(502).json({ error: msg });
-      }
-      // Store invoice_id so status polling can check it
-      await updatePaymentExternalId(txRef, data.invoice.invoice_id);
-      return res.json({ ok: true, method: 'mpesa', txRef, message: 'Check your phone for the M-Pesa prompt.' });
-    }
-
-    // card: generate IntaSend hosted checkout link
-    const body = {
-      public_key: process.env.INTASEND_PUBLISHABLE_KEY,
-      currency: 'KES',
-      email: customerEmail,
-      first_name: 'Customer',
-      last_name: '',
-      phone_number: customerPhone,
+    await createPayment({
+      userId: user.id,
+      txRef,
       amount: PRICE_KES,
-      comment: 'Orchestra-Core Lifetime Access',
-      redirect_url: redirectUrl,
-    };
-    const r = await fetch(`${IS_BASE}/checkout/`, {
-      method: 'POST', headers: isHeaders(), body: JSON.stringify(body),
+      phone: msisdn,
     });
-    const data = await r.json();
-    if (!data.url) {
-      await failPayment(txRef);
-      return res.status(502).json({ error: 'Could not start payment. Try again.' });
-    }
-    await updatePaymentExternalId(txRef, data.id);
-    res.json({ ok: true, method: 'card', txRef, paymentLink: data.url });
+
+    const push = await stkPush({
+      phone: msisdn,
+      amount: PRICE_KES,
+      accountReference: 'OrchestraC',
+      description: 'Full access',
+    });
+
+    await attachCheckoutIds(txRef, push.merchantRequestId, push.checkoutRequestId);
+
+    res.json({
+      ok: true,
+      txRef,
+      message: push.customerMessage || 'Check your phone for the M-Pesa prompt.',
+    });
   } catch (err) {
     console.error('payment/initiate error', err);
-    res.status(500).json({ error: 'Something went wrong. Please try again.' });
+    if (String(err.message).startsWith('STK_PUSH_FAILED')) {
+      return res.status(502).json({ error: 'M-Pesa could not start the payment. Check the number and try again.' });
+    }
+    res.status(500).json({ error: 'Something went wrong starting the payment. Please try again.' });
   }
 });
 
-// GET /api/payment/status/:txRef — frontend polls this for M-Pesa completion
+// ── GET /api/payment/status/:txRef ─────────────────────────────────────────
+// The frontend polls this every few seconds. Two things can complete a payment:
+// Safaricom's callback (fast, but can be delayed or lost) and this query
+// (authoritative). Having both means a paying customer is never left locked out
+// because one webhook went missing.
 router.get('/status/:txRef', async (req, res) => {
-  const payment = await getPaymentByTxRef(req.params.txRef);
-  if (!payment) return res.status(404).json({ error: 'Payment not found.' });
-  if (payment.status !== 'pending') return res.json({ status: payment.status });
+  try {
+    const payment = await getPaymentByTxRef(req.params.txRef);
+    if (!payment) return res.status(404).json({ error: 'Payment not found.' });
+    if (payment.status !== 'pending') return res.json({ status: payment.status });
 
-  // Poll IntaSend for live status
-  if (payment.flw_tx_id) {
-    try {
-      const r = await fetch(`${IS_BASE}/payment/status/`, {
-        method: 'POST',
-        headers: isHeaders(),
-        body: JSON.stringify({ invoice_id: payment.flw_tx_id }),
-      });
-      const { invoice } = await r.json();
-      if (invoice?.state === 'COMPLETE') {
-        await handlePaymentSuccess(payment, req.params.txRef, payment.flw_tx_id);
+    if (payment.checkout_request_id) {
+      const result = await stkQuery(payment.checkout_request_id);
+      if (result.status === 'completed') {
+        await handlePaymentSuccess(payment, null);
         return res.json({ status: 'completed' });
       }
-      if (invoice?.state === 'FAILED' || invoice?.state === 'CANCELLED') {
-        await failPayment(req.params.txRef);
-        return res.json({ status: 'failed' });
+      if (result.status === 'failed') {
+        await failPayment(payment.tx_ref, result.desc);
+        return res.json({ status: 'failed', message: result.desc });
       }
-    } catch (err) {
-      console.error('status check error', err);
     }
-  }
 
-  res.json({ status: payment.status });
+    res.json({ status: 'pending' });
+  } catch (err) {
+    console.error('payment/status error', err);
+    // Never fail the poll loop on a transient Daraja hiccup — just keep waiting.
+    res.json({ status: 'pending' });
+  }
 });
 
-// POST /api/payment/verify — called after card redirect returns to our site
-// Body: { tx_ref, invoice_id? }
-router.post('/verify', async (req, res) => {
-  const { tx_ref, invoice_id } = req.body;
-  if (!tx_ref) return res.status(400).json({ error: 'tx_ref required' });
+// ── POST /api/payment/callback/:secret ─────────────────────────────────────
+// Safaricom POSTs the STK result here. Daraja does not sign its callbacks, so
+// the URL itself carries an unguessable secret and we additionally verify the
+// CheckoutRequestID against a payment we actually created and the amount
+// against what we asked for. Always answer 200 — a non-200 makes Safaricom
+// retry the same result repeatedly.
+router.post('/callback/:secret', async (req, res) => {
+  const ack = () => res.json({ ResultCode: 0, ResultDesc: 'Accepted' });
 
-  const payment = await getPaymentByTxRef(tx_ref);
-  if (!payment) return res.status(404).json({ error: 'Payment not found.' });
-  if (payment.status === 'completed') return res.json({ ok: true, already: true });
+  if (req.params.secret !== process.env.MPESA_CALLBACK_SECRET) {
+    console.warn('payment/callback: bad secret');
+    return res.status(404).json({ ResultCode: 1, ResultDesc: 'Not found' });
+  }
 
   try {
-    const invoiceId = invoice_id || payment.flw_tx_id;
-    if (invoiceId) {
-      const r = await fetch(`${IS_BASE}/payment/status/`, {
-        method: 'POST',
-        headers: isHeaders(),
-        body: JSON.stringify({ invoice_id: invoiceId }),
-      });
-      const { invoice } = await r.json();
-      if (invoice?.state === 'COMPLETE') {
-        await handlePaymentSuccess(payment, tx_ref, invoiceId);
-        return res.json({ ok: true });
-      }
-      if (invoice?.state === 'FAILED' || invoice?.state === 'CANCELLED') {
-        await failPayment(tx_ref);
-        return res.status(402).json({ error: 'Payment was not successful.' });
-      }
+    const cb = parseCallback(req.body);
+    if (!cb) {
+      console.warn('payment/callback: unrecognised payload', JSON.stringify(req.body));
+      return ack();
     }
-    // Webhook may have already processed it between our check and now
-    const fresh = await getPaymentByTxRef(tx_ref);
-    if (fresh?.status === 'completed') return res.json({ ok: true });
-    res.status(202).json({ pending: true, message: 'Payment still processing. Please wait a moment.' });
+
+    const payment = await getPaymentByCheckoutId(cb.checkoutRequestId);
+    if (!payment) {
+      console.warn('payment/callback: no payment for', cb.checkoutRequestId);
+      return ack();
+    }
+    if (payment.status === 'completed') return ack();
+
+    if (cb.resultCode !== '0') {
+      await failPayment(payment.tx_ref, cb.resultDesc);
+      return ack();
+    }
+
+    // Guard against an underpaid/mismatched amount ever unlocking access.
+    if (Number(cb.amount) < Number(payment.amount)) {
+      console.warn(`payment/callback: amount mismatch — paid ${cb.amount}, expected ${payment.amount}`);
+      await failPayment(payment.tx_ref, `Amount mismatch: received ${cb.amount}`);
+      return ack();
+    }
+
+    await handlePaymentSuccess(payment, cb.receipt);
+    ack();
   } catch (err) {
-    console.error('payment/verify error', err);
-    res.status(500).json({ error: 'Could not verify payment. Contact support if you were charged.' });
+    console.error('payment/callback error', err);
+    ack();
   }
 });
 
-// POST /api/payment/webhook — IntaSend fires this on payment events
-// IntaSend authenticates webhooks by including the webhook secret as a 'challenge' field in the body
-router.post('/webhook', async (req, res) => {
-  if (req.body.challenge !== process.env.INTASEND_WEBHOOK_SECRET) {
-    return res.status(401).send('Unauthorised');
-  }
+// Marks the payment complete, issues the access key, and emails it. Safe to
+// call twice — completePayment only ever transitions a pending row.
+async function handlePaymentSuccess(payment, receipt) {
+  const updated = await completePayment(payment.tx_ref, receipt);
+  if (!updated) return; // another path (callback vs. poll) already completed it
 
-  const { invoice_id, state } = req.body;
-
-  if (state === 'COMPLETE' && invoice_id) {
-    const payment = await getPaymentByExternalId(invoice_id);
-    if (payment && payment.status !== 'completed') {
-      await handlePaymentSuccess(payment, payment.tx_ref, invoice_id);
-    }
-  } else if ((state === 'FAILED' || state === 'CANCELLED') && invoice_id) {
-    const payment = await getPaymentByExternalId(invoice_id);
-    if (payment) await failPayment(payment.tx_ref).catch(() => {});
-  }
-
-  res.sendStatus(200);
-});
-
-async function handlePaymentSuccess(payment, txRef, externalId) {
   const licenseKey = generateLicenseKey();
-  await completePayment(txRef, externalId);
   await markUserPaid(payment.user_id, licenseKey);
+
   const user = await getUserById(payment.user_id);
-  const identifier = user?.email || user?.phone;
-  if (identifier) await sendLicenseConfirmation(identifier, licenseKey).catch(console.error);
+  if (user?.email) {
+    await sendAccessConfirmation(user.email, licenseKey).catch(err =>
+      console.error('access confirmation email failed', err),
+    );
+  }
 }
 
 export default router;

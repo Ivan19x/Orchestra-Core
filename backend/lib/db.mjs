@@ -7,22 +7,12 @@ const supabase = createClient(
 
 // ── users ──────────────────────────────────────────────────────────────────
 
-export async function findUserByIdentifier(identifier) {
-  const isEmail = identifier.includes('@');
-  const col = isEmail ? 'email' : 'phone';
-  const { data } = await supabase.from('users').select('*').eq(col, identifier).maybeSingle();
-  return data;
-}
-
-export async function upsertUser(identifier) {
-  const isEmail = identifier.includes('@');
-  const col = isEmail ? 'email' : 'phone';
-  const { data, error } = await supabase
+export async function findUserByIdentifier(email) {
+  const { data } = await supabase
     .from('users')
-    .upsert({ [col]: identifier }, { onConflict: col, ignoreDuplicates: false })
-    .select()
-    .single();
-  if (error) throw error;
+    .select('*')
+    .eq('email', email)
+    .maybeSingle();
   return data;
 }
 
@@ -39,15 +29,13 @@ export async function markUserPaid(userId, licenseKey) {
   if (error) throw error;
 }
 
-// Throws on a unique-constraint violation if the identifier already has an
-// account - that's the desired behavior (signup should fail, not silently
-// overwrite an existing account's password).
-export async function createUserWithPassword(identifier, passwordHash) {
-  const isEmail = identifier.includes('@');
-  const col = isEmail ? 'email' : 'phone';
+// Throws on a unique-constraint violation if the email already has an account —
+// that's the desired behavior (signup should fail, not silently overwrite an
+// existing account's password).
+export async function createUserWithPassword(email, passwordHash) {
   const { data, error } = await supabase
     .from('users')
-    .insert({ [col]: identifier, password_hash: passwordHash })
+    .insert({ email, password_hash: passwordHash })
     .select()
     .single();
   if (error) throw error;
@@ -62,38 +50,20 @@ export async function setUserPassword(userId, passwordHash) {
   if (error) throw error;
 }
 
-// ── otp_codes ──────────────────────────────────────────────────────────────
-
-export async function saveOtp(identifier, codeHash, expiresAt) {
-  const { error } = await supabase
-    .from('otp_codes')
-    .insert({ identifier, code_hash: codeHash, expires_at: expiresAt });
-  if (error) throw error;
-}
-
-export async function getLatestOtp(identifier) {
-  const { data } = await supabase
-    .from('otp_codes')
-    .select('*')
-    .eq('identifier', identifier)
-    .eq('used', false)
-    .gt('expires_at', new Date().toISOString())
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  return data;
-}
-
-export async function markOtpUsed(id) {
-  await supabase.from('otp_codes').update({ used: true }).eq('id', id);
-}
-
 // ── payments ───────────────────────────────────────────────────────────────
 
-export async function createPayment(userId, txRef, amount, currency, method) {
+export async function createPayment({ userId, txRef, amount, phone }) {
   const { data, error } = await supabase
     .from('payments')
-    .insert({ user_id: userId, tx_ref: txRef, amount, currency, payment_method: method, status: 'pending' })
+    .insert({
+      user_id: userId,
+      tx_ref: txRef,
+      amount,
+      currency: 'KES',
+      payment_method: 'mpesa',
+      phone,
+      status: 'pending',
+    })
     .select()
     .single();
   if (error) throw error;
@@ -105,30 +75,50 @@ export async function getPaymentByTxRef(txRef) {
   return data;
 }
 
-export async function completePayment(txRef, flwTxId) {
+export async function getPaymentByCheckoutId(checkoutRequestId) {
+  const { data } = await supabase
+    .from('payments')
+    .select('*')
+    .eq('checkout_request_id', checkoutRequestId)
+    .maybeSingle();
+  return data;
+}
+
+export async function attachCheckoutIds(txRef, merchantRequestId, checkoutRequestId) {
+  const { error } = await supabase
+    .from('payments')
+    .update({
+      merchant_request_id: merchantRequestId,
+      checkout_request_id: checkoutRequestId,
+    })
+    .eq('tx_ref', txRef);
+  if (error) throw error;
+}
+
+// Only ever transitions a row that is still pending. The `.eq('status',
+// 'pending')` filter is what makes double-completion impossible when the
+// callback and the status poll race each other — the loser gets no row back
+// and knows not to issue a second licence key.
+export async function completePayment(txRef, mpesaReceipt) {
   const { data, error } = await supabase
     .from('payments')
-    .update({ status: 'completed', flw_tx_id: String(flwTxId) })
+    .update({
+      status: 'completed',
+      mpesa_receipt: mpesaReceipt ?? null,
+      completed_at: new Date().toISOString(),
+    })
     .eq('tx_ref', txRef)
+    .eq('status', 'pending')
     .select()
-    .single();
+    .maybeSingle();
   if (error) throw error;
   return data;
 }
 
-export async function failPayment(txRef) {
-  await supabase.from('payments').update({ status: 'failed' }).eq('tx_ref', txRef);
-}
-
-export async function updatePaymentExternalId(txRef, externalId) {
-  await supabase.from('payments').update({ flw_tx_id: String(externalId) }).eq('tx_ref', txRef);
-}
-
-export async function getPaymentByExternalId(externalId) {
-  const { data } = await supabase
+export async function failPayment(txRef, resultDesc) {
+  await supabase
     .from('payments')
-    .select('*')
-    .eq('flw_tx_id', String(externalId))
-    .maybeSingle();
-  return data;
+    .update({ status: 'failed', result_desc: resultDesc ?? null })
+    .eq('tx_ref', txRef)
+    .eq('status', 'pending');
 }

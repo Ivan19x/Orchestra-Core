@@ -8,32 +8,27 @@ import paymentRoutes from './routes/payment.mjs';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// The Electron app's bundled local server always runs on this fixed port
-// (see SERVER_PORT in electron/main.cjs) — its origin must always be allowed
-// regardless of what CORS_ORIGINS is set to for the website, otherwise every
-// app install silently loses the ability to call the backend whenever
-// CORS_ORIGINS gets updated to just the production website URL.
-const ELECTRON_APP_ORIGIN = 'http://localhost:5175';
-
-const allowedOrigins = [
-  ELECTRON_APP_ORIGIN,
-  ...(process.env.CORS_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean),
-];
+const allowedOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
 
 app.use(helmet());
+
+// Render/Fly/Railway all sit behind a proxy — without this, express-rate-limit
+// sees every request as coming from the same proxy IP and rate-limits everyone
+// together.
+app.set('trust proxy', 1);
+
 app.use(cors({
   origin: (origin, cb) => {
+    // No Origin header = a server-to-server call (Safaricom's callback, health
+    // checks). Those aren't browser requests, so CORS doesn't apply to them.
     if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
     cb(new Error('CORS: origin not allowed'));
   },
   credentials: true,
 }));
-
-// Raw body needed for webhook signature check — must come before json()
-app.use('/api/payment/webhook', express.raw({ type: '*/*' }), (req, _res, next) => {
-  if (Buffer.isBuffer(req.body)) req.body = JSON.parse(req.body.toString());
-  next();
-});
 
 app.use(express.json());
 

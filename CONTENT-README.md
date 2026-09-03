@@ -101,5 +101,10 @@ The file name and the frontmatter numbers should match (`S4M7.md` has
 ## Where the code lives (for reference only — you don't edit it)
 
 - Lessons folder: `src/content/lessons/`
-- Loader (auto-discovery + parsing + sorting): `src/lib/lessons.ts`
+- Catalogue builder (reads the frontmatter at build time): the lesson-index plugin in `vite.config.ts`
+- Loader (catalogue + on-demand lesson bodies): `src/lib/lessons.ts`
 - Lessons list page: `src/pages/Lessons.tsx` · single lesson: `src/pages/Lesson.tsx`
+
+Lesson bodies are loaded one at a time rather than all at once, so the site
+stays fast no matter how many lessons exist. Nothing about writing a lesson
+changes because of that — it is handled for you.

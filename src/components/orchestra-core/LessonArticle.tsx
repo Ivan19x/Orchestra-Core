@@ -2,22 +2,23 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Clock } from 'lucide-react';
 
-// The lesson header + rendered markdown body, shared by the website reader
-// (src/pages/Lesson.tsx) and the in-app Electron reader (AppShell) so both
-// stay visually identical. remark-gfm is what makes markdown tables (e.g. the
-// 50/30/20 lesson) render as real tables instead of raw "|" pipes.
+// The lesson header plus its rendered markdown body. remark-gfm is what makes
+// markdown tables (e.g. the 50/30/20 lesson) render as real tables instead of
+// raw "|" pipes.
 export function LessonArticle({
   seriesName,
   module,
   title,
   readTime,
   body,
+  loading = false,
 }: {
   seriesName: string;
   module: string;
   title: string;
   readTime: string;
   body?: string;
+  loading?: boolean;
 }) {
   return (
     <>
@@ -27,7 +28,17 @@ export function LessonArticle({
         <Clock className="w-3 h-3" /> {readTime}
       </span>
 
-      {body ? (
+      {loading ? (
+        // A skeleton rather than a spinner: the header above is already real,
+        // so the page shouldn't visibly jump when the prose arrives.
+        <div className="space-y-3 animate-pulse" aria-label="Loading lesson" role="status">
+          {[
+            'w-full', 'w-11/12', 'w-full', 'w-4/5', 'w-full', 'w-3/4',
+          ].map((w, i) => (
+            <div key={i} className={`h-3.5 rounded bg-blush ${w}`} />
+          ))}
+        </div>
+      ) : body ? (
         <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-serif prose-headings:font-medium prose-headings:text-foreground prose-p:text-foreground prose-li:text-foreground prose-strong:text-foreground prose-a:text-primary prose-table:text-foreground">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
         </div>

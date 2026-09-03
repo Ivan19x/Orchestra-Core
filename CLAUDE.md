@@ -1,26 +1,54 @@
-# Project: Orchestra-Core — AI Financial Literacy Coach
+# Project: Orchestra-Core — financial education for Kenya
 
-> This file is the single source of truth for this project. It covers every major decision, everything built so far, and exactly what remains before the first sale. Update it whenever something meaningful changes.
+> Single source of truth for this project. Update it whenever something
+> meaningful changes.
 
 ---
 
 ## Who's building this
 
-Ivan — 21, BBIT student at Strathmore University (Nairobi, Kenya), Year 2. Building solo on a personal laptop (HP 245 G10). Career interests: Product Management / Business Analysis / Tech Sales in Kenya's fintech sector (Safaricom is an aspiration), eventual goal of founding his own business. Separately runs CYRION, a more technical personal project (local AI agent/OS with a multi-model Ollama "gears" architecture). Orchestra-Core shares some technical DNA with CYRION but is a distinct, public-facing product.
+Ivan — 21, BBIT student at Strathmore University (Nairobi, Kenya), Year 2.
+Building solo on a personal laptop. Career interests: Product Management /
+Business Analysis / Tech Sales in Kenya's fintech sector, eventual goal of
+founding his own business. Separately runs CYRION, a more technical personal
+project. Orchestra-Core is a distinct, public-facing product.
 
 ---
 
-## What this project is
+## What this project is — as of 3 September 2026
 
-An AI-powered financial literacy and education app. A local LLM (via Ollama) plus a RAG knowledge base teaches people how money, markets, behavioral finance, and the people/institutions who move markets actually work — **education, not personalized financial advice**. Go-to-market: Kenya first, then global. Distribution: simplest first (downloadable local app) → hosted web → mobile, as resources allow.
+**A website that sells access to a written financial-education curriculum.**
+80 lessons across nine series, read in the browser. KES 200 one-time, paid by
+M-Pesa. Kenya first.
+
+That is the whole product. It is deliberately smaller than it used to be.
+
+### What was removed, and why
+
+Three things were cut in September 2026 to get to something shippable:
+
+| Removed | Why | Where it went |
+|---|---|---|
+| **The AI coach** (Ollama, qwen2.5, RAG, tool-calling, `/ask`, `/try`) | Ivan wants to build his own model later rather than ship someone else's. Nothing on the site mentions AI now. | `recycle/` |
+| **The desktop + Android apps** (Electron, Capacitor, auto-update, deep links, CI release pipeline) | Website-only focus. The app comes later. | `recycle/` |
+| **The donation / support page** (personal M-Pesa number, supporter names) | Not wanted. Route `/support` now redirects to `/about`. | `recycle/` |
+| **IntaSend** (payment aggregator) | Replaced by a direct Safaricom Daraja integration — money goes straight to Ivan's own Paybill/Till, no middleman. | deleted |
+
+`recycle/` is gitignored: the code still exists on disk for when the app and AI
+come back, but it is not on GitHub and not in the build.
+
+**Do not re-add AI features, app download links, or donation UI** unless Ivan
+asks. They were removed on purpose.
 
 ---
 
 ## Brand identity
 
-**Name: Orchestra-Core** — single unified name for the consumer-facing product, the multi-model AI engine/architecture, and the business. All other candidate names are retired (Compass, Cyrion, Dira, Fenwa, Doutdes, IIMITI — fully dropped, do not revisit).
+**Name: Orchestra-Core.** All other candidate names are retired (Compass,
+Cyrion, Dira, Fenwa, Doutdes, IIMITI — do not revisit).
 
-**Tagline / motto (community-support area only):** *"Inter se pecuniarie adiuvantes"* — Latin for "helping one another financially." Use under the logo on the Support page only, not as the main brand name.
+The Latin motto *"Inter se pecuniarie adiuvantes"* belonged to the support page
+and is retired with it.
 
 ---
 
@@ -28,17 +56,25 @@ An AI-powered financial literacy and education app. A local LLM (via Ollama) plu
 
 | Token | Hex | Use |
 |---|---|---|
-| Primary maroon | `#7A2330` | CTAs, icons, price highlight, active states |
-| White | `#FFFFFF` | Main page background |
+| Primary maroon | `#7A2330` | CTAs, icons, price, active states |
+| White | `#FFFFFF` | Page background |
 | Blush/cream | `#FBF1EE` | Alternating "pause point" sections |
 | Divider | `#F0E0DD` | Borders, separators |
 | Dark text | `#2B2320` | Headings |
-| Muted text | `#7A6C68` | Body / secondary text |
+| Muted text | `#7A6C68` | Body / secondary |
 | Faint text | `#A39590` | Footer / fine print |
 
-Typography: clean sans-serif throughout (Inter-style); headings medium weight (500), never heavy/bold. Optional serif for hero headline only. Overall vibe: warm, academic-premium rather than typical fintech blue.
+Typography: clean sans-serif; headings medium weight (500), never heavy. Serif
+(`font-serif`) for display headlines. Vibe: warm, academic-premium — not fintech
+blue.
 
-**Dark mode:** the site has a warm dark theme (opt-in via the sun/moon toggle in `Nav`). It's driven entirely by the CSS-variable tokens above — `.dark` in `src/index.css` redefines them (warm near-black background, off-white text, the maroon lightened to stay legible, blush/cream → subtly-raised dark surfaces). Because every component uses semantic tokens (`bg-background`, `bg-blush`, `text-foreground`, `text-warm-muted`, `border-border`, …), dark mode cascades automatically — keep using those tokens, never hardcode `bg-white`/hex, or new UI won't theme. Default is light; the choice persists in `localStorage` (`oc_theme`) and is applied pre-paint by an inline script in `index.html` to avoid a flash. Hook: `src/lib/theme.ts` (`useTheme`); toggle: `ThemeToggle.tsx`.
+**Dark mode** is driven entirely by these tokens. `.dark` in `src/index.css`
+redefines them. Because every component uses semantic classes (`bg-background`,
+`bg-blush`, `text-foreground`, `text-warm-muted`, `border-border`), dark mode
+cascades automatically. **Keep using those tokens — never hardcode `bg-white` or
+a hex**, or new UI won't theme. Default is light; the choice persists in
+`localStorage` (`oc_theme`) and is applied pre-paint by an inline script in
+`index.html`. Hook: `src/lib/theme.ts`; toggle: `ThemeToggle.tsx`.
 
 ---
 
@@ -47,553 +83,228 @@ Typography: clean sans-serif throughout (Inter-style); headings medium weight (5
 | Service | URL | Platform |
 |---|---|---|
 | Website | https://orchestra-core.vercel.app | Vercel (auto-deploys on push to main) |
-| Backend API | https://orchestra-core.onrender.com | Render (auto-deploys on push to main) |
-| GitHub repo | https://github.com/Ivan19x/Orchestra-Core | main branch |
-| Releases | https://github.com/Ivan19x/Orchestra-Core/releases | Built by CI on every `v*.*.*` tag |
+| API | https://orchestra-core.onrender.com | Render (auto-deploys on push to main) |
+| Repo | https://github.com/Ivan19x/Orchestra-Core | main branch |
+
+Full deployment and go-live instructions: [`docs/SETUP.md`](docs/SETUP.md).
 
 ---
 
 ## Website pages
 
-Four-stage visitor journey: **Home → Explore → Try → Get Orchestra-Core**
-
-| Route | Description |
+| Route | What it is |
 |---|---|
-| `/` | Hero, value props, sample lesson preview, pricing teaser, support teaser, closing CTA |
-| `/how-it-works` | Sample chat, local-first privacy, lesson structure |
-| `/lessons` | Searchable library across 3 series (Money basics / Smart money / Kenya money). Cards are clickable and open a full in-browser reader. **Access model: reading any lesson requires a (free) account; premium lessons additionally require `session.paid`.** One free lesson per series (the starter: `1-1`, smart-money `01`, kenya-money `01`); everything else is `premium` in `lessons.ts`. Cards show a "Free"/"Premium" badge. |
-| `/lessons/:slug` | Single-lesson reader (`Lesson.tsx`). Three gates: not signed in → "create a free account" (`SignupGate`); signed in + premium + unpaid → upgrade gate (`LockedLesson`); otherwise the full `LessonArticle`. `:slug` is the last path segment of the lesson's content key — see `lessonUrlSlug()`/`getLessonByUrlSlug()` in `lessons.ts`. |
-| `/try` | No-signup static chat demo, 4-5 pre-loaded example questions |
-| `/pricing` | Single card — one-time price (`PRICE_LABEL`), benefits, FAQ |
-| `/checkout` | Payment flow. Skips the identity step entirely when already signed in (goes straight to payment); anonymous buyers get `SignupForm` (email + password + confirm + T&C) inline. |
-| `/signup` | Create a **free** account (`SignupForm`: email + password + confirm + agree to T&C) → `/dashboard`. The funnel entry for new visitors (Nav "Get started — free", Home hero). |
-| `/forgot-password` | Request a password-reset link (emailed, 10-min expiry). |
-| `/reset-password` | Set a new password from the emailed token (`?token=`), then auto-signed-in → `/dashboard`. |
-| `/login` | Returning user password sign-in → `/dashboard`. Links to `/forgot-password` and `/signup`. |
-| `/account` | License key display, dashboard link, desktop-app connect (deep link) + download (paused) cards, sign out |
-| `/download` | **Desktop app downloads are paused** (see "Desktop app on pause" below) — page always shows a paused message regardless of session, with a CTA to `/dashboard` (paid) or `/checkout` (not paid). `DownloadPanel.tsx` is unused while paused, not deleted. |
-| `/support` | M-Pesa Till, Buy Me a Coffee, progress bar, supporter names |
-| `/about` | Founder story, mission |
-| `/privacy` | Privacy Policy (DPA compliance) |
-| `/terms` | Terms of Service |
-| `/ask` | Live AI chat panel (dev-only, not in nav) |
-| `/dashboard` | **The actual product now** — lessons, AI chat, and learning tools, all in-browser. Includes a "Your lessons" section listing the first lessons, each linking into the `/lessons/:slug` reader. Despite still being absent from the public nav `links` array, it's where every paid session is actually routed: `Nav.tsx`'s CTA button shows "Open dashboard" → `/dashboard` instead of "Get Orchestra-Core" whenever `session?.paid` is true, and it's the primary destination from Checkout's "done" screen and from `/download`'s paused message. |
-| `/app` | Electron/Android app shell — not a website page, only loaded inside the apps |
+| `/` | Hero, three value props, the three free starter lessons, price, CTA |
+| `/how-it-works` | Curriculum / Kenya-first / one payment |
+| `/lessons` | The full nine-series programme, searchable. Free badge on starters, Premium (lock) on the rest |
+| `/lessons/:code` | The reader. `:code` is `S<series>M<module>`, e.g. `/lessons/S1M1` |
+| `/pricing` | One card, the price, benefits, FAQ |
+| `/checkout` | Two steps: create account → pay by M-Pesa STK push |
+| `/signup` · `/login` | Email + password |
+| `/forgot-password` · `/reset-password` | Emailed 10-minute reset link |
+| `/account` | Access key, dashboard link, sign out |
+| `/dashboard` | The signed-in learning space: whole library by series, budget tool |
+| `/about` · `/privacy` · `/terms` | Story, DPA-compliant policy, ToS |
 
-Global nav: sticky white header, Logo (Orbit icon + "Orchestra**-Core**" wordmark), nav links center. Right side swaps based on session: signed out → "Get Orchestra-Core" → `/checkout`; signed in but unpaid → same button, "Sign in"/"Account" link added; signed in and paid → "Open dashboard" → `/dashboard`. Collapses to hamburger on mobile, CTA always visible.
+Retired routes `/try`, `/ask`, `/download`, `/support` redirect rather than 404.
+
+Global nav: sticky header, logo left, links centre (How it works · Lessons ·
+Pricing · About), theme toggle + auth CTA right. Signed out → "Get started —
+free" → `/signup`. Signed in → "Open dashboard".
 
 ---
 
-## Desktop app on pause — focus is the website (as of 23 June 2026)
+## Access model
 
-The downloadable Electron/Android app still exists in full (code untouched,
-CI still builds it on every tag) but is **not currently being offered or
-linked anywhere as the way to access a purchase**. Decision: the local-AI
-experience inside the app "isn't working well" yet (founder's words) and is
-being set aside for later — right now, focus is entirely on the website:
-buying, lesson content, and pricing, which are far faster to iterate on than
-an Electron release cycle. The website's AI chat (`/dashboard`'s `AskPanel`)
-now has a real **"Set up AI coach"** flow (`AiSetupPanel` + `lib/ollamaSetup.ts`):
-on a laptop it checks for a locally-running Ollama and downloads the three
-models via Ollama's HTTP API (`/api/tags` + `/api/pull`), with progress bars;
-on phones/tablets it shows a "the AI runs on a computer — keep reading" message
-instead (Ollama doesn't run on phones). **Caveat:** for the deployed HTTPS site
-to reach `localhost:11434`, the user must start Ollama allowing this origin —
-`OLLAMA_ORIGINS=https://orchestra-core.vercel.app ollama serve` (localhost→
-localhost dev works without it); Chrome Private-Network-Access rules may still
-block it on some versions, so the desktop app stays the friction-free AI path.
-Lesson reading on the website is fully real and is the priority right now.
+Three states, enforced in `src/pages/Lesson.tsx`:
 
-Concretely:
-- `/download` always shows a paused message (not gated by `session.paid`
-  the way it used to be) — see the website pages table above.
-- Checkout's "done" screen and `/account`'s desktop-app card both point at
-  `/dashboard` first; the app deep-link button (`orchestracore://auth?...`)
-  was removed from Checkout's done screen specifically (still present on
-  `/account` for anyone who already has the app installed from before the
-  pause — that case is still real and still works).
-- Nothing about pricing, licensing, or what a purchase includes changed —
-  the desktop app is still part of what a buyer's licence covers (see
-  Terms.tsx Section 2), it's just not the delivery mechanism right now.
-  No separate purchase will be needed when it returns.
-- This is reversible by re-adding the relevant links/CTAs — nothing about
-  the app itself was removed or disabled, only its visibility on the
-  website.
+1. **Anonymous** → can browse the library, cannot read anything. Sees a
+   create-a-free-account gate.
+2. **Free account** (`session.paid === false`) → can read the one `free: true`
+   lesson in each series (9 of them).
+3. **Paid** (`session.paid === true`) → everything.
+
+`has_paid` in the database is the single source of truth; the JWT carries it and
+`/api/auth/me` refreshes it.
 
 ---
 
-## Product / app concept (what people use after buying)
+## The content — 80 lessons, nine series
 
-The downloadable Electron app (and Android APK) loads `/app` — a full shell separate from the website nav/footer.
+All lessons live in `src/content/lessons/` as `S<series>M<module>.md`. **This is
+the product.** Adding one is dropping in a file and pushing — no code changes.
+Format and rules: [`CONTENT-README.md`](CONTENT-README.md).
 
-**App shell layout (`src/pages/AppShell.tsx`):**
-- Left sidebar (w-56, blush background): Logo, nav buttons (AI / Lessons / Support / Account), `SetupStatus` checklist at the bottom
-- Main content area: switches between AI chat, lesson browser, support, account panels
-- Update banner at top when a new version is available
-- **Opens to the Lessons tab by default**, not AI Coach — a brand-new user lands on the curriculum with a prominent "New here? Start with the basics" card linking straight into Module 1's reader, not an empty chat box with no guidance.
+| Series | Title | Modules |
+|---|---|---|
+| 1 | Money Basics | 8 |
+| 2 | Adult Life Money | 10 |
+| 3 | Smart Money | 12 |
+| 4 | Kenya Money | 8 |
+| 5 | Teenager to Adult | 8 |
+| 6 | Psychology of Money | 6 |
+| 7 | Home & Household | 9 |
+| 8 | Investing & Saving | 10 |
+| 9 | Family & Parenting | 9 |
 
-**`SetupStatus` sidebar checklist (`src/components/orchestra-core/SetupStatus.tsx`):**
-- Device scanned ✓ (cosmetic step, no longer ties to any tier decision)
-- Ollama running ✓ / spinner
-- Downloading models (1 of 3) / (2 of 3) / (3 of 3) — qwen2.5:7b, moondream, nomic-embed-text in sequence, each with its own % progress bar
-- Collapses to "AI ready" when complete; reports completion up to `AppShell` via `onSetupComplete` so the AI tab can block input until setup actually finishes
-- Invisible on website and Android (returns null when not in Electron)
+Module 1 of each series is `free: true`. Everything else is premium.
 
-**Setup runs in background** — the app shows full content immediately. There is no blocking setup screen. If someone opens AI Coach and tries to chat before setup finishes, the input is disabled with "Currently setting up the model, kindly wait…" instead of a failed request.
+`src/lib/curriculum.ts` holds the *plan* (the module titles shown for anything
+not yet written). Edit it only to change the plan — never to publish a lesson.
 
-**Model downloads survive interruption** (`runSetup()` in `electron/main.cjs`): each of the 3 required models gets its own retry budget (3 attempts, with a backoff sleep between retries) — one model failing doesn't block the others from being attempted. `ollama pull` resumes from its local blob cache rather than restarting at 0%, so a retry (or the user simply reopening the app after closing it mid-download) picks up where it left off instead of re-downloading from scratch. If a model still fails after all retries, the error message tells the user it'll auto-resume next time they open the app — which is true, since `runSetup()` re-checks `hasModel()` for each model on every launch and only pulls what's still missing.
+### How lessons are loaded (important)
 
-**Auto sign-in from website:** The deep link `orchestracore://auth?token=JWT` opens the app (if installed) and signs the user in automatically — no OTP needed in the app at all. Two entry points fire it: the checkout "done" screen (right after a fresh purchase) and a "Connect to desktop app" button on `/account` (for anyone already signed in on the website who wants to link an existing or newly-installed app, e.g. after reinstalling). The app's own Account tab leads with "Open my account on the website" pointing at this, with email+password kept only as a fallback. Single-instance lock ensures the token is delivered even if the app was already open.
+Deliberately split in two:
 
-**AI chat (`AppAI`):** Shows `AskPanel` in Electron. Shows "AI runs on desktop" message with download link on Android. The AI's role is explicitly *not* to be the primary teaching content — the lessons are the course. The AI explains lesson topics further, does live research via `web_search`/`web_fetch` tools when a question needs current information, and helps with practical account setup (M-Pesa, SACCOs, bank/brokerage accounts, CDS registration) as guidance, not personalized advice. Mirrors the user's language — replies in whatever language they write in (Kiswahili/Sheng, English, or any other), per the "## Languages" rule in `content/system-prompt.md` / `orchestraCore.ts`'s `SYSTEM_PROMPT` (note: the local model follows this better for high-resource languages than for low-resource ones).
+- **The catalogue** (title, series, module, free, minutes, summary) is built at
+  build time by the `virtual:lesson-index` Vite plugin in `vite.config.ts`. It's
+  small and every page needs it, so it ships in the main bundle.
+- **The bodies** are separate chunks, fetched one at a time by
+  `loadLessonBody()` in `src/lib/lessons.ts`.
 
-**Lesson browser (`AppLessons`):** Full series browser. Clicking a lesson card opens a full in-app reader (`LessonReader`) with the lesson's actual markdown content rendered — not just a summary. `LessonReader` now renders the body via the shared `LessonArticle` component (same one the website's `/lessons/:slug` reader uses), so the two stay visually identical. "Ask about this" remains as a secondary action to jump into AI Coach with the lesson pre-filled.
-
-**Account (`AppAccount`):** Shows session info + password sign-in if not logged in.
-
-### Content corpus — three series, 12+ lessons
-
-- **Money basics** — how money actually works, foundational concepts
-- **Smart money** — 13F/13D filings, Buffett-style analysis, central bank communication, crypto on-chain concepts. All framed as educational case studies, never "copy them to get rich"
-- **Kenya money** — M-Pesa, SACCOs, NSE, local financial landscape
-
-All lesson content lives in `content/lessons/` as Markdown with frontmatter. Same content = curriculum + RAG corpus + content-marketing material (every lesson is a short-form video script).
+This matters: bundling all 80 bodies eagerly put ~500KB of prose in the first
+page load. The split took the initial download from 362KB to 93KB gzipped, and
+it stays flat as lessons are added. **Don't switch the body glob back to
+`eager: true`.**
 
 ---
 
 ## Technical architecture
 
-### Stack overview
-
 | Layer | Technology |
 |---|---|
-| Frontend | React 18 + TypeScript + Vite, Tailwind CSS, shadcn/ui |
-| Routing | React Router v6 |
-| AI chat | Ollama local server (qwen2.5:7b), browser-side RAG retrieval, real tool-calling (web_search/web_fetch) |
-| In-app server | Express (`server/index.mjs`) — web_search/web_fetch backend + static file serving |
-| Desktop packaging | Electron 33 + electron-builder (NSIS for Windows, DMG for Mac, AppImage for Linux) |
-| Auto-update | `electron-updater` — checks GitHub Releases on startup, downloads + installs silently |
-| Mobile | Capacitor 8 wrapping the same React build as an Android APK |
-| Payment backend | Express API (`backend/`) — deployed on Render |
+| Frontend | React 18 + TypeScript + Vite, Tailwind, React Router v6 |
+| Markdown | react-markdown + remark-gfm (tables), lazy-loaded with the reader |
+| API | Express (`backend/`), deployed on Render |
 | Database | Supabase (managed PostgreSQL) |
-| Auth | Password (bcrypt-hashed) → 30-day JWT in localStorage |
-| Payments | IntaSend (M-Pesa STK push + card) |
-| SMS | Africa's Talking REST API (sandbox for now, production requires KYC) |
-| Email | Resend |
+| Auth | Email + bcrypt password → 30-day JWT in `localStorage` (`oc_token`) |
+| Payments | Safaricom Daraja — M-Pesa STK Push, direct |
+| Email | Gmail SMTP via app password (Resend as fallback) |
 
-### Fixed model lineup (no more device-RAM tiering)
+Every piece runs on a genuinely free tier. That is a hard constraint while
+bootstrapping, not a preference — check for a free path before recommending any
+paid service.
 
-Every install pulls the same three models — no device scan, no tier picking:
-
-| Model | Purpose |
-|---|---|
-| `qwen2.5:7b` (Apache-2.0) | The one chat model, for everyone |
-| `moondream` | Vision model — downloaded for a future feature, not yet wired into any UI |
-| `nomic-embed-text` | RAG lesson retrieval embeddings |
-
-Key principle: static content (lessons) always ships regardless of device. Previously the app picked one of 4 models (0.5B/3B/7B/14B) based on detected RAM — this was dropped because it added complexity without enough payoff; `qwen2.5:7b` is the standard for every install now. `electron/main.cjs`'s `REQUIRED_MODELS` array is the source of truth for the pull list; `runSetup()` pulls each in sequence with per-model progress reported to `SetupStatus.tsx`.
-
-### Key files / directories
+### Key files
 
 ```
-Orchestra-Core/
-├── src/
-│   ├── pages/
-│   │   ├── Home, HowItWorks, Lessons, Try, Pricing, Download, Support, About
-│   │   ├── Lesson.tsx       — single-lesson in-browser reader (/lessons/:slug), premium-gated
-│   │   ├── Privacy.tsx, Terms.tsx
-│   │   ├── Ask.tsx          — live AI chat (dev-only)
-│   │   ├── Dashboard.tsx    — product dashboard (dev-only)
-│   │   ├── Checkout.tsx     — 4-step payment flow
-│   │   ├── Login.tsx        — returning user password sign-in
-│   │   ├── Account.tsx      — license key + download link
-│   │   └── AppShell.tsx     — Electron/Android app shell (loads at /app)
-│   ├── components/orchestra-core/
-│   │   ├── Nav.tsx          — sticky header, auth-aware
-│   │   ├── Footer.tsx
-│   │   ├── Logo.tsx         — Orbit icon + wordmark, mobile monogram
-│   │   ├── AskPanel.tsx     — reusable chat UI (used in /ask, /dashboard, AppShell)
-│   │   ├── LessonArticle.tsx — shared lesson header + markdown body (web /lessons/:slug reader + AppShell's in-app reader), renders tables via remark-gfm
-│   │   ├── AiSetupPanel.tsx — website "Set up AI coach" flow: checks local Ollama + downloads the 3 models via its HTTP API (laptops only; phones told to keep reading)
-│   │   ├── ThemeToggle.tsx  — sun/moon light/dark toggle in the Nav
-│   │   ├── SetupStatus.tsx  — sidebar setup checklist (Electron-only), multi-model progress
-│   │   ├── DownloadPanel.tsx — single download button + what's-included info (no device scan)
-│   │   ├── ThinkingIndicator.tsx
-│   │   ├── StreakBadge.tsx
-│   │   └── SupportPanel.tsx
-│   ├── lib/
-│   │   ├── orchestraCore.ts — Ollama chat + RAG retrieval + web_search/web_fetch tool-calling
-│   │   ├── lessonContent.ts — loads + parses content/lessons/**/*.md for the in-app reader
-│   │   ├── lessons.ts       — lesson metadata
-│   │   ├── quickTools.ts    — Smart Money / market mood prompts
-│   │   ├── api.ts           — typed fetch wrapper for backend API
-│   │   ├── session.ts       — JWT localStorage management, useSession hook
-│   │   ├── platform.ts      — isElectron, isCapacitor, isMobileApp, getPlatform(), isLikelyMobileDevice()
-│   │   ├── ollamaSetup.ts   — browser→local-Ollama HTTP client: checkOllama() (/api/tags) + pullModel() (/api/pull, streamed). REQUIRED_MODELS lives here for the website
-│   │   └── theme.ts         — useTheme() light/dark hook (toggles `dark` class on <html>, persists to localStorage)
-│   └── hooks/
-│       └── use-toast.ts     — toast notifications (Toaster/Sonner)
-├── backend/                 — payment + auth API (deployed on Render)
-│   ├── index.mjs            — Express entry point
-│   ├── routes/
-│   │   ├── auth.mjs         — send-otp, verify-otp, /me
-│   │   └── payment.mjs      — IntaSend M-Pesa STK push + card, webhook, status
-│   ├── lib/
-│   │   ├── db.mjs           — all Supabase queries
-│   │   ├── otp.mjs          — generate + bcrypt-verify 6-digit codes
-│   │   ├── license.mjs      — generate OC-XXXXXXXX-XXXX-XXXX-XXXX keys
-│   │   └── notify.mjs       — Africa's Talking SMS + Resend email
-│   ├── supabase-schema.sql  — paste into Supabase SQL Editor to create tables
-│   ├── .env.example         — every credential needed, with instructions
-│   └── Dockerfile           — Docker deployment (any VPS)
-├── server/                  — in-app local server (bundled inside Electron)
-│   └── index.mjs            — web_search/web_fetch tool backend + static serving of dist/
-├── electron/
-│   ├── main.cjs             — Electron main process, starts server sidecar, auto-updater, deep link handler
-│   └── preload.cjs          — contextBridge: exposes electronSetup + update IPC to renderer
-├── content/
-│   ├── lessons/             — Markdown lesson files (curriculum + RAG corpus + marketing scripts)
-│   └── system-prompt.md     — AI coach persona, guardrails, Kenya examples
-├── android/                 — Capacitor Android project (committed, build outputs gitignored)
-├── recycle/                 — gitignored. Dead code + reference material set aside by a full repo
-│                               audit (untrimmed shadcn scaffold, superseded lesson drafts, business
-│                               docs), mirroring original paths for easy restoration if ever needed.
-├── assets/                  — Source images for Capacitor icon/splash generation
-│   ├── icon-only.png
-│   └── splash.png
-├── build/
-│   └── icon.png             — App icon source for electron-builder
-├── public/
-│   ├── logo-512.png
-│   ├── favicon.ico
-│   └── rag-index.json       — 134 embedded chunks, committed to repo (regenerate with `npm run rag:build`, requires local Ollama + nomic-embed-text). This is the path the app actually fetches at runtime — do not move it.
-├── scripts/
-│   ├── build-rag-index.mjs  — chunks lessons + embeds via nomic-embed-text
-│   ├── query-rag.mjs        — test retrieval from CLI
-│   └── ask.mjs              — test full ask pipeline from CLI
-├── capacitor.config.ts      — Capacitor config (appId: com.orchestracore.app)
-├── .github/workflows/
-│   └── release.yml          — builds Windows + Mac + Linux + Android on git tag push
-├── .env.local.example       — frontend env vars template
-└── package.json             — version: 1.3.0
+src/
+├── pages/            one file per route
+│   ├── Lesson.tsx    the reader + the signup/paywall gates
+│   ├── Checkout.tsx  account creation → M-Pesa STK push → polling
+│   └── Dashboard.tsx signed-in library
+├── components/orchestra-core/
+│   ├── Nav, Footer, SiteLayout, Logo, ThemeToggle, ScrollToTop
+│   ├── LessonCard, LessonArticle (header + markdown body + skeleton)
+│   ├── SignupForm    shared by /signup and checkout step 1
+│   ├── StreakBadge, BudgetBuilderCard
+├── lib/
+│   ├── lessons.ts    catalogue (build-time) + loadLessonBody (lazy)
+│   ├── curriculum.ts the nine-series plan
+│   ├── session.ts    JWT storage + useSession()
+│   ├── api.ts        typed fetch wrapper
+│   ├── pricing.ts    PRICE_KES / PRICE_LABEL
+│   └── theme.ts      light/dark
+└── content/lessons/  the 80 lessons
+
+backend/
+├── index.mjs
+├── routes/auth.mjs      signup, login, me, request-reset, reset-password
+├── routes/payment.mjs   initiate, status, callback
+└── lib/
+    ├── daraja.mjs       OAuth, STK push, STK query, callback parsing
+    ├── db.mjs           all Supabase queries
+    ├── notify.mjs       Gmail/Resend email
+    ├── password.mjs     bcrypt
+    └── license.mjs      OC-XXXX… access keys
+
+vite.config.ts       includes the lesson-index plugin
+docs/SETUP.md        deployment + go-live
+recycle/             gitignored: AI, Electron, Android, donations, old scaffold
 ```
-
-### IPC bridge (Electron preload → renderer)
-
-`window.electronSetup` is exposed via contextBridge:
-- `onProgress(cb)` — setup step updates: `{ step, detail, percent? }`
-- `onComplete(cb)` — setup finished: `{ model }`
-- `onError(cb)` — setup failed: `{ step, message }`
-- `notifyReady()` — renderer calls this when mounted; triggers main to start setup
-- `onToken(cb)` — deep link JWT delivered: `{ token }`
-- `onUpdateAvailable(cb)` / `onUpdateProgress(cb)` / `onUpdateDownloaded(cb)` — auto-update events
-- `installUpdate()` — trigger quit-and-install
-
-### Auto-update flow
-
-1. App starts → after 10 seconds, `autoUpdater.checkForUpdatesAndNotify()` runs
-2. If new version found → downloads silently → sends `update:downloaded` IPC
-3. AppShell shows banner: "v1.x.x is ready — Restart & update"
-4. User clicks → `installUpdate()` → `autoUpdater.quitAndInstall(false, true)`
-5. App restarts with new version
-
-Update source: GitHub Releases (`latest.yml` / `latest-mac.yml` / `latest-linux.yml` published by electron-builder).
-
-### Deep link auto sign-in
-
-Protocol: `orchestracore://auth?token=JWT_TOKEN`
-
-- `app.setAsDefaultProtocolClient('orchestracore')` registered in main.cjs
-- `app.requestSingleInstanceLock()` ensures second instance passes URL to first via `second-instance` event
-- `handleDeepLink(url)` parses token and sends `setup:token` IPC to renderer
-- If app not yet open when link is clicked, token is stored in `pendingToken` and delivered once window is ready
-- Checkout done screen shows: `<a href="orchestracore://auth?token=...">Open in Orchestra-Core app</a>`
 
 ---
 
-## Payment & auth system
+## Payments — how it actually works
 
-### How it works end-to-end
+Direct Safaricom Daraja integration. No aggregator.
 
-**New buyer:**
-1. Visits `/pricing` → clicks "Get Orchestra-Core" → goes to `/checkout`
-2. **Step 1 — Identity (password account, created *before* any charge):** enters email + password (min. 8 chars) → `POST /api/auth/signup` creates the account immediately (bcrypt-hashed password) and returns a JWT (30-day), saved to localStorage, `paid: false`. No OTP/email-code step anywhere in this flow — the account is fully real and accessible the moment it's created, which also sidesteps Resend's email-deliverability restriction entirely (no code ever needs to reach the customer's inbox to sign up or sign in). If the email already has a password-protected account, signup is rejected (409) and the user is pointed to `/login`. If signup returns `paid: true` (re-buying after already owning a licence), skip straight to `/account` — nothing to charge.
-3. **Step 2 — Payment:** chooses M-Pesa or "Other" (card, Google Pay, Apple Pay, Pesalink, KE bank transfer, Cash App, PYUSD — whichever IntaSend rails are enabled in the IntaSend dashboard; all surfaced automatically by IntaSend's hosted checkout page, no separate integration needed per method)
-   - M-Pesa: enters M-Pesa number → backend calls IntaSend → STK push sent to phone → frontend polls `/api/payment/status/:txRef` every 3 seconds until confirmed
-   - Other: backend generates IntaSend hosted checkout link → user redirected → pays with whichever method they choose on IntaSend's page → redirected back to `/checkout?step=card-return&tx_ref=...`. The component remounts fresh here (component state is gone) — identity is recovered from the session saved in Step 1 (`getStoredUser()`), not from component state.
-4. **Step 3 — Done:** payment confirmed → `GET /api/auth/me` fetches the freshly-generated license key → displayed, download link shown, deep link button to open app
+1. `/checkout` step 1 creates the account (`POST /api/auth/signup`) — **before**
+   any money moves, so a customer can never pay and have no way back in.
+2. Step 2 posts to `POST /api/payment/initiate` with the phone number. The API
+   creates a `pending` payments row, calls Daraja STK Push, and stores the
+   returned `CheckoutRequestID`.
+3. The customer gets the PIN prompt on their phone.
+4. **Two independent paths** can complete the payment, and either is enough:
+   - Safaricom POSTs to `/api/payment/callback/:secret` (fast).
+   - The browser polls `/api/payment/status/:txRef`, which asks Daraja directly
+     via STK Query (authoritative).
 
-`TESTING_PHASE` (`VITE_TESTING_PHASE` on Vercel) skips Step 2 entirely after signup — calls `/api/payment/initiate` with `method: 'free'` and goes straight to Done. Separate flag from the backend's `TESTING_FREE`.
+   This redundancy is on purpose — a lost callback must never leave a paying
+   customer locked out. `completePayment()` only ever transitions a row that is
+   still `pending`, so whichever path wins, the licence key is issued once.
+5. On success: `users.has_paid = true`, an access key is generated, and a
+   receipt email goes out.
 
-**Returning buyer:**
-1. Visits `/login` → enters email + password → `POST /api/auth/login` verifies the bcrypt hash → redirected to `/account`
-2. `/account` shows license key + download link
+**Security notes.** Daraja does not sign its callbacks, so: the callback URL
+carries an unguessable secret path segment; the `CheckoutRequestID` must match a
+payment we created; and the paid amount is checked against the expected amount
+before access is granted.
 
-**Testing mode:** `TESTING_FREE=true` on Render allows checkout to complete without real payment. Set to `false` before accepting real money — still `true` as of this session (see go-live checklist step 4 below); `PRICE_KES` env var can temporarily override the charged amount (e.g. `10`) for a cheap real end-to-end test before reverting to the real price.
+### Backend environment variables
 
-**Session storage:** JWT in `localStorage` under key `oc_token`. `useSession()` hook reads it and updates any component that cares (Nav, Download, Account). Sessions last 30 days.
+See [`backend/.env.example`](backend/.env.example) — it documents every one,
+including sandbox values. The two that must stay in sync across hosts:
 
-**OTP infrastructure (otp.mjs, send-otp/verify-otp routes) is still in the codebase but unused by any active flow** — kept in case a future feature (2FA, password reset) wants it, not wired into signup/login anymore. `OTPInput.tsx` was removed (moved to `recycle/`) since nothing renders it now.
+- `PRICE_KES` (Render) — what is charged
+- `VITE_PRICE_KES` (Vercel) — what is displayed
 
-### Backend API routes
+### Database
 
-| Method | Path | What it does |
-|---|---|---|
-| GET | `/api/health` | Liveness check |
-| POST | `/api/auth/signup` | Create account with email + password (rate-limited: 10/10min) |
-| POST | `/api/auth/login` | Verify email + password → JWT + user data (rate-limited: 10/10min) |
-| GET | `/api/auth/me` | Validate JWT → return current user |
-| POST | `/api/payment/initiate` | Start IntaSend M-Pesa STK push OR generate hosted checkout link |
-| GET | `/api/payment/status/:txRef` | Poll payment status (pending/completed/failed) |
-| POST | `/api/payment/verify` | Verify card/other payment after redirect |
-| POST | `/api/payment/webhook` | IntaSend fires this on payment completion |
-
-### Backend environment variables (on Render)
-
-| Variable | Value |
-|---|---|
-| `JWT_SECRET` | 64-byte random hex |
-| `SUPABASE_URL` | Supabase project URL |
-| `SUPABASE_SERVICE_KEY` | Supabase service_role key |
-| `RESEND_API_KEY` | Resend API key (`re_...`) — fallback only; see `GMAIL_*` below |
-| `EMAIL_FROM` | `Orchestra-Core <onboarding@resend.dev>` |
-| `GMAIL_USER` | Gmail address that sends reset/license emails (e.g. `chweyaivan@gmail.com`) |
-| `GMAIL_APP_PASSWORD` | 16-char Gmail **app password** (needs 2FA on the account). When `GMAIL_*` are set, `notify.mjs`'s `sendEmail` uses Gmail SMTP — which delivers to ANY recipient, unlike Resend's shared sender — and only falls back to Resend if unset. |
-| `AT_API_KEY` | Africa's Talking API key |
-| `PRICE_KES` | Amount charged, in KES. Default 2000. **Set to `10` for cheap live testing**, then back to `2000`. |
-| `AT_USERNAME` | `sandbox` (testing) → production username when KYC approved |
-| `INTASEND_PUBLISHABLE_KEY` | IntaSend publishable key |
-| `INTASEND_SECRET_KEY` | IntaSend secret key |
-| `INTASEND_WEBHOOK_SECRET` | Random string matching IntaSend webhook settings |
-| `FRONTEND_URL` | `https://orchestra-core.vercel.app` |
-| `CORS_ORIGINS` | `https://orchestra-core.vercel.app` (add localhost entries for local dev) |
-| `TESTING_FREE` | `true` during testing phase; `false` for real sales |
-| `NODE_ENV` | `production` |
-
-### Database tables (Supabase)
-
-**users** — `id`, `email`, `phone`, `license_key`, `has_paid`, `created_at`
-**otp_codes** — `id`, `identifier`, `code_hash` (bcrypt), `expires_at` (10 min), `used`, `created_at`
-**payments** — `id`, `user_id`, `tx_ref`, `amount`, `currency`, `payment_method`, `status`, `intasend_tx_id`, `created_at`
-
-### License key format
-`OC-XXXXXXXX-XXXX-XXXX-XXXX-XXXX` (random 12-byte hex, uppercase). Generated on payment confirmation, stored in `users.license_key`, sent in confirmation SMS/email.
-
----
-
-## CI / release pipeline
-
-`.github/workflows/release.yml` — triggered on any `v*.*.*` tag push.
-
-Four parallel jobs, all on Node 22, all with `permissions: contents: write`:
-
-| Job | Runner | Output |
-|---|---|---|
-| build-windows | windows-latest | `Orchestra-Core Setup X.X.X.exe` + `latest.yml` |
-| build-mac | macos-latest | `Orchestra-Core-X.X.X.dmg` + `latest-mac.yml` |
-| build-linux | ubuntu-latest | `Orchestra-Core-X.X.X.AppImage` + `latest-linux.yml` |
-| build-android | ubuntu-latest | `app-release-unsigned.apk` |
-
-All artifacts are uploaded to the GitHub Release. The `latest*.yml` files are what `electron-updater` uses to detect and serve updates.
-
-**To release a new version:**
-```bash
-# 1. Bump version in package.json (use [System.IO.File]::WriteAllText — NOT Set-Content -Encoding utf8, which adds a BOM and breaks CI)
-# 2. Commit
-git add package.json
-git commit -m "chore: bump to vX.X.X"
-git push origin main
-# 3. Tag
-git tag vX.X.X
-git push origin vX.X.X
-# 4. Wait ~15 min for CI → go to GitHub Releases → Edit → Publish (remove Draft status)
-```
-
-**Critical: never use PowerShell `Set-Content -Encoding utf8` on package.json** — PowerShell 5.1 writes a UTF-8 BOM which breaks Vite's JSON parsing on CI. Always use:
-```powershell
-$utf8NoBOM = New-Object System.Text.UTF8Encoding $false
-[System.IO.File]::WriteAllText("$pwd\package.json", $content, $utf8NoBOM)
-```
+Two tables — `users` and `payments`. Schema and migrations:
+[`backend/supabase-schema.sql`](backend/supabase-schema.sql). Row-level security
+is enabled with no permissive policy; the API uses the `service_role` key, which
+bypasses RLS, so a leaked public key still reads nothing.
 
 ---
 
 ## Business model
 
-**Price:** KES 2,000 one-time (~$15). No subscriptions.
+**KES 200 one-time.** No subscriptions. Unlocks all 80 lessons plus everything
+added later.
 
-**Revenue layers:**
-1. Direct sales (primary)
-2. Content marketing — lesson content repurposed as TikTok/IG/X short-form
-3. B2B later — SACCOs, employers, universities (Phase 5)
-
-**Support/donation feature:** "Support Orchestra-Core" — transparent progress bar, M-Pesa Till (Kenya), Buy Me a Coffee (international). Not equity crowdfunding.
-
-**Infrastructure cost discipline:** every piece of infrastructure (Vercel, Render, Supabase, Resend, IntaSend, GitHub) runs on a genuinely free tier — zero recurring monthly or annual cost. This is a hard constraint while solo-bootstrapping, not a preference: check whether a free-tier path exists before adding or recommending any paid service or domain. It's also why password-based accounts replaced OTP rather than buying a domain to fix Resend's sender restriction — the domain would have worked but cost money, so the free engineering fix was chosen instead. The first place real infrastructure spend is planned is the eventual local-AI-to-hosted-AI migration, funded by revenue at that point — not before.
+Revenue layers: direct sales (primary); content marketing (every lesson is a
+short-form video script); B2B to SACCOs/employers/universities much later.
 
 ---
 
-## Legal / regulatory context (Kenya)
+## Legal / regulatory (Kenya)
 
-- **CMA:** Stay strictly on the education side — general/impersonal content only, never personalized buy/sell advice for specific securities.
-- **Business registration:** BRS business name "Orchestra-Core" via eCitizen, ~KES 950 one-time. Separate annual County Single Business Permit (~KES 5,000-10,000) once actively trading.
-- **Data Protection Act 2019:** Privacy Policy live at `/privacy`, Terms at `/terms`. DPA obligations apply from first data collected. ODPC formal registration not required until KES 5M turnover or 10+ staff.
-- **Model licensing:** All models are Apache-2.0 (Qwen2.5 family) — safe to redistribute in a downloadable product.
-- **RAG content:** Original summaries only, never verbatim book text.
-
----
-
-## Roadmap
-
-1. **Phase 1 — Ship something real.** ← WE ARE HERE
-2. **Phase 2 — Meet people where their devices are.** (per-tier builds, budget Android)
-3. **Phase 3 — Build the actual orchestra.** (multi-gear orchestrator, specialized models)
-4. **Phase 4 — Let the community fund reach.** (ODPC, hosted tier on VPS)
-5. **Phase 5 — Go where the trust already exists.** (SACCO/employer site licences)
-6. **Phase 6 — Beyond Kenya.** (USD pricing, global app stores, second country module)
+- **CMA:** strictly education. General, impersonal content only — never
+  personalized buy/sell advice on specific securities.
+- **Data Protection Act 2019:** `/privacy` and `/terms` are live and current.
+  ODPC registration not required until KES 5M turnover or 10+ staff.
+- **Business registration:** BRS business name "Orchestra-Core" is registered.
+  A county Single Business Permit is separate and still outstanding.
+- **Consumer Protection Act 2012:** `/terms` §5–6 cover the internet-agreement
+  disclosures and the refund position.
 
 ---
 
-## Phase 1 — Complete status
+## Current status
 
-### ✅ Done
+**Done:** all 80 lessons written and live on the site · the three-tier access
+model · Daraja M-Pesa payments · accounts, login, password reset · dark mode ·
+legal pages · bundle split so the site stays fast as lessons are added.
 
-- **Lesson content** — 12+ lessons across 3 series in `content/lessons/`, Markdown with frontmatter
-- **RAG pipeline** — `public/rag-index.json` (134 chunks, 16 lessons) committed to repo; `npm run rag:build` regenerates it; `npm run rag:query` tests retrieval. (Was broken for every release through v1.1.6: the index lived only at the gitignored `public/rag-index.json` path and was never committed, so every shipped build had zero lesson grounding — fixed by committing it and deleting the stale, unused `content/rag-index.json` that nothing actually read.)
-- **System prompt** — `content/system-prompt.md` — educational framing, Socratic voice, Kenya examples, "not financial advice" guardrails
-- **CLI ask pipeline** — `npm run ask -- "question"` does full RAG + streaming Ollama end-to-end
-- **`/ask` page** — live browser chat panel, source-lesson chips, Deep Dive toggle (now real tool-calling, not a pre-search)
-- **`/dashboard` page** — streak badge, Today's insight, Budget builder, Smart Money tools, Ask panel, Support panel
-- **Electron app** — `AppShell` opens to Lessons by default with a "Start here" card, in-app lesson reader, sidebar setup checklist (multi-model progress), auto-updater, deep link sign-in
-- **Android app** — Capacitor 8 wrapping the React build; `android/` project committed; icons generated
-- **Fixed model lineup** — every install pulls `qwen2.5:7b` + `moondream` + `nomic-embed-text`, no device scanning or tiering (`DownloadPanel.tsx` on the website, `REQUIRED_MODELS` in `electron/main.cjs`)
-- **AI tool-calling** — `web_search`/`web_fetch` tools the model can call itself when a question needs current information, via `server/index.mjs`'s `/api/web-search` and `/api/web-fetch`
-- **Logo / wordmark** — `Logo.tsx`, Orbit icon, "Orchestra**-Core**" split colour, "OC" monogram
-- **Payment + auth system** — IntaSend (M-Pesa, card, Google Pay, Apple Pay, Pesalink, KE bank, Cash App, PYUSD), password-based accounts (bcrypt), JWT sessions, license keys
-- **Checkout flow** — `/checkout` (4 steps) + `/login` + `/account`
-- **Website** — all pages live at https://orchestra-core.vercel.app, auto-deploys on push
-- **Backend** — deployed on Render at https://orchestra-core.onrender.com, `TESTING_FREE=true`
-- **CI pipeline** — 4-platform builds (Windows, Mac, Linux, Android) on every version tag
-- **Privacy Policy + Terms** — live at `/privacy` and `/terms`
+**To do before first sale** — all of it dashboard work, no code needed. Follow
+[`docs/SETUP.md`](docs/SETUP.md) §5:
 
----
+1. Run the Supabase schema; put the keys on Render.
+2. Create the Daraja app; test in sandbox.
+3. Apply to Go Live on Daraja; swap in production credentials.
+4. Cheap live test at `PRICE_KES=1`, then set both price vars back to `200`.
+5. Add an UptimeRobot monitor so Render's free tier doesn't sleep (§6).
 
-### ⏳ Go-live checklist (code is fully ready — only dashboard steps remain)
-
-BRS business name is registered. IntaSend application is approved for live
-payments. Switching to password-based accounts (see "Payment & auth system"
-above) means a domain and Resend email-deliverability fix are no longer
-required to go live — see "Deferred, not blocking" below for why. Every
-remaining step below is a dashboard action only the account owner can take
-(no API/CLI access available for any of these) — the code side is already
-done and waiting. Do them in this order:
-
-#### 1. Rotate IntaSend keys and configure the webhook
-
-The live keys currently in use sat exposed in git history earlier (since
-purged, repo is now public) — rotate them before real money flows through:
-1. IntaSend dashboard → Settings → API Keys → generate new live publishable
-   + secret keys.
-2. IntaSend dashboard → Webhooks → URL: `https://orchestra-core.onrender.com/api/payment/webhook`,
-   set a secret string.
-3. Render → set `INTASEND_PUBLISHABLE_KEY`, `INTASEND_SECRET_KEY` (new
-   values), `INTASEND_WEBHOOK_SECRET` (matching what you set in IntaSend).
-   No code change needed — `payment.mjs` already auto-detects live vs
-   sandbox from the key prefix and already authenticates webhooks against
-   `INTASEND_WEBHOOK_SECRET`.
-
-#### 2. Production environment variables on Render
-
-| Variable | Required value |
-|---|---|
-| `FRONTEND_URL` | `https://orchestra-core.vercel.app` |
-| `CORS_ORIGINS` | `https://orchestra-core.vercel.app` |
-| `NODE_ENV` | `production` |
-| `EMAIL_FROM` | current shared `onboarding@resend.dev` sender is fine to leave as-is — see "Deferred, not blocking" below |
-| `INTASEND_*` | set in step 1 above |
-| `PRICE_KES` | set to `2000` (the real price) or remove the variable entirely — `payment.mjs`'s code default is now `2000`, so unset behaves the same as `2000` |
-| `TESTING_FREE` | **set to `false`** — this is the official-launch switch, not a testing one. Leave `true` only for a deliberate short test window. |
-
-Note: the backend's CORS config (`backend/index.mjs`) always allows
-`http://localhost:5175` (the Electron app's fixed local origin) in code
-regardless of `CORS_ORIGINS` — so the *app* won't break even if this is
-still wrong, but the *website* will if `CORS_ORIGINS` doesn't include the
-Vercel URL.
-
-#### 3. Vercel environment variables
-
-- Confirm `VITE_API_URL=https://orchestra-core.onrender.com`
-- **Set `VITE_TESTING_PHASE` to `false` or remove it entirely** — this is
-  the frontend half of going live (separate flag from the backend's
-  `TESTING_FREE`, both must be off). Leaving it `true` shows "0 KES, free
-  during testing" on `/` and `/pricing` regardless of what the backend
-  charges.
-- `VITE_PRICE_KES` — the **displayed** price (`src/lib/pricing.ts` →
-  `PRICE_LABEL`, used on `/`, `/pricing`, `/checkout`, `/account`, lesson
-  gates). Default 2000. Keep it in sync with the backend's `PRICE_KES` —
-  set BOTH to `10` for a cheap live test, both back to `2000` after. It's a
-  build-time var, so changing it needs a fresh Vercel deploy to take effect.
-- `VITE_DOWNLOAD_URL_WIN` no longer needs to be set — desktop downloads
-  are paused (see "Desktop app on pause" above), so `/download` doesn't
-  use this variable right now. Revisit when downloads resume.
-
-#### 4. End-to-end live test, then go live
-
-Sign up with a real email + password, confirm the license key shows on
-the Done screen and on `/account`, confirm `/dashboard` works (lessons +
-AI chat). When ready: flip `TESTING_FREE=false` on Render and
-`VITE_TESTING_PHASE=false` on Vercel (step 2/3 above), then go through
-`/checkout` for real — pay the actual KES 2,000 yourself via M-Pesa as
-the live-mode test (IntaSend live mode has no fake sandbox once keys are
-live, so this is the standard way to validate a live integration).
-Confirm: payment completes at the real price, license key generates,
-`/account` and `/dashboard` both work. If all of that passes, you're live.
-
-#### Deferred, not blocking
-
-- **Custom domain + Resend domain verification** — originally needed to fix
-  OTP delivery (Resend's shared `onboarding@resend.dev` sender only
-  delivers to the account's own verified email until a custom domain is
-  verified). Moot now: sign-in uses real passwords, not emailed codes, so
-  nothing in the active flow depends on email deliverability. The
-  post-purchase "here's your license key" confirmation email still goes
-  through Resend and will silently fail to reach anyone but the account
-  owner until a domain is verified (wrapped in `.catch`, so it never blocks
-  checkout — the license key already shows directly in the app). Worth
-  fixing later for polish/branding, not a blocker. No domain has been
-  purchased — deliberately deferred while every other piece of
-  infrastructure stays on a free tier with zero recurring cost.
-- **Africa's Talking production KYC** — SMS stays sandbox; fully unused
-  now (OTP-via-SMS was the only caller, and OTP is no longer wired into
-  any active flow).
-- **ODPC formal registration** — still correctly deferred until KES 5M
-  turnover or 10+ staff.
-- **Single Business Permit** — county-level, separate from the BRS name
-  registration already done; worth doing but not code-related.
-
----
-
-### ⏳ Post-launch improvements (not blockers)
-
-- [x] **Ollama first-run handling** — `main.cjs`'s `runSetup()` already auto-downloads and silently installs Ollama if missing, then pulls the model lineup — no manual screen needed. If something does fail, `SetupStatus` shows a "Try again" button + a link to ollama.com.
-- [x] **App icon + branded installer** — `build/icon.ico` (multi-res) and `build/installerSidebar.bmp` (164x314, maroon background + white logo + wordmark) generated via `node scripts/build-installer-assets.mjs`. `nsis` config in `package.json` sets `oneClick: false` (required for the sidebar to render) with `installerIcon`/`uninstallerIcon`/`installerHeaderIcon`/`installerSidebar`/`uninstallerSidebar`. Verified locally: `npx electron-builder --win --publish=never` builds cleanly with no NSIS errors from the custom assets. Mac `.icns` still auto-generated by electron-builder from `build/icon.png` (512x512 source) — no separate action needed there.
-- [ ] **Dashboard/Ask nav for web users** — `/dashboard` and `/ask` exist but aren't reachable from the website nav post-login. Add a "Go to dashboard" link on the `/account` page or in Nav when session.paid is true
-- [ ] **Android APK signing** — current CI output is unsigned (works for sideloading, can't go on Google Play). Needs a signing keystore + Gradle signing config
-- [ ] **iOS** — Capacitor config is ready but requires Apple Developer account ($99/year) and a Mac build. Deferred
-- [ ] **Mac DMG** — CI now builds it but it hasn't been locally tested end-to-end
-- [ ] **Content marketing** — start posting 1-2 clips/week from lesson corpus before launch. TikTok Kenya, Instagram, X. Example: "How one tweet wiped $2 trillion off markets", "What a 13F filing actually tells you", "Why M-Pesa is studied in Harvard Business School"
-- [x] **"Reading a payslip" lesson promoted** — now `1-9-reading-a-payslip.md`, Module 9 of series-1 (PAYE/NSSF/SHIF/Housing Levy).
-- [ ] **moondream has no UI yet** — pulled during setup alongside qwen2.5:7b and nomic-embed-text, but nothing in the app uses vision capability yet. Wire up a feature (e.g. "read this payslip/receipt screenshot") or it's just sitting unused on every install.
-
----
-
-## Deferred to later phases
-
-**Phase 2:** budget Android support, revisit smaller models if the fixed qwen2.5:7b lineup proves too heavy for lower-end laptops
-
-**Phase 3:** multi-gear orchestrator (specialized models per domain, synthesized answers)
-
-**Phase 4:** Formal ODPC registration (when approaching KES 5M turnover or hiring staff), hosted web tier on VPS funded by donations
-
-**Phase 5:** SACCO/employer B2B licensing
-
-**Phase 6:** USD pricing via Lemon Squeezy/Paddle, Google Play (Financial features declaration), second country module
+**Later:** custom domain · the AI coach (Ivan's own model) · the desktop and
+Android apps · B2B licensing.

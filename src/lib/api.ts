@@ -61,21 +61,20 @@ export function resetPassword(token: string, password: string) {
   });
 }
 
-// ── payment ────────────────────────────────────────────────────────────────
+// ── payment (M-Pesa via Safaricom Daraja) ──────────────────────────────────
 
-export function initiatePayment(identifier: string, method: 'mpesa' | 'card' | 'free', mpesaPhone?: string) {
-  return request<{ ok: boolean; method: string; txRef: string; paymentLink?: string; message?: string }>(
+// Triggers the STK Push — the "enter your M-Pesa PIN" prompt on the customer's
+// phone. Resolves as soon as the prompt is sent, NOT when it's paid: poll
+// getPaymentStatus(txRef) after this to find out what the customer did.
+export function initiatePayment(identifier: string, phone: string) {
+  return request<{ ok: boolean; txRef: string; message?: string }>(
     '/api/payment/initiate',
-    { method: 'POST', body: JSON.stringify({ identifier, method, mpesaPhone }) },
+    { method: 'POST', body: JSON.stringify({ identifier, phone }) },
   );
 }
 
 export function getPaymentStatus(txRef: string) {
-  return request<{ status: 'pending' | 'completed' | 'failed' }>(`/api/payment/status/${txRef}`);
-}
-
-export function verifyCardPayment(txRef: string, invoiceId?: string) {
-  return request<{ ok: boolean }>('/api/payment/verify', {
-    method: 'POST', body: JSON.stringify({ tx_ref: txRef, invoice_id: invoiceId }),
-  });
+  return request<{ status: 'pending' | 'completed' | 'failed'; message?: string }>(
+    `/api/payment/status/${txRef}`,
+  );
 }

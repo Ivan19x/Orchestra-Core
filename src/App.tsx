@@ -1,53 +1,40 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { isMobileApp } from "./lib/platform";
+import { ScrollToTop } from "./components/orchestra-core/ScrollToTop";
 import { SiteLayout } from "./components/orchestra-core/SiteLayout";
 import Home from "./pages/Home";
 import HowItWorks from "./pages/HowItWorks";
 import Lessons from "./pages/Lessons";
-import Lesson from "./pages/Lesson";
-import Try from "./pages/Try";
-import Ask from "./pages/Ask";
-import Dashboard from "./pages/Dashboard";
 import Pricing from "./pages/Pricing";
-import Download from "./pages/Download";
-import Support from "./pages/Support";
 import About from "./pages/About";
-import Checkout from "./pages/Checkout";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import Account from "./pages/Account";
-import Privacy from "./pages/Privacy";
-import Terms from "./pages/Terms";
-import AppShell from "./pages/AppShell";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+// Split out of the first download. The reader pulls in the whole markdown
+// renderer, and the rest of these are pages most visitors never open — no
+// reason to make everyone pay for them on a phone connection.
+const Lesson = lazy(() => import("./pages/Lesson"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const Account = lazy(() => import("./pages/Account"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
+  <BrowserRouter>
+    <ScrollToTop />
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <Routes>
           <Route element={<SiteLayout />}>
-            {/* On mobile (Capacitor), send root → /app so the app shell loads */}
-            <Route path="/" element={isMobileApp ? <Navigate to="/app" replace /> : <Home />} />
+            <Route path="/" element={<Home />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/lessons" element={<Lessons />} />
             <Route path="/lessons/:code" element={<Lesson />} />
-            <Route path="/try" element={<Try />} />
-            <Route path="/ask" element={<Ask />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/pricing" element={<Pricing />} />
-            <Route path="/download" element={<Download />} />
-            <Route path="/support" element={<Support />} />
             <Route path="/about" element={<About />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/login" element={<Login />} />
@@ -57,14 +44,18 @@ const App = () => (
             <Route path="/account" element={<Account />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+
+            {/* Retired routes that may still be linked from elsewhere — keep
+                them resolving to something sensible rather than a 404. */}
+            <Route path="/try" element={<Navigate to="/lessons" replace />} />
+            <Route path="/ask" element={<Navigate to="/lessons" replace />} />
+            <Route path="/download" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/support" element={<Navigate to="/about" replace />} />
           </Route>
-          {/* Electron-only screen — no site nav/footer */}
-          <Route path="/app" element={<AppShell />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
+  </BrowserRouter>
 );
 
 export default App;

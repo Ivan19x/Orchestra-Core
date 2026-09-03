@@ -9,7 +9,7 @@ const links = [
   { to: '/how-it-works', label: 'How it works' },
   { to: '/lessons', label: 'Lessons' },
   { to: '/pricing', label: 'Pricing' },
-  { to: '/support', label: 'Support' },
+  { to: '/about', label: 'About' },
 ];
 
 export function Nav() {

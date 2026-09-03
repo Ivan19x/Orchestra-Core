@@ -63,6 +63,10 @@ export const CURRICULUM: SeriesPlan[] = [
       { module: 6, title: 'Negotiation & Earning More' },
       { module: 7, title: 'Avoiding Lifestyle Inflation' },
       { module: 8, title: 'Money Habits of Financially Free People' },
+      { module: 9, title: 'How Warren Buffett Reads a Balance Sheet' },
+      { module: 10, title: 'What a 13F Filing Tells You' },
+      { module: 11, title: 'Why Hedge Funds Short Stocks' },
+      { module: 12, title: 'How Market-Movers Think About Risk' },
     ],
   },
   {

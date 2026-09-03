@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Copy, Check, Download, LogOut, BookOpen, Link2 } from 'lucide-react';
-import { useSession, clearSession, dispatchSessionChange, getToken } from '@/lib/session';
+import { Copy, Check, LogOut, BookOpen } from 'lucide-react';
+import { useSession, clearSession, dispatchSessionChange, getToken, saveSession } from '@/lib/session';
 import { getMe } from '@/lib/api';
 import { PRICE_LABEL } from '@/lib/pricing';
 
@@ -11,11 +11,17 @@ export default function Account() {
   const [licenseKey, setLicenseKey] = useState(session?.licenseKey ?? '');
   const [copied, setCopied] = useState(false);
 
+  // Re-sync from the server on every visit: a payment confirmed on another
+  // device (or by Safaricom's callback after this browser stopped polling)
+  // needs to show up here without the user having to sign out and back in.
   useEffect(() => {
-    if (!getToken()) { navigate('/login'); return; }
+    const token = getToken();
+    if (!token) { navigate('/login'); return; }
     getMe()
       .then(user => {
         if (user.licenseKey) setLicenseKey(user.licenseKey);
+        saveSession(token, user);
+        dispatchSessionChange();
       })
       .catch(() => {
         clearSession();
@@ -45,91 +51,57 @@ export default function Account() {
         <div className="container-narrow py-20">
           <div className="text-xs uppercase tracking-[0.18em] text-primary mb-4">My account</div>
           <h1 className="font-serif text-4xl md:text-5xl text-foreground">
-            {session.identifier.includes('@') ? session.identifier.split('@')[0] : session.identifier}
+            {session.identifier.split('@')[0]}
           </h1>
           <p className="text-warm-muted mt-2">{session.identifier}</p>
         </div>
       </section>
 
       <section className="container-narrow py-16 space-y-6">
-        {/* Licence */}
+        {/* Access */}
         <div className="bg-background rounded-2xl border border-border p-6 md:p-8">
-          <h2 className="font-serif text-xl text-foreground mb-1">License</h2>
+          <h2 className="font-serif text-xl text-foreground mb-1">Access</h2>
           <p className="text-sm text-warm-muted mb-5">
-            {session.paid ? 'Lifetime access · one-time payment' : 'No active licence found.'}
+            {session.paid
+              ? 'Full access · every lesson unlocked · one-time payment'
+              : 'Free account — the starter lesson in each series is open to you.'}
           </p>
 
-          {session.paid && licenseKey ? (
-            <div className="bg-blush rounded-xl border border-border p-4 flex items-center justify-between gap-4">
-              <code className="text-sm font-mono text-foreground break-all">{licenseKey}</code>
-              <button onClick={copy} className="shrink-0 text-primary hover:opacity-70 transition" aria-label="Copy">
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              </button>
-            </div>
-          ) : !session.paid ? (
+          {session.paid ? (
+            licenseKey && (
+              <>
+                <div className="bg-blush rounded-xl border border-border p-4 flex items-center justify-between gap-4">
+                  <code className="text-sm font-mono text-foreground break-all">{licenseKey}</code>
+                  <button onClick={copy} className="shrink-0 text-primary hover:opacity-70 transition" aria-label="Copy access key">
+                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-xs text-faint mt-2">
+                  Your access key — proof of purchase. You don't need it to sign in.
+                </p>
+              </>
+            )
+          ) : (
             <Link to="/checkout"
               className="inline-flex items-center px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition">
-              Get full access — {PRICE_LABEL}
+              Unlock everything — {PRICE_LABEL}
             </Link>
-          ) : null}
+          )}
         </div>
 
-        {/* Dashboard (free users) — read the free starter lessons */}
-        {!session.paid && (
-          <div className="bg-background rounded-2xl border border-border p-6 md:p-8">
-            <h2 className="font-serif text-xl text-foreground mb-1">Your dashboard</h2>
-            <p className="text-sm text-warm-muted mb-5">
-              Read the free starter lesson in each series. Unlock every lesson across all series with full access.
-            </p>
-            <Link to="/dashboard"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition">
-              <BookOpen className="w-4 h-4" /> Open dashboard
-            </Link>
-          </div>
-        )}
-
-        {/* Dashboard (browser) */}
-        {session.paid && (
-          <div className="bg-background rounded-2xl border border-border p-6 md:p-8">
-            <h2 className="font-serif text-xl text-foreground mb-1">Your dashboard</h2>
-            <p className="text-sm text-warm-muted mb-5">
-              Open your learning dashboard — every lesson across all series, plus your budgeting tools.
-            </p>
-            <Link to="/dashboard"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition">
-              <BookOpen className="w-4 h-4" /> Open dashboard
-            </Link>
-          </div>
-        )}
-
-        {/* Connect to desktop app — pushes this session into the installed app via deep link, no OTP needed there */}
-        {session.paid && (
-          <div className="bg-background rounded-2xl border border-border p-6 md:p-8">
-            <h2 className="font-serif text-xl text-foreground mb-1">Connect to desktop app</h2>
-            <p className="text-sm text-warm-muted mb-5">
-              Already have Orchestra-Core installed? Click below to sign in there instantly — no verification code needed,
-              it uses this website session.
-            </p>
-            <a
-              href={`orchestracore://auth?token=${encodeURIComponent(getToken() ?? '')}`}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition"
-            >
-              <Link2 className="w-4 h-4" /> Connect to desktop app
-            </a>
-          </div>
-        )}
-
-        {/* Download */}
-        {session.paid && (
-          <div className="bg-background rounded-2xl border border-border p-6 md:p-8">
-            <h2 className="font-serif text-xl text-foreground mb-1">Download desktop app</h2>
-            <p className="text-sm text-warm-muted mb-5">Downloads are paused while we focus on the website — use your dashboard above in the meantime.</p>
-            <Link to="/download"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-primary text-primary text-sm hover:bg-primary hover:text-primary-foreground transition">
-              <Download className="w-4 h-4" /> Go to Download page
-            </Link>
-          </div>
-        )}
+        {/* Dashboard */}
+        <div className="bg-background rounded-2xl border border-border p-6 md:p-8">
+          <h2 className="font-serif text-xl text-foreground mb-1">Your dashboard</h2>
+          <p className="text-sm text-warm-muted mb-5">
+            {session.paid
+              ? 'Every lesson across every series, plus your budgeting tools.'
+              : 'Pick up where you left off, and read the free starter lessons.'}
+          </p>
+          <Link to="/dashboard"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition">
+            <BookOpen className="w-4 h-4" /> Open dashboard
+          </Link>
+        </div>
 
         {/* Sign out */}
         <div className="pt-2">
