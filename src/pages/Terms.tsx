@@ -80,18 +80,35 @@ export default function Terms() {
               transaction reference, the amount, the phone number used, and whether the payment succeeded.
             </p>
             <p className="text-warm-muted mb-3">
-              <strong className="text-foreground">Refund policy:</strong> Because Orchestra-Core is a digital product
-              that becomes immediately readable the moment payment is confirmed, refunds are generally not available
-              once access has been unlocked. However, in accordance with the Kenya Consumer Protection Act 2012:
+              <strong className="text-foreground">Refund policy.</strong> The first lesson of every series is free to
+              read before you pay, without entering any payment details. You are therefore deciding with the actual
+              material in front of you, and there is no change-of-mind refund once your access has been unlocked.
+              There are two situations in which you are entitled to your money back:
             </p>
-            <ul className="list-disc list-inside text-warm-muted space-y-2 ml-2">
-              <li>If your M-Pesa payment was taken but your access did not unlock, you are entitled to a full refund (or, if you prefer, to have your access activated manually). Contact us with your M-Pesa confirmation code.</li>
-              <li>If you were charged twice for the same purchase, the duplicate is refunded in full.</li>
-              <li>If you believe you were misled about what Orchestra-Core provides, contact us within 14 days of purchase to discuss.</li>
+            <ul className="list-disc list-outside text-warm-muted space-y-3 ml-5 mb-3">
+              <li>
+                <strong className="text-foreground">The service was not working when you paid.</strong> If your M-Pesa
+                payment is taken but you cannot reach your lessons — access never unlocks, or the service is
+                unavailable — you may report it to us within <strong className="text-foreground">14 days of the
+                payment</strong> and choose either a full refund or to have your access activated manually. Report it
+                with the M-Pesa confirmation code from your SMS.
+              </li>
+              <li>
+                <strong className="text-foreground">You were charged more than once</strong> for the same purchase. Any
+                duplicate payment is refunded in full, whenever it is identified.
+              </li>
             </ul>
-            <p className="text-warm-muted mt-3">
-              To request a refund: <a href="mailto:chweyaivan@gmail.com" className="text-primary hover:underline">chweyaivan@gmail.com</a>.
-              We will respond within 5 business days.
+            <p className="text-warm-muted mb-3">
+              <strong className="text-foreground">After the 14 days.</strong> If you do not report a service problem
+              within 14 days of paying, no refund is due. Your purchase is not lost: access is permanent, it is restored
+              as soon as the service is available again, and you continue reading from where you stopped. A temporary
+              interruption delays your access; it does not end it.
+            </p>
+            <p className="text-warm-muted">
+              To report a problem or request a refund:{' '}
+              <a href="mailto:chweyaivan@gmail.com" className="text-primary hover:underline">chweyaivan@gmail.com</a>.
+              We will respond within 5 business days. Nothing in this section limits any right you have under Kenyan
+              law that cannot be waived by agreement.
             </p>
           </div>
 

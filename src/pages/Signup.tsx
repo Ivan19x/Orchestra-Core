@@ -19,7 +19,7 @@ export default function Signup() {
           <div className="text-xs uppercase tracking-[0.15em] text-primary mb-1">Create your free account</div>
           <h1 className="font-serif text-3xl text-foreground mb-2">Start reading in a minute.</h1>
           <p className="text-sm text-warm-muted mb-8">
-            A free account lets you read the starter lesson in each series. Unlock every lesson and your AI coach anytime.
+            A free account lets you read the first lesson of every series. Unlock the rest whenever you're ready.
           </p>
 
           <SignupForm onSuccess={() => navigate('/dashboard')} submitLabel="Create free account" />

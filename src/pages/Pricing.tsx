@@ -12,34 +12,28 @@ const benefits = [
   'No subscriptions, no tracking, no upsells',
 ];
 
+// The five questions someone asks with their thumb over the pay button.
+// Everything else lives on /faq so the two pages don't repeat each other.
 const faqs = [
   {
-    q: 'Is this financial advice?',
-    a: 'No. Orchestra-Core is financial education. It teaches you how money, markets, and institutions work so you can make better decisions — but it never tells you what to buy or sell, and we never touch your money.',
-  },
-  {
-    q: 'How do I pay?',
-    a: 'With M-Pesa. Enter your Safaricom number at checkout and you\'ll get the usual prompt on your phone — enter your PIN and your account unlocks straight away. We never see your PIN.',
-  },
-  {
-    q: 'Do I need to install anything?',
-    a: 'No. Orchestra-Core runs entirely on the website. Create an account, sign in, and read.',
-  },
-  {
     q: 'What exactly do I get for one payment?',
-    a: 'Lifetime access to the full written curriculum — every lesson across every series, current and future. One payment, owned forever, no subscription.',
+    a: 'Every lesson across every series, unlocked for good — plus every lesson added later, at no extra cost. One payment, owned forever, no subscription and nothing auto-debited.',
   },
   {
     q: 'Can I read anything before paying?',
-    a: 'Yes. The starter lesson in each series is free to read with a free account — no payment details needed. Read those first and decide afterwards.',
+    a: 'Yes. The first lesson of every series is free to read with a free account, and you enter no payment details to get them. They are real lessons, not samples — read them first and decide afterwards.',
   },
   {
-    q: 'Why do you need my email?',
-    a: 'To link your purchase to you, so you can sign back in from any device without paying again. We store nothing else and never sell your data.',
+    q: 'How do I pay?',
+    a: 'With M-Pesa. Enter your Safaricom number at checkout and the usual prompt comes to your phone — enter your PIN and your account unlocks straight away. Your PIN is entered on your own handset and never reaches us.',
   },
   {
-    q: 'What if my payment fails?',
-    a: 'Nothing is charged unless the M-Pesa prompt is completed. If money left your account but access didn\'t unlock, email us with your M-Pesa confirmation code and we\'ll sort it out.',
+    q: 'Can I get a refund?',
+    a: 'Because you can read the free lessons before paying, there is no change-of-mind refund once your access is open. But if you pay and the service is not working, tell us within 14 days and you can take a full refund or have your access switched on by hand. Duplicate charges are always refunded in full.',
+  },
+  {
+    q: 'Is this financial advice?',
+    a: 'No. It teaches you how money, markets and institutions work so you can make your own decisions — it never tells you what to buy or sell, and we never touch your money.',
   },
 ];
 
@@ -101,6 +95,12 @@ export default function Pricing() {
             </AccordionItem>
           ))}
         </Accordion>
+
+        <p className="text-center mt-8">
+          <Link to="/faq" className="text-sm text-primary hover:underline">
+            More questions people ask →
+          </Link>
+        </p>
       </section>
     </>
   );

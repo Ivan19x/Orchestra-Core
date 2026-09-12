@@ -18,8 +18,14 @@ project. Orchestra-Core is a distinct, public-facing product.
 ## What this project is — as of 3 September 2026
 
 **A website that sells access to a written financial-education curriculum.**
-80 lessons across nine series, read in the browser. KES 200 one-time, paid by
-M-Pesa. Kenya first.
+80 lessons across nine series, read in the browser. One-time payment by M-Pesa.
+Kenya first.
+
+**On the price:** KES 200 is a *testing-stage* price. The intended price is
+KES 2,000. Because of that, **never hardcode a price in copy** — always render
+`{PRICE_LABEL}` from `src/lib/pricing.ts`, which reads `VITE_PRICE_KES`. Raising
+the price is then a two-variable change with no code edit: `VITE_PRICE_KES` on
+Vercel (displayed) and `PRICE_KES` on Render (charged). They must always match.
 
 That is the whole product. It is deliberately smaller than it used to be.
 
@@ -98,7 +104,8 @@ Full deployment and go-live instructions: [`docs/SETUP.md`](docs/SETUP.md).
 | `/how-it-works` | Curriculum / Kenya-first / one payment |
 | `/lessons` | The full nine-series programme, searchable. Free badge on starters, Premium (lock) on the rest |
 | `/lessons/:code` | The reader. `:code` is `S<series>M<module>`, e.g. `/lessons/S1M1` |
-| `/pricing` | One card, the price, benefits, FAQ |
+| `/pricing` | One card, the price, benefits, and the 5 purchase-decision questions |
+| `/faq` | "Questions people ask" — the everyday practical questions, in four groups |
 | `/checkout` | Two steps: create account → pay by M-Pesa STK push |
 | `/signup` · `/login` | Email + password |
 | `/forgot-password` · `/reset-password` | Emailed 10-minute reset link |
@@ -108,8 +115,21 @@ Full deployment and go-live instructions: [`docs/SETUP.md`](docs/SETUP.md).
 
 Retired routes `/try`, `/ask`, `/download`, `/support` redirect rather than 404.
 
+**Division of copy** (set September 2026, keep it):
+
+- **`/about` is the story** — why this exists, in Ivan's first-person voice. Never
+  a Q&A. The thesis: people are told to pick one lane and money gets deferred to
+  "later"; there is always a path forward and money is the tool every path runs
+  on.
+- **`/faq` is the everyday questions** — light and practical (what do I get, how
+  do I pay, refunds, passwords). The long pitch-style Q&A about competitors,
+  credentials and defensibility is **for pitching, not for the website**.
+- **No competitors are named anywhere on the site**, and no superlative claims
+  ("the first", "the only", "the best"). Verified clean — keep it that way.
+
 Global nav: sticky header, logo left, links centre (How it works · Lessons ·
-Pricing · About), theme toggle + auth CTA right. Signed out → "Get started —
+Pricing · About), theme toggle + auth CTA right. `/faq` is linked from the
+footer, from `/pricing`, and from the homepage — deliberately not in the nav. Signed out → "Get started —
 free" → `/signup`. Signed in → "Open dashboard".
 
 ---
@@ -270,8 +290,8 @@ bypasses RLS, so a leaked public key still reads nothing.
 
 ## Business model
 
-**KES 200 one-time.** No subscriptions. Unlocks all 80 lessons plus everything
-added later.
+**One-time payment** (KES 200 while testing, KES 2,000 intended). No
+subscriptions. Unlocks all 80 lessons plus everything added later.
 
 Revenue layers: direct sales (primary); content marketing (every lesson is a
 short-form video script); B2B to SACCOs/employers/universities much later.

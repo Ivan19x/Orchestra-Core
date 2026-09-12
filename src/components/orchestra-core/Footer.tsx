@@ -16,6 +16,7 @@ export function Footer() {
           ['How it works', '/how-it-works'],
           ['Lessons', '/lessons'],
           ['Pricing', '/pricing'],
+          ['Questions', '/faq'],
           ['About', '/about'],
         ]} />
         <FooterCol title="Legal" links={[

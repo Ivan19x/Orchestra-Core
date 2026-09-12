@@ -7,6 +7,7 @@ import HowItWorks from "./pages/HowItWorks";
 import Lessons from "./pages/Lessons";
 import Pricing from "./pages/Pricing";
 import About from "./pages/About";
+import Faq from "./pages/Faq";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/about" element={<About />} />
+            <Route path="/faq" element={<Faq />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
