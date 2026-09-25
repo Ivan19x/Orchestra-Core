@@ -4,7 +4,7 @@ import { Logo } from './Logo';
 export function Footer() {
   return (
     <footer className="border-t border-border bg-background mt-24">
-      <div className="container-prose py-14 grid grid-cols-1 sm:grid-cols-3 gap-10">
+      <div className="container-prose py-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
         <div>
           <Logo />
           <p className="mt-3 text-sm text-warm-muted max-w-xs">
@@ -15,9 +15,14 @@ export function Footer() {
         <FooterCol title="Learn" links={[
           ['How it works', '/how-it-works'],
           ['Lessons', '/lessons'],
+          ['Consultants', '/consultants'],
           ['Pricing', '/pricing'],
           ['Questions', '/faq'],
           ['About', '/about'],
+        ]} />
+        <FooterCol title="More" links={[
+          ['Teach with us', '/teach'],
+          ['Contact', '/contact'],
         ]} />
         <FooterCol title="Legal" links={[
           ['Terms of Service', '/terms'],

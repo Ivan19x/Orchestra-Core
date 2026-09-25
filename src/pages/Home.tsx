@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Landmark, ShieldCheck, ArrowRight, Smartphone } from 'lucide-react';
+import { BookOpen, Landmark, ShieldCheck, ArrowRight, Smartphone, GraduationCap } from 'lucide-react';
 import { LessonCard } from '@/components/orchestra-core/LessonCard';
 import { CTABand } from '@/components/orchestra-core/CTABand';
 import { getAllLessons, seriesIcon, lessonHref } from '@/lib/lessons';
@@ -128,8 +128,37 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Pricing teaser */}
+      {/* Book a consultant */}
       <section className="bg-blush border-y border-border">
+        <div className="container-narrow py-24">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center text-primary mx-auto mb-5">
+              <GraduationCap className="w-5 h-5" strokeWidth={1.75} />
+            </div>
+            <div className="text-xs uppercase tracking-[0.18em] text-primary mb-4">One-to-one</div>
+            <h2 className="font-serif text-4xl md:text-5xl text-foreground mb-4">
+              Would you rather be taught?
+            </h2>
+            <p className="text-warm-muted leading-relaxed mb-8">
+              Book a verified teacher and go through the curriculum together — online, or in person if
+              that suits you better. Rates are set by us and are the same whoever you book, so nobody
+              pays more for the same hour.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link to="/consultants" className="inline-flex items-center justify-center px-7 py-3 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition">
+                See consultants and rates
+              </Link>
+              <Link to="/teach" className="inline-flex items-center justify-center px-7 py-3 rounded-full border border-primary text-primary hover:bg-background transition">
+                Teach with us
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing teaser — plain ground, so it alternates against the consultant
+          band above it and the CTA band below. */}
+      <section className="border-y border-border">
         <div className="container-narrow py-24 text-center">
           <div className="text-xs uppercase tracking-[0.18em] text-primary mb-4">No subscriptions. Ever.</div>
           <h2 className="font-serif text-5xl md:text-6xl text-foreground mb-3">{PRICE_LABEL}</h2>

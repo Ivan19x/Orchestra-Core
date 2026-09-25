@@ -23,6 +23,10 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
+const Consultants = lazy(() => import("./pages/Consultants"));
+const ConsultantProfile = lazy(() => import("./pages/ConsultantProfile"));
+const Teach = lazy(() => import("./pages/Teach"));
+const Contact = lazy(() => import("./pages/Contact"));
 
 const App = () => (
   <BrowserRouter>
@@ -38,6 +42,10 @@ const App = () => (
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/about" element={<About />} />
             <Route path="/faq" element={<Faq />} />
+            <Route path="/consultants" element={<Consultants />} />
+            <Route path="/consultants/:slug" element={<ConsultantProfile />} />
+            <Route path="/teach" element={<Teach />} />
+            <Route path="/contact" element={<Contact />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />

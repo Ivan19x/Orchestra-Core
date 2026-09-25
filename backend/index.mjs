@@ -4,6 +4,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 import authRoutes from './routes/auth.mjs';
 import paymentRoutes from './routes/payment.mjs';
+import consultantRoutes from './routes/consultants.mjs';
+import bookingRoutes from './routes/bookings.mjs';
+import contactRoutes from './routes/contact.mjs';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -35,6 +38,9 @@ app.use(express.json());
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/consultants', consultantRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/contact', contactRoutes);
 
 app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
 app.use((err, _req, res, _next) => {

@@ -78,3 +78,107 @@ export function getPaymentStatus(txRef: string) {
     `/api/payment/status/${txRef}`,
   );
 }
+
+// ── consultants & sessions ─────────────────────────────────────────────────
+
+export interface Consultant {
+  id: string;
+  slug: string;
+  full_name: string;
+  headline?: string;
+  bio?: string;
+  photo_url?: string;
+  specialities: string[];
+  hourly_rate_kes: number;
+  session_modes: ('online' | 'in_person')[];
+  service_area?: string;
+}
+
+export interface BookingSummary {
+  ref: string;
+  starts_at: string;
+  duration_minutes: number;
+  mode: 'online' | 'in_person';
+  location?: string;
+  meeting_link?: string;
+  amount_kes: number;
+  status: string;
+  consultants?: { full_name: string; slug: string };
+}
+
+export function listConsultants() {
+  return request<{ consultants: Consultant[] }>('/api/consultants');
+}
+
+export function getConsultant(slug: string) {
+  return request<{ consultant: Consultant }>(`/api/consultants/${slug}`);
+}
+
+export function getConsultantSlots(slug: string, durationMinutes: number) {
+  return request<{ durationMinutes: number; slots: string[] }>(
+    `/api/consultants/${slug}/slots?duration=${durationMinutes}`,
+  );
+}
+
+export interface NewBooking {
+  consultantSlug: string;
+  startsAt: string;
+  durationMinutes: number;
+  mode: 'online' | 'in_person';
+  location?: string;
+  learnerNote?: string;
+  phone: string;
+}
+
+export function createBooking(payload: NewBooking) {
+  return request<{ ok: boolean; ref: string; amountKes: number; message?: string }>('/api/bookings', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getBookingStatus(ref: string) {
+  return request<{ status: string; message?: string }>(`/api/bookings/${ref}/status`);
+}
+
+export function listMyBookings() {
+  return request<{ bookings: BookingSummary[] }>('/api/bookings/mine');
+}
+
+export interface ConsultantApplication {
+  fullName: string;
+  headline?: string;
+  bio: string;
+  qualifications: string;
+  experienceYears?: number;
+  idLast4?: string;
+  specialities?: string[];
+  sessionModes: ('online' | 'in_person')[];
+  serviceArea?: string;
+}
+
+export function applyAsConsultant(payload: ConsultantApplication) {
+  return request<{ ok: boolean; status: string }>('/api/consultants/apply', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getMyApplication() {
+  return request<{
+    application: null | {
+      status: string;
+      slug: string;
+      fullName: string;
+      documentsReceived: boolean;
+      appliedAt: string;
+    };
+  }>('/api/consultants/me/application');
+}
+
+export function sendContactMessage(payload: { name?: string; email: string; subject?: string; body: string }) {
+  return request<{ ok: boolean }>('/api/contact', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}

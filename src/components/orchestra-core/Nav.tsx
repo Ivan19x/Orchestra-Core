@@ -8,6 +8,7 @@ import { useSession } from '@/lib/session';
 const links = [
   { to: '/how-it-works', label: 'How it works' },
   { to: '/lessons', label: 'Lessons' },
+  { to: '/consultants', label: 'Consultants' },
   { to: '/pricing', label: 'Pricing' },
   { to: '/about', label: 'About' },
 ];

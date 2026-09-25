@@ -9,6 +9,8 @@ import {
 import { generateLicenseKey } from '../lib/license.mjs';
 import { sendAccessConfirmation } from '../lib/notify.mjs';
 import { stkPush, stkQuery, parseCallback, normalizeMsisdn, darajaConfigured } from '../lib/daraja.mjs';
+import { getBookingByCheckoutId, failBooking } from '../lib/consultants-db.mjs';
+import { settleBooking } from './bookings.mjs';
 
 const router = Router();
 
@@ -133,7 +135,11 @@ router.post('/callback/:secret', async (req, res) => {
 
     const payment = await getPaymentByCheckoutId(cb.checkoutRequestId);
     if (!payment) {
-      console.warn('payment/callback: no payment for', cb.checkoutRequestId);
+      // Session bookings are paid through the same Daraja shortcode, so an
+      // unrecognised CheckoutRequestID may well be a booking rather than a
+      // curriculum purchase. Both live behind this one callback URL.
+      const handled = await handleBookingCallback(cb);
+      if (!handled) console.warn('payment/callback: no payment or booking for', cb.checkoutRequestId);
       return ack();
     }
     if (payment.status === 'completed') return ack();
@@ -157,6 +163,28 @@ router.post('/callback/:secret', async (req, res) => {
     ack();
   }
 });
+
+// A callback whose CheckoutRequestID belongs to a session booking rather than
+// a curriculum purchase. Returns true if it was ours to handle.
+async function handleBookingCallback(cb) {
+  const booking = await getBookingByCheckoutId(cb.checkoutRequestId);
+  if (!booking) return false;
+  if (booking.status !== 'pending_payment') return true;
+
+  if (cb.resultCode !== '0') {
+    await failBooking(booking.ref, cb.resultDesc);
+    return true;
+  }
+  // Same guard as the curriculum purchase: an underpayment never unlocks.
+  if (Number(cb.amount) < Number(booking.amount_kes)) {
+    console.warn(`booking callback: amount mismatch — paid ${cb.amount}, expected ${booking.amount_kes}`);
+    await failBooking(booking.ref, `Amount mismatch: received ${cb.amount}`);
+    return true;
+  }
+
+  await settleBooking(booking, cb.receipt);
+  return true;
+}
 
 // Marks the payment complete, issues the access key, and emails it. Safe to
 // call twice — completePayment only ever transitions a pending row.

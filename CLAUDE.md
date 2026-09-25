@@ -111,6 +111,10 @@ Full deployment and go-live instructions: [`docs/SETUP.md`](docs/SETUP.md).
 | `/forgot-password` · `/reset-password` | Emailed 10-minute reset link |
 | `/account` | Access key, dashboard link, sign out |
 | `/dashboard` | The signed-in learning space: whole library by series, budget tool |
+| `/consultants` | Directory of verified teachers with hourly rates |
+| `/consultants/:slug` | One teacher: profile, free times, book and pay by M-Pesa |
+| `/teach` | Teacher application — the vetting funnel |
+| `/contact` | Contact form, lands in `contact_messages` and your inbox |
 | `/about` · `/privacy` · `/terms` | Story, DPA-compliant policy, ToS |
 
 Retired routes `/try`, `/ask`, `/download`, `/support` redirect rather than 404.
@@ -328,3 +332,114 @@ legal pages · bundle split so the site stays fast as lessons are added.
 
 **Later:** custom domain · the AI coach (Ivan's own model) · the desktop and
 Android apps · B2B licensing.
+
+---
+
+## Consultant sessions — one-to-one teaching
+
+Added September 2026. A second product line alongside the written curriculum:
+verified teachers deliver Orchestra-Core's own material one-to-one, online or in
+person, paid by the hour through the site.
+
+### The money model — read this before touching pricing
+
+Teachers teach **our** curriculum, so **the platform sets the price, not the
+teacher.** A teacher never names their own rate; that is what stops the same
+lesson costing one learner KES 500 and another KES 5,000. Concretely:
+
+| Field | Who sets it | Meaning |
+|---|---|---|
+| `consultants.hourly_rate_kes` | Orchestra-Core | what the learner pays per hour |
+| `consultants.session_fee_kes` | Orchestra-Core | what the teacher earns per session |
+| `consultants.monthly_base_kes` | Orchestra-Core | retainer, paid regardless of bookings |
+
+A teacher's pay is therefore **a monthly base plus a fee per session
+delivered** — settled monthly, not per booking. Orchestra-Core keeps whatever
+is left of the learner's payment (`bookings.platform_fee_kes`).
+
+**The application form deliberately does not ask an applicant what they want to
+charge.** Do not add that field.
+
+Every money column on `bookings` is a **snapshot** taken at booking time.
+Changing a rate later must never alter what is owed on a session already sold.
+
+### Money you are holding
+
+Learners pay Orchestra-Core; Orchestra-Core then owes teachers. That is a real
+liability, not just revenue. The `consultant_payouts_due` view in
+`backend/supabase-schema.sql` is the ledger — open it in the Supabase Table
+Editor on payout day and it answers "who do I pay, and how much" in one screen.
+
+**Payouts are manual for now.** Automating them needs Daraja **B2C**, which is a
+separate Safaricom product with its own approval and a pre-funded account. The
+ledger is built so that dropping B2C in later changes nothing else.
+
+### Vetting
+
+Teachers apply at `/teach`, which creates a `consultants` row with
+`status = 'pending'`. They are then emailed asking for their national ID,
+certificates and school documents by reply. A human checks them, and approval is
+currently a SQL update — see the worked example at the bottom of
+`backend/supabase-schema.sql`.
+
+Status flow: `pending → verifying → approved` (or `rejected` / `suspended`).
+**Only `approved` rows are ever returned publicly**, and the public column list
+in `consultants-db.mjs` deliberately excludes the vetting fields.
+
+**We never store a full national ID number** — only `id_last4`, to match against
+the document emailed in. Under the DPA 2019 the full number is sensitive
+personal data with real breach consequences and no operational upside here.
+
+### The education / advice line
+
+This is the part of the product most able to breach the boundary the rest of the
+site is careful about. Terms §3 keeps Orchestra-Core clear of CMA licensing by
+being *general, impersonal education*. A paid one-to-one session is exactly
+where that can slip into personalised advice for compensation.
+
+So: sessions teach the curriculum. The disclaimer appears on `/consultants`, on
+every consultant profile, in the booking confirmation email, and in the teacher
+application. **Verification does not change this** — a verified teacher is not a
+licensed investment adviser. Keep the wording wherever it already appears.
+
+### How booking works
+
+1. `/consultants/:slug` asks the API for free slots.
+2. Availability is stored as **recurring weekly windows in minutes from midnight
+   EAT** (`consultant_availability`). Kenya is UTC+3 all year, so a fixed offset
+   is correct and no timezone library is needed. `backend/lib/slots.mjs` turns
+   windows into concrete UTC instants, minus anything already booked, minus a
+   12-hour lead time, 21 days ahead.
+3. `POST /api/bookings` **re-validates the slot and re-derives the price
+   server-side.** The browser is never trusted for either — it knows the rate
+   only in order to display it.
+4. The booking is created `pending_payment` and an M-Pesa STK push goes out.
+   Slots held by an unpaid booking still block, so two people cannot part-pay
+   for the same hour.
+5. Confirmation comes from **either** Safaricom's callback **or** the browser's
+   status poll — same belt-and-braces design as the curriculum purchase.
+   `confirmBooking()` only transitions a row that is still `pending_payment`, so
+   whichever wins, the confirmation email sends once.
+
+Session bookings and curriculum purchases share one Daraja shortcode and
+therefore one callback URL, so `routes/payment.mjs` checks `payments` first and
+falls through to `bookings`.
+
+### Built vs. not built
+
+**Built:** public directory with rates · profiles · slot picking · booking and
+M-Pesa payment · teacher application and vetting states · contact form · the
+monthly payout ledger · confirmation and notification emails.
+
+**Not built yet** — all of it currently done by hand in Supabase:
+
+1. **Teacher portal** — managing their own availability, seeing their bookings
+   and earnings. Today: availability is inserted by SQL.
+2. **Admin back office** — approving applicants, setting pay, marking payouts
+   paid, reading contact messages. Today: SQL and the Table Editor.
+3. **Learner↔teacher messaging** — the contact form exists, threads do not.
+4. **Document upload** — applicants email documents rather than uploading them.
+   Real upload needs a Supabase Storage bucket.
+5. **Cancellations and refunds for sessions** — no flow yet. Terms §5 covers the
+   curriculum purchase only, and will need a sessions clause before this is
+   promoted heavily.
