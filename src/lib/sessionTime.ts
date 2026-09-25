@@ -58,3 +58,25 @@ export function groupSlotsByDay(slots: string[]): { key: string; label: string; 
 export function formatKes(amount: number): string {
   return `KES ${amount.toLocaleString('en-US')}`;
 }
+
+// ── Session state helpers ──────────────────────────────────────────────────
+// Kept here rather than beside the status pill so the rules live in a plain
+// module: a component file that also exports functions breaks fast refresh.
+
+/** A no-show can only be reported after the session, and only for 48 hours. */
+export const REPORT_WINDOW_HOURS = 48;
+
+interface Timed { starts_at: string; duration_minutes: number }
+
+export function sessionEndMs(b: Timed): number {
+  return new Date(b.starts_at).getTime() + b.duration_minutes * 60_000;
+}
+
+export function sessionEnded(b: Timed, now = Date.now()): boolean {
+  return now >= sessionEndMs(b);
+}
+
+export function withinReportWindow(b: Timed, now = Date.now()): boolean {
+  const end = sessionEndMs(b);
+  return now >= end && now <= end + REPORT_WINDOW_HOURS * 3_600_000;
+}

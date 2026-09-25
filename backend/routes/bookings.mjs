@@ -5,12 +5,17 @@ import {
   getApprovedConsultantBySlug, getApprovedConsultantById, getAvailability,
   getBlockingBookings, createBooking, getBookingByRef, attachBookingCheckoutIds,
   confirmBooking, failBooking, listBookingsForUser,
+  getBookingWithParties, transitionBooking,
 } from '../lib/consultants-db.mjs';
+import {
+  resolveCancellation, resolveNoShow, disputed,
+  sessionEnded, withinReportWindow, REPORT_WINDOW_HOURS,
+} from '../lib/session-policy.mjs';
 import { getUserById } from '../lib/db.mjs';
 import { isSlotBookable, eatPayoutMonth } from '../lib/slots.mjs';
 import { stkPush, stkQuery, normalizeMsisdn, darajaConfigured } from '../lib/daraja.mjs';
 import { requireUser } from '../lib/require-user.mjs';
-import { sendBookingConfirmed } from '../lib/notify.mjs';
+import { sendBookingConfirmed, sendSessionUpdate } from '../lib/notify.mjs';
 
 const router = Router();
 
@@ -169,6 +174,165 @@ router.get('/mine', requireUser, async (req, res) => {
     res.status(500).json({ error: 'Could not load your sessions.' });
   }
 });
+
+// ── Session lifecycle: cancelling, no-shows, completion ────────────────────
+
+// Which side of the booking is this user on? Anyone who is neither gets a 404
+// rather than a 403 — they should not learn that the booking exists.
+async function loadAsParty(ref, user) {
+  const booking = await getBookingWithParties(ref);
+  if (!booking) return { error: 404 };
+  if (booking.user_id === user.id) return { booking, role: 'learner' };
+  if (booking.consultants?.user_id === user.id) return { booking, role: 'teacher' };
+  return { error: 404 };
+}
+
+// Turns a policy decision into the single database write that applies it, so a
+// refund and a voided payout can never land separately.
+function patchFromOutcome(outcome, extra = {}) {
+  const refunding = (outcome.refundAmountKes ?? 0) > 0;
+  return {
+    status: outcome.status,
+    resolution_note: outcome.reason,
+    refund_status: refunding ? 'approved' : 'none',
+    refund_amount_kes: refunding ? outcome.refundAmountKes : null,
+    refund_reason: refunding ? outcome.reason : null,
+    payout_status: outcome.voidPayout ? 'void' : 'unpaid',
+    payout_voided_reason: outcome.voidPayout ? outcome.reason : null,
+    ...extra,
+  };
+}
+
+// POST /api/bookings/:ref/cancel — either side calls off an upcoming session.
+router.post('/:ref/cancel', requireUser, async (req, res) => {
+  try {
+    const { booking, role, error } = await loadAsParty(req.params.ref, req.user);
+    if (error) return res.status(404).json({ error: 'Booking not found.' });
+    if (booking.status !== 'confirmed') {
+      return res.status(409).json({ error: 'This session can no longer be cancelled.' });
+    }
+    if (sessionEnded(booking)) {
+      return res.status(409).json({ error: 'This session has already happened. Report a problem with it instead.' });
+    }
+
+    const outcome = resolveCancellation({ booking, by: role });
+    const updated = await transitionBooking({
+      ref: booking.ref,
+      expectedStatuses: ['confirmed'],
+      patch: patchFromOutcome(outcome, {
+        cancelled_at: new Date().toISOString(),
+        cancelled_by: role,
+      }),
+    });
+    if (!updated) return res.status(409).json({ error: 'This session was just updated. Reload and try again.' });
+
+    await notifyCancellation(updated, booking, role, outcome).catch(err =>
+      console.error('cancellation email failed', err));
+
+    res.json({ ok: true, status: updated.status, refundAmountKes: outcome.refundAmountKes, message: outcome.reason });
+  } catch (err) {
+    console.error('booking cancel error', err);
+    res.status(500).json({ error: 'Could not cancel this session.' });
+  }
+});
+
+// POST /api/bookings/:ref/report — "the other side did not turn up".
+// Body: { note? }
+router.post('/:ref/report', requireUser, async (req, res) => {
+  try {
+    const { booking, role, error } = await loadAsParty(req.params.ref, req.user);
+    if (error) return res.status(404).json({ error: 'Booking not found.' });
+    if (booking.status !== 'confirmed') {
+      return res.status(409).json({ error: 'This session has already been resolved.' });
+    }
+    if (!withinReportWindow(booking)) {
+      return res.status(409).json({
+        error: sessionEnded(booking)
+          ? `Reports close ${REPORT_WINDOW_HOURS} hours after a session. Use the contact form and we will look into it.`
+          : 'You can report a missed session once its time has passed.',
+      });
+    }
+
+    // If the other side already reported the opposite, a person decides.
+    const conflicting = booking.reported_by && booking.reported_by !== role;
+    const outcome = conflicting
+      ? disputed()
+      : resolveNoShow({ booking, by: role });
+
+    const updated = await transitionBooking({
+      ref: booking.ref,
+      expectedStatuses: ['confirmed'],
+      patch: patchFromOutcome(outcome, {
+        reported_by: role,
+        reported_at: new Date().toISOString(),
+        report_note: req.body?.note ? String(req.body.note).trim().slice(0, 1000) : null,
+      }),
+    });
+    if (!updated) return res.status(409).json({ error: 'This session was just updated. Reload and try again.' });
+
+    await notifyNoShow(updated, booking, role, outcome).catch(err =>
+      console.error('no-show email failed', err));
+
+    res.json({ ok: true, status: updated.status, refundAmountKes: outcome.refundAmountKes, message: outcome.reason });
+  } catch (err) {
+    console.error('booking report error', err);
+    res.status(500).json({ error: 'Could not report this session.' });
+  }
+});
+
+// POST /api/bookings/:ref/complete — the teacher confirms it happened.
+router.post('/:ref/complete', requireUser, async (req, res) => {
+  try {
+    const { booking, role, error } = await loadAsParty(req.params.ref, req.user);
+    if (error) return res.status(404).json({ error: 'Booking not found.' });
+    if (role !== 'teacher') return res.status(403).json({ error: 'Only the consultant can mark a session delivered.' });
+    if (booking.status !== 'confirmed') return res.status(409).json({ error: 'This session has already been resolved.' });
+    if (!sessionEnded(booking)) return res.status(409).json({ error: 'You can mark a session delivered once it has finished.' });
+
+    const updated = await transitionBooking({
+      ref: booking.ref,
+      expectedStatuses: ['confirmed'],
+      patch: { status: 'completed', completed_at: new Date().toISOString() },
+    });
+    if (!updated) return res.status(409).json({ error: 'This session was just updated. Reload and try again.' });
+
+    res.json({ ok: true, status: 'completed' });
+  } catch (err) {
+    console.error('booking complete error', err);
+    res.status(500).json({ error: 'Could not update this session.' });
+  }
+});
+
+// Both parties are told, always — the person who did not act needs to know
+// what happened to their time and their money.
+async function notifyCancellation(updated, booking, by, outcome) {
+  const learnerEmail = booking.users?.email;
+  const teacherName = booking.consultants?.full_name;
+  if (learnerEmail) {
+    await sendSessionUpdate({
+      to: learnerEmail,
+      booking: updated,
+      heading: by === 'teacher' ? 'Your session was cancelled' : 'Your session is cancelled',
+      body: by === 'teacher'
+        ? `${teacherName} had to cancel. ${outcome.reason}`
+        : outcome.reason,
+      consultantName: teacherName,
+    });
+  }
+}
+
+async function notifyNoShow(updated, booking, by, outcome) {
+  const learnerEmail = booking.users?.email;
+  if (learnerEmail && by === 'learner') {
+    await sendSessionUpdate({
+      to: learnerEmail,
+      booking: updated,
+      heading: 'We are sorting out your refund',
+      body: outcome.reason,
+      consultantName: booking.consultants?.full_name,
+    });
+  }
+}
 
 // Shared by the poll above and the M-Pesa callback.
 export async function settleBooking(booking, receipt) {

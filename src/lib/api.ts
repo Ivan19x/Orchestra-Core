@@ -182,3 +182,178 @@ export function sendContactMessage(payload: { name?: string; email: string; subj
     body: JSON.stringify(payload),
   });
 }
+
+// ── session lifecycle ──────────────────────────────────────────────────────
+
+export function cancelBooking(ref: string) {
+  return request<{ ok: boolean; status: string; refundAmountKes: number; message: string }>(
+    `/api/bookings/${ref}/cancel`, { method: 'POST' },
+  );
+}
+
+export function reportBooking(ref: string, note?: string) {
+  return request<{ ok: boolean; status: string; refundAmountKes: number | null; message: string }>(
+    `/api/bookings/${ref}/report`, { method: 'POST', body: JSON.stringify({ note }) },
+  );
+}
+
+export function completeBooking(ref: string) {
+  return request<{ ok: boolean; status: string }>(`/api/bookings/${ref}/complete`, { method: 'POST' });
+}
+
+// ── teacher portal ─────────────────────────────────────────────────────────
+
+export interface AvailabilityWindow {
+  weekday: number;
+  startMinute: number;
+  endMinute: number;
+}
+
+export interface TeacherProfile {
+  id: string;
+  slug: string;
+  fullName: string;
+  headline?: string;
+  status: string;
+  documentsReceived: boolean;
+  hourlyRateKes: number;
+  sessionFeeKes: number;
+  monthlyBaseKes: number;
+  sessionModes: string[];
+  serviceArea?: string;
+}
+
+export interface TeacherBooking {
+  ref: string;
+  starts_at: string;
+  duration_minutes: number;
+  mode: string;
+  location?: string;
+  learner_note?: string;
+  amount_kes: number;
+  teacher_fee_kes: number;
+  status: string;
+  payout_status: string;
+  payout_month?: string;
+  refund_status: string;
+  users?: { email: string };
+}
+
+export function getTeacherProfile() {
+  return request<{
+    consultant: TeacherProfile;
+    policy: { cancellationWindowHours: number; reportWindowHours: number };
+  }>('/api/teacher/me');
+}
+
+export function getTeacherAvailability() {
+  return request<{ availability: AvailabilityWindow[] }>('/api/teacher/availability');
+}
+
+export function saveTeacherAvailability(availability: AvailabilityWindow[]) {
+  return request<{ ok: boolean; count: number }>('/api/teacher/availability', {
+    method: 'PUT', body: JSON.stringify({ availability }),
+  });
+}
+
+export function getTeacherBookings() {
+  return request<{
+    bookings: TeacherBooking[];
+    monthlyBaseKes: number;
+    earnings: { month: string; sessions: number; sessionFeesKes: number; paid: boolean }[];
+  }>('/api/teacher/bookings');
+}
+
+// ── admin ──────────────────────────────────────────────────────────────────
+
+export interface AdminApplication {
+  id: string;
+  slug: string;
+  full_name: string;
+  headline?: string;
+  status: string;
+  hourly_rate_kes: number;
+  session_fee_kes: number;
+  monthly_base_kes: number;
+  qualifications?: string;
+  experience_years?: number;
+  id_last4?: string;
+  documents_received: boolean;
+  session_modes: string[];
+  service_area?: string;
+  applied_at: string;
+  users?: { email: string };
+}
+
+export interface PayoutRow {
+  payout_month: string;
+  consultant_id: string;
+  full_name: string;
+  sessions: number;
+  learners_paid_kes: number;
+  orchestra_core_kept_kes: number;
+  session_fees_owed_kes: number;
+  monthly_base_kes: number;
+  total_owed_kes: number;
+}
+
+export interface RefundRow {
+  ref: string;
+  refund_amount_kes: number;
+  refund_reason?: string;
+  booking_status: string;
+  starts_at: string;
+  refund_to_phone?: string;
+  learner_email: string;
+  consultant: string;
+}
+
+export interface ContactRow {
+  id: string;
+  name?: string;
+  email: string;
+  subject?: string;
+  body: string;
+  created_at: string;
+}
+
+export function getAdminOverview() {
+  return request<{
+    counts: Record<string, number>;
+    payouts: PayoutRow[];
+    refunds: RefundRow[];
+    attention: { ref: string; status: string; starts_at: string; learner_email: string; consultant: string }[];
+    applications: AdminApplication[];
+    messages: ContactRow[];
+  }>('/api/admin/overview');
+}
+
+export function updateConsultantAdmin(id: string, patch: Record<string, unknown>) {
+  return request<{ ok: boolean }>(`/api/admin/consultants/${id}`, {
+    method: 'PATCH', body: JSON.stringify(patch),
+  });
+}
+
+export function markPayoutPaidAdmin(consultantId: string, payoutMonth: string, reference: string) {
+  return request<{ ok: boolean; sessionsSettled: number }>('/api/admin/payouts/mark-paid', {
+    method: 'POST', body: JSON.stringify({ consultantId, payoutMonth, reference }),
+  });
+}
+
+export function markRefundPaidAdmin(ref: string, reference: string) {
+  return request<{ ok: boolean }>(`/api/admin/refunds/${ref}/paid`, {
+    method: 'POST', body: JSON.stringify({ reference }),
+  });
+}
+
+export function resolveBookingAdmin(ref: string, payload: {
+  status: string; refundAmountKes?: number; voidPayout?: boolean; note?: string;
+}) {
+  return request<{ ok: boolean }>(`/api/admin/bookings/${ref}/resolve`, {
+    method: 'POST', body: JSON.stringify(payload),
+  });
+}
+
+export function markMessageHandled(id: string) {
+  return request<{ ok: boolean }>(`/api/admin/messages/${id}/handled`, { method: 'POST' });
+}

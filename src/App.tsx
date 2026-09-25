@@ -27,6 +27,9 @@ const Consultants = lazy(() => import("./pages/Consultants"));
 const ConsultantProfile = lazy(() => import("./pages/ConsultantProfile"));
 const Teach = lazy(() => import("./pages/Teach"));
 const Contact = lazy(() => import("./pages/Contact"));
+const MySessions = lazy(() => import("./pages/MySessions"));
+const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 
 const App = () => (
   <BrowserRouter>
@@ -46,6 +49,9 @@ const App = () => (
             <Route path="/consultants/:slug" element={<ConsultantProfile />} />
             <Route path="/teach" element={<Teach />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/sessions" element={<MySessions />} />
+            <Route path="/teach/dashboard" element={<TeacherDashboard />} />
+            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />

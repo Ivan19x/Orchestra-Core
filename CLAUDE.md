@@ -115,6 +115,9 @@ Full deployment and go-live instructions: [`docs/SETUP.md`](docs/SETUP.md).
 | `/consultants/:slug` | One teacher: profile, free times, book and pay by M-Pesa |
 | `/teach` | Teacher application — the vetting funnel |
 | `/contact` | Contact form, lands in `contact_messages` and your inbox |
+| `/sessions` | A learner's bookings: cancel, or report a no-show |
+| `/teach/dashboard` | Consultant portal: pay, earnings, availability, their sessions |
+| `/admin` | Back office. Gated by ADMIN_EMAILS; answers 404 to everyone else |
 | `/about` · `/privacy` · `/terms` | Story, DPA-compliant policy, ToS |
 
 Retired routes `/try`, `/ask`, `/download`, `/support` redirect rather than 404.

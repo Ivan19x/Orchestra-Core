@@ -247,3 +247,109 @@ order by b.payout_month desc, total_owed_kes desc;
 --   insert into consultant_availability (consultant_id, weekday, start_minute, end_minute)
 --   select id, 2, 9*60, 17*60 from consultants where slug = 'jane-mwangi';
 --   -- weekday: 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat; minutes from midnight EAT
+
+-- ============================================================================
+-- SESSION LIFECYCLE, CANCELLATIONS AND REFUNDS
+-- Added September 2026. Safe to re-run.
+--
+-- The rule everything below serves: if the teaching did not happen, the learner
+-- should not be out of pocket, and nobody should be paid for delivering it.
+-- A refund to the learner and a voided payout are therefore two halves of the
+-- same event and must always move together.
+-- ============================================================================
+
+-- `bookings.status` values, in full:
+--   pending_payment  the M-Pesa prompt is out, nothing settled
+--   confirmed        paid, upcoming
+--   completed        taught, teacher is owed
+--   cancelled        called off before it happened (see cancelled_by)
+--   no_show_teacher  learner turned up, teacher did not  -> refund, void payout
+--   no_show_learner  teacher turned up, learner did not  -> no refund, teacher paid
+--   disputed         the two sides disagree; a human decides
+--   failed           payment never completed
+alter table bookings add column if not exists completed_at     timestamptz;
+alter table bookings add column if not exists cancelled_at     timestamptz;
+alter table bookings add column if not exists cancelled_by     text;   -- learner | teacher | admin
+alter table bookings add column if not exists reported_by      text;   -- learner | teacher
+alter table bookings add column if not exists reported_at      timestamptz;
+alter table bookings add column if not exists report_note      text;
+alter table bookings add column if not exists resolution_note  text;
+
+-- Refunds. `refund_status`:
+--   none | requested | approved | paid | declined
+-- 'approved' means it is owed; 'paid' means the money actually went back, and
+-- refund_reference holds the M-Pesa code so it can be reconciled later.
+alter table bookings add column if not exists refund_status     text not null default 'none';
+alter table bookings add column if not exists refund_amount_kes integer;
+alter table bookings add column if not exists refund_reason     text;
+alter table bookings add column if not exists refund_reference  text;
+alter table bookings add column if not exists refunded_at       timestamptz;
+
+-- payout_status gains 'void' — a session that was refunded or never delivered
+-- must stop appearing as money owed to the teacher.
+--   unpaid | paid | void
+alter table bookings add column if not exists payout_voided_reason text;
+
+create index if not exists bookings_refund_idx on bookings (refund_status)
+  where refund_status in ('requested', 'approved');
+create index if not exists bookings_status_time_idx on bookings (status, starts_at);
+
+-- ── Payout ledger, corrected for the above ──────────────────────────────────
+-- Only sessions that were actually delivered and are still owed. A voided
+-- payout (teacher no-show, teacher cancellation, refunded session) drops out
+-- here automatically, which is the whole point of having the state.
+create or replace view consultant_payouts_due as
+select
+  b.payout_month,
+  c.id               as consultant_id,
+  c.full_name,
+  count(*)                                    as sessions,
+  sum(b.amount_kes)                           as learners_paid_kes,
+  sum(b.platform_fee_kes)                     as orchestra_core_kept_kes,
+  sum(b.teacher_fee_kes)                      as session_fees_owed_kes,
+  c.monthly_base_kes                          as monthly_base_kes,
+  sum(b.teacher_fee_kes) + c.monthly_base_kes as total_owed_kes
+from bookings b
+join consultants c on c.id = b.consultant_id
+where b.status in ('completed', 'no_show_learner')
+  and b.payout_status = 'unpaid'
+group by b.payout_month, c.id, c.full_name, c.monthly_base_kes
+order by b.payout_month desc, total_owed_kes desc;
+
+-- ── Refunds you owe ─────────────────────────────────────────────────────────
+-- Approved but not yet sent. This is a debt to a customer: clear it fast, it is
+-- the single thing most likely to turn one bad session into a public complaint.
+create or replace view refunds_due as
+select
+  b.ref,
+  b.refund_amount_kes,
+  b.refund_reason,
+  b.status          as booking_status,
+  b.starts_at,
+  b.phone           as refund_to_phone,
+  u.email           as learner_email,
+  c.full_name       as consultant
+from bookings b
+join users u       on u.id = b.user_id
+join consultants c on c.id = b.consultant_id
+where b.refund_status = 'approved'
+order by b.starts_at asc;
+
+-- ── Sessions needing a human ────────────────────────────────────────────────
+-- Past sessions nobody has resolved, plus anything disputed.
+create or replace view sessions_needing_attention as
+select
+  b.ref,
+  b.status,
+  b.starts_at,
+  b.duration_minutes,
+  b.report_note,
+  u.email     as learner_email,
+  c.full_name as consultant
+from bookings b
+join users u       on u.id = b.user_id
+join consultants c on c.id = b.consultant_id
+where b.status = 'disputed'
+   or (b.status = 'confirmed'
+       and b.starts_at + (b.duration_minutes || ' minutes')::interval < now() - interval '48 hours')
+order by b.starts_at asc;

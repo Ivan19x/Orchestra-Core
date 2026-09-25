@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Copy, Check, LogOut, BookOpen } from 'lucide-react';
+import { Copy, Check, LogOut, BookOpen, CalendarDays, GraduationCap } from 'lucide-react';
 import { useSession, clearSession, dispatchSessionChange, getToken, saveSession } from '@/lib/session';
 import { getMe } from '@/lib/api';
 import { PRICE_LABEL } from '@/lib/pricing';
@@ -101,6 +101,43 @@ export default function Account() {
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition">
             <BookOpen className="w-4 h-4" /> Open dashboard
           </Link>
+        </div>
+
+        {/* Sessions */}
+        <div className="bg-background rounded-2xl border border-border p-6 md:p-8">
+          <h2 className="font-serif text-xl text-foreground mb-1">One-to-one sessions</h2>
+          <p className="text-sm text-warm-muted mb-5">
+            Sessions you've booked with a consultant, and where to cancel or report a problem.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Link to="/sessions"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm hover:opacity-90 transition">
+              <CalendarDays className="w-4 h-4" /> Your sessions
+            </Link>
+            <Link to="/consultants"
+              className="inline-flex items-center px-5 py-2.5 rounded-full border border-primary text-primary text-sm hover:bg-blush transition">
+              Book a consultant
+            </Link>
+          </div>
+        </div>
+
+        {/* Teaching — only relevant to people who applied, so it links rather
+            than assuming; /teach shows their actual status. */}
+        <div className="bg-background rounded-2xl border border-border p-6 md:p-8">
+          <h2 className="font-serif text-xl text-foreground mb-1">Teaching with Orchestra-Core</h2>
+          <p className="text-sm text-warm-muted mb-5">
+            If you teach with us, manage your availability and sessions here. If you don't yet, you can
+            apply — it's paid work on your own schedule.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Link to="/teach/dashboard"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-primary text-primary text-sm hover:bg-blush transition">
+              <GraduationCap className="w-4 h-4" /> Consultant dashboard
+            </Link>
+            <Link to="/teach" className="inline-flex items-center px-5 py-2.5 text-sm text-warm-muted hover:text-foreground transition">
+              Apply to teach
+            </Link>
+          </div>
         </div>
 
         {/* Sign out */}

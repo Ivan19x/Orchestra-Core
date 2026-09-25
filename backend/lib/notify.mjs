@@ -205,3 +205,59 @@ export async function forwardContactMessage(message) {
     `),
   );
 }
+
+// Any change to a booking after it was paid for. One template, because the
+// reader always wants the same three things: what happened, to which session,
+// and what it means for their money.
+export async function sendSessionUpdate({ to, booking, heading, body, consultantName }) {
+  const refundLine = (booking.refund_amount_kes ?? 0) > 0 && booking.refund_status !== 'paid'
+    ? `<p style="margin:0 0 6px;color:#2B2320"><strong>Refund due: KES ${booking.refund_amount_kes}</strong></p>
+       <p style="margin:0 0 0;color:#7A6C68;font-size:13px">Sent back to the M-Pesa number you paid from, usually within a few working days.</p>`
+    : '';
+
+  await sendEmail(
+    to,
+    heading,
+    SHELL(`
+      <h1 style="font-size:26px;color:#2B2320;margin:0 0 16px;font-weight:500">${escapeHtml(heading)}</h1>
+      <p style="color:#7A6C68;margin-bottom:24px">${escapeHtml(body)}</p>
+      <div style="background:#FBF1EE;border:1px solid #F0E0DD;border-radius:12px;padding:20px 24px;margin-bottom:24px">
+        <p style="margin:0 0 6px;color:#2B2320"><strong>${escapeHtml(consultantName ?? 'Your session')}</strong></p>
+        <p style="margin:0 0 6px;color:#7A6C68">${formatEat(booking.starts_at)}</p>
+        <p style="margin:0 0 10px;color:#A39590;font-size:13px">Reference ${escapeHtml(booking.ref)}</p>
+        ${refundLine}
+      </div>
+      <p style="font-size:13px;color:#A39590">
+        Think this is wrong? Reply to this email and a person will look at it.
+      </p>
+    `),
+  );
+}
+
+export async function sendConsultantApproved(email, consultant) {
+  await sendEmail(
+    email,
+    'You are approved to teach with Orchestra-Core',
+    SHELL(`
+      <h1 style="font-size:28px;color:#2B2320;margin:0 0 16px;font-weight:500">You are approved.</h1>
+      <p style="color:#7A6C68;margin-bottom:24px">
+        Your documents checked out and your profile is live. The next thing to do is set the days and
+        times you are free — learners can only book inside those.
+      </p>
+      <div style="background:#FBF1EE;border:1px solid #F0E0DD;border-radius:12px;padding:20px 24px;margin-bottom:28px">
+        <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#A39590;margin:0 0 10px">Your pay</p>
+        <p style="margin:0 0 6px;color:#2B2320"><strong>KES ${consultant.session_fee_kes}</strong> for every session you deliver</p>
+        <p style="margin:0 0 6px;color:#2B2320"><strong>KES ${consultant.monthly_base_kes}</strong> monthly base</p>
+        <p style="margin:10px 0 0;color:#7A6C68;font-size:13px">
+          Paid out monthly. Learners pay KES ${consultant.hourly_rate_kes} an hour, which Orchestra-Core
+          sets so the price is the same whoever they book.
+        </p>
+      </div>
+      <a href="${process.env.FRONTEND_URL}/teach/dashboard" style="display:inline-block;padding:14px 28px;background:#7A2330;color:#fff;text-decoration:none;border-radius:100px;font-size:15px">Set your availability</a>
+      <p style="font-size:13px;color:#A39590;margin-top:32px">
+        Sessions teach the Orchestra-Core curriculum. They are financial education — please do not give
+        personal investment advice or recommend specific products.
+      </p>
+    `),
+  );
+}

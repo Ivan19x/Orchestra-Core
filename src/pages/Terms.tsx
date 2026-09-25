@@ -113,6 +113,104 @@ export default function Terms() {
           </div>
 
           <div>
+            <h2 className="font-serif text-2xl text-foreground mb-3">5b. One-to-one sessions with a consultant</h2>
+            <p className="text-warm-muted mb-3">
+              Separately from the written curriculum, you can book a paid one-to-one session with a
+              consultant — a teacher we have verified, who delivers the Orchestra-Core curriculum. These
+              terms apply to those bookings.
+            </p>
+            <p className="text-warm-muted mb-3">
+              <strong className="text-foreground">What a session is.</strong> Teaching, on our material.
+              Consultants are verified for identity and qualifications, but verification is not a licence:
+              a consultant is a teacher, not a licensed financial adviser, and will not tell you what to
+              buy, sell or invest in. Section 3 applies to sessions in full.
+            </p>
+            <p className="text-warm-muted mb-3">
+              <strong className="text-foreground">Price.</strong> Rates are set by Orchestra-Core, not by
+              the consultant, so the same session costs the same whoever you book. You pay Orchestra-Core
+              at the time of booking; we pay the consultant.
+            </p>
+
+            <p className="text-warm-muted mb-3">
+              <strong className="text-foreground">If a session does not happen.</strong> The principle we
+              apply is simple: if you were not taught, you should not be out of pocket.
+            </p>
+            <div className="overflow-x-auto mb-3">
+              <table className="w-full text-sm border border-border rounded-lg">
+                <thead>
+                  <tr className="bg-blush">
+                    <th className="text-left p-3 text-foreground font-medium border-b border-border">What happened</th>
+                    <th className="text-left p-3 text-foreground font-medium border-b border-border">What you get</th>
+                  </tr>
+                </thead>
+                <tbody className="text-warm-muted">
+                  {[
+                    ['Your consultant does not attend', 'Full refund. Report it within 48 hours of the session time.'],
+                    ['Your consultant cancels, for any reason', 'Full refund.'],
+                    ['You cancel more than 24 hours ahead', 'Full refund.'],
+                    ['You cancel less than 24 hours ahead', 'No refund — the time was already held for you.'],
+                    ['You do not attend', 'No refund. Your consultant attended and held the hour.'],
+                    ['Our booking or payment system failed', 'Full refund, or we rebook you — your choice.'],
+                  ].map(([a, b]) => (
+                    <tr key={a} className="border-b border-border last:border-b-0">
+                      <td className="p-3 align-top">{a}</td>
+                      <td className="p-3 align-top text-foreground">{b}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-warm-muted mb-3">
+              Where a refund is due it is returned to the M-Pesa number you paid from, normally within a
+              few working days. A consultant is never paid for a session they did not deliver.
+            </p>
+            <p className="text-warm-muted mb-3">
+              <strong className="text-foreground">If the two accounts differ.</strong> Where you and your
+              consultant each report a different version of what happened, the session is held and a
+              person at Orchestra-Core reviews it. Nobody is paid and no refund is issued until that is
+              decided, and we will explain the outcome to both of you.
+            </p>
+            <p className="text-warm-muted mb-3">
+              <strong className="text-foreground">Late arrivals and short sessions.</strong> If a session
+              starts late or runs short through your consultant's fault, contact us — we will either make
+              up the time or refund the part you did not receive. The table above covers sessions that did
+              not happen at all; partial problems are handled case by case.
+            </p>
+            <p className="text-warm-muted mb-3">
+              <strong className="text-foreground">In-person sessions.</strong> Where you and a consultant
+              agree to meet in person, you are responsible for choosing a location you are comfortable
+              with. Orchestra-Core does not supervise sessions and is not responsible for what happens at
+              a location neither of us controls. Tell us immediately if a consultant behaves improperly —
+              we will suspend a profile while we look into it.
+            </p>
+            <p className="text-warm-muted">
+              <strong className="text-foreground">Conduct.</strong> Sessions are for teaching. Consultants
+              may not solicit payment outside Orchestra-Core, sell you products, or give personal
+              investment advice. Report any of that to us and we will act on it.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="font-serif text-2xl text-foreground mb-3">5c. Teaching as a consultant</h2>
+            <p className="text-warm-muted mb-3">
+              If you apply to teach, you agree to be verified: we check your identity document,
+              qualifications and supporting school or institutional documents before your profile goes
+              live. We keep only the last four digits of your ID number, never the full number.
+            </p>
+            <p className="text-warm-muted mb-3">
+              <strong className="text-foreground">Pay.</strong> Orchestra-Core sets what learners pay and
+              what you earn: a monthly base plus a fixed fee for each session you deliver, settled
+              monthly. You may not set your own rate or take payment from a learner directly. You are an
+              independent contractor, not an employee, and are responsible for your own tax.
+            </p>
+            <p className="text-warm-muted">
+              <strong className="text-foreground">Not delivering.</strong> If you cancel or do not attend,
+              the learner is refunded in full and that session is not paid. Repeatedly missing sessions
+              will result in your profile being suspended.
+            </p>
+          </div>
+
+          <div>
             <h2 className="font-serif text-2xl text-foreground mb-3">6. Internet agreements (Consumer Protection Act 2012, Part IV)</h2>
             <p className="text-warm-muted">
               This is an internet agreement under Kenya's Consumer Protection Act 2012 (ss.31–33). Before completing

@@ -5,6 +5,7 @@ nine series, read in the browser. One-time payment via M-Pesa, no subscription.
 
 - **Website:** https://orchestra-core.vercel.app
 - **API:** https://orchestra-core.onrender.com
+- **Operating manual:** [`docs/MANUAL.txt`](docs/MANUAL.txt) — full setup, going live, and running it day to day
 - **Setup guide:** [`docs/SETUP.md`](docs/SETUP.md) — M-Pesa, database, hosting, deployment
 - **Writing lessons:** [`CONTENT-README.md`](CONTENT-README.md)
 - **Full project context:** [`CLAUDE.md`](CLAUDE.md)

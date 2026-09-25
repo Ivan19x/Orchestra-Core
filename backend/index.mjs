@@ -7,6 +7,8 @@ import paymentRoutes from './routes/payment.mjs';
 import consultantRoutes from './routes/consultants.mjs';
 import bookingRoutes from './routes/bookings.mjs';
 import contactRoutes from './routes/contact.mjs';
+import teacherRoutes from './routes/teacher.mjs';
+import adminRoutes from './routes/admin.mjs';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -41,6 +43,8 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/consultants', consultantRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/teacher', teacherRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
 app.use((err, _req, res, _next) => {

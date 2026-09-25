@@ -1,0 +1,736 @@
+===============================================================================
+ORCHESTRA-CORE - OPERATING MANUAL
+Last updated: 25 September 2026
+===============================================================================
+
+Everything needed to set the website up from nothing, take it live, and run it
+day to day. Work through PART 2 in order; each step says how to tell it worked.
+
+If you only ever read one section, read PART 6. That is the running of the
+business - approving teachers, paying them, and handling refunds.
+
+
+CONTENTS
+-------------------------------------------------------------------------------
+  PART 1   What you have
+  PART 2   One-time setup
+             2.1  Database (Supabase)
+             2.2  Email (Gmail)
+             2.3  M-Pesa (Safaricom Daraja)
+             2.4  The API (Render)
+             2.5  The callback URL
+             2.6  The website (Vercel)
+             2.7  Make yourself the administrator
+  PART 3   Testing before you take real money
+  PART 4   Going live
+  PART 5   Keeping it running
+  PART 6   Running it day to day
+             6.1  Approving a teacher
+             6.2  Paying teachers (monthly)
+             6.3  Refunds
+             6.4  Disputes
+             6.5  Messages
+  PART 7   Adding and editing lessons
+  PART 8   Changing the price
+  PART 9   Troubleshooting
+  PART 10  Every environment variable
+  PART 11  Running it on your own laptop
+
+
+===============================================================================
+PART 1 - WHAT YOU HAVE
+===============================================================================
+
+Two products on one website.
+
+  1. THE CURRICULUM. 80 written lessons across 9 series. One payment unlocks
+     all of them forever. The first lesson of every series is free to read with
+     a free account.
+
+  2. ONE-TO-ONE SESSIONS. Verified teachers ("consultants") deliver that same
+     curriculum in person or online, charged by the hour. Learners pay
+     Orchestra-Core; Orchestra-Core pays the teachers monthly.
+
+Four services run it, all on free tiers:
+
+  Supabase   the database - accounts, payments, bookings, messages
+  Render     the API - signup, login, payments, bookings
+  Vercel     the website itself
+  Daraja     Safaricom M-Pesa - takes the money
+
+Plus a Gmail account to send receipts and password resets.
+
+WEB ADDRESSES
+  Website   https://orchestra-core.vercel.app
+  API       https://orchestra-core.onrender.com
+  Code      https://github.com/Ivan19x/Orchestra-Core
+
+Pushing to the "main" branch on GitHub automatically redeploys both the website
+and the API. You do not need to do anything else to publish a change.
+
+
+===============================================================================
+PART 2 - ONE-TIME SETUP
+===============================================================================
+
+-------------------------------------------------------------------------------
+2.1  DATABASE (SUPABASE)                                        about 10 minutes
+-------------------------------------------------------------------------------
+
+  1. Go to supabase.com and sign in with GitHub.
+  2. New project. Name it "orchestra-core".
+  3. Generate a database password and save it somewhere safe.
+  4. Region: West EU (Ireland). It is the closest free region to Kenya. Every
+     other choice adds delay to every page a customer loads.
+  5. Wait about two minutes for it to finish building.
+  6. Open SQL Editor -> New query. Open the file
+     backend/supabase-schema.sql from the code, copy ALL of it, paste it in,
+     and press Run.
+  7. Go to Project Settings -> API and copy two values:
+       Project URL             -> this is SUPABASE_URL
+       service_role secret     -> this is SUPABASE_SERVICE_KEY
+     (Click "Reveal" to see the service_role key.)
+
+  The SQL file is safe to run again at any time. When new features are added,
+  re-running it is how you update the database.
+
+  WARNING: the service_role key bypasses all database security. It goes ONLY
+  into Render's environment variables. Never in the website, never in the code,
+  never in a screenshot or a WhatsApp message.
+
+  HOW TO TELL IT WORKED
+  Open Table Editor. You should see these tables, all empty:
+       users, payments, consultants, consultant_availability,
+       bookings, contact_messages
+
+
+-------------------------------------------------------------------------------
+2.2  EMAIL (GMAIL)                                               about 5 minutes
+-------------------------------------------------------------------------------
+
+  The site sends receipts, password resets, booking confirmations, refund
+  notices and teacher application emails. Gmail sends them all for free.
+
+  1. The Gmail account must have 2-Step Verification switched on. Turn it on
+     first if it is not.
+  2. Go to myaccount.google.com/apppasswords
+  3. Create an app password named "Orchestra-Core".
+  4. Google shows 16 characters in four groups. Copy them and DELETE THE
+     SPACES. It goes in as one 16-character string.
+
+  This gives you GMAIL_USER (the address) and GMAIL_APP_PASSWORD (the 16
+  characters).
+
+
+-------------------------------------------------------------------------------
+2.3  M-PESA (SAFARICOM DARAJA)                                  about 15 minutes
+-------------------------------------------------------------------------------
+
+  This is a direct integration with Safaricom. No middleman takes a cut. Start
+  in the sandbox, where no real money moves.
+
+  1. Create an account at developer.safaricom.co.ke
+  2. My Apps -> Add a new app. Name it "Orchestra-Core".
+  3. Tick BOTH "Lipa Na M-Pesa Sandbox" and "M-Pesa Sandbox".
+  4. Open the app and copy the Consumer Key and Consumer Secret.
+
+  SANDBOX VALUES (these are Safaricom's public test values - they are meant to
+  be shared, and only work in the sandbox):
+
+       MPESA_ENV                = sandbox
+       MPESA_SHORTCODE          = 174379
+       MPESA_PASSKEY            = bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b
+                                  10f78e6b72ada1ed2c919
+                                  (one line, no spaces or line break)
+       MPESA_TRANSACTION_TYPE   = CustomerPayBillOnline
+
+  TEST PHONE NUMBER: 254708374149
+  Real phones do NOT get prompts in the sandbox. Use that number.
+
+
+-------------------------------------------------------------------------------
+2.4  THE API (RENDER)                                           about 20 minutes
+-------------------------------------------------------------------------------
+
+  First, generate two secrets on your laptop. Open a terminal and run each:
+
+       node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+       node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"
+
+  The first is JWT_SECRET. The second is MPESA_CALLBACK_SECRET. Generate them
+  fresh. Do not use the same value for both.
+
+  CREATE THE SERVICE
+  1. render.com -> New -> Web Service -> connect Ivan19x/Orchestra-Core
+  2. Settings (the root directory is the one people get wrong):
+
+       Name               orchestra-core
+       Language           Node
+       Branch             main
+       Root Directory     backend          <-- IMPORTANT
+       Build Command      npm install
+       Start Command      npm start
+       Instance Type      Free
+
+  3. Environment tab. Add all of these:
+
+       NODE_ENV                 production
+       JWT_SECRET               (the 128-character value you generated)
+       SUPABASE_URL             (from 2.1)
+       SUPABASE_SERVICE_KEY     (from 2.1)
+       MPESA_ENV                sandbox
+       MPESA_CONSUMER_KEY       (from 2.3)
+       MPESA_CONSUMER_SECRET    (from 2.3)
+       MPESA_SHORTCODE          174379
+       MPESA_PASSKEY            (the sandbox passkey from 2.3)
+       MPESA_TRANSACTION_TYPE   CustomerPayBillOnline
+       MPESA_CALLBACK_SECRET    (the 48-character value you generated)
+       PRICE_KES                200
+       GMAIL_USER               (from 2.2)
+       GMAIL_APP_PASSWORD       (from 2.2)
+       ADMIN_EMAIL              chweyaivan@gmail.com
+       ADMIN_EMAILS             chweyaivan@gmail.com
+       FRONTEND_URL             https://orchestra-core.vercel.app
+       CORS_ORIGINS             https://orchestra-core.vercel.app
+
+     Leave MPESA_CALLBACK_URL for the next step - you do not have the address
+     yet.
+
+  TWO THINGS THAT WILL COST YOU AN HOUR IF YOU GET THEM WRONG
+
+     * DO NOT set PORT. Render assigns it. Setting it yourself makes the
+       service fail its health check and never come up.
+
+     * CORS_ORIGINS must match the website address exactly. No trailing slash.
+       Get it wrong and the website's requests are blocked by the browser,
+       while the API itself looks perfectly healthy.
+
+  HOW TO TELL IT WORKED
+  Open https://orchestra-core.onrender.com/api/health in a browser.
+  It must show:  {"ok":true}
+  If not, open the Logs tab on Render - a missing variable names itself there.
+
+
+-------------------------------------------------------------------------------
+2.5  THE CALLBACK URL                                            about 5 minutes
+-------------------------------------------------------------------------------
+
+  When someone finishes paying, Safaricom sends the result to a web address
+  you control. It must be public HTTPS - localhost will not work.
+
+  Take the MPESA_CALLBACK_SECRET you generated in 2.4 and put it on the end of
+  the callback path. The same secret goes in both variables:
+
+       MPESA_CALLBACK_SECRET = a1b2c3d4...
+       MPESA_CALLBACK_URL    = https://orchestra-core.onrender.com
+                               /api/payment/callback/a1b2c3d4...
+
+  (All one line, no spaces. The part after "callback/" is the same secret.)
+
+  Save. Render will redeploy.
+
+  WHY THE SECRET IS IN THE ADDRESS
+  Safaricom does not sign its callbacks, which means anything on the internet
+  could send a fake "payment succeeded" message. Three things stop that:
+     - the secret in the address means nobody can find it
+     - the payment ID must match a payment this server actually started
+     - the amount paid is checked against the amount expected
+  Both curriculum purchases and session bookings use this one address.
+
+  HOW TO TELL IT WORKED
+  Both variables contain the identical secret, and the URL starts with https
+  and has no trailing slash.
+
+
+-------------------------------------------------------------------------------
+2.6  THE WEBSITE (VERCEL)                                       about 10 minutes
+-------------------------------------------------------------------------------
+
+  1. vercel.com -> Add New -> Project -> import Ivan19x/Orchestra-Core
+  2. Framework preset: Vite. Leave the build settings alone - the file
+     vercel.json already sets them correctly.
+  3. Settings -> Environment Variables. Add these, ticked for Production,
+     Preview and Development:
+
+       VITE_API_URL       https://orchestra-core.onrender.com
+       VITE_PRICE_KES     200
+
+  4. Deploy.
+
+  IMPORTANT: VITE_ variables are built into the website when it is compiled,
+  not read when someone visits. Changing one in the Vercel dashboard does
+  NOTHING until you redeploy: Deployments -> the three dots -> Redeploy.
+  This is the most common way to end up showing the wrong price.
+
+  HOW TO TELL IT WORKED
+  The homepage loads and shows KES 200. /lessons lists nine series. Create a
+  test account, then look in Supabase -> Table Editor -> users and see your
+  email there. That one test proves the website, the API, CORS and the
+  database are all talking to each other.
+
+
+-------------------------------------------------------------------------------
+2.7  MAKE YOURSELF THE ADMINISTRATOR                             about 2 minutes
+-------------------------------------------------------------------------------
+
+  The admin area at /admin is where you approve teachers, pay them and handle
+  refunds. Access is controlled by ADMIN_EMAILS on Render, which you set in
+  2.4. There is no "make me admin" button anywhere - deliberately, so nobody
+  can grant themselves access.
+
+  1. Make sure ADMIN_EMAILS on Render contains the email address you use to
+     sign in to the website. Several addresses can be separated by commas.
+  2. Sign in to the website with that address.
+  3. Go to https://orchestra-core.vercel.app/admin
+
+  If you see "Not found", the email you signed in with is not in the list.
+  That is the intended behaviour - people who are not administrators are not
+  told the page exists.
+
+
+===============================================================================
+PART 3 - TESTING BEFORE YOU TAKE REAL MONEY
+===============================================================================
+
+Do these in order and stop at the first one that fails. No real money moves.
+
+  CURRICULUM
+  1. Sign up with a real email you can open. The account appears in Supabase
+     -> users, with has_paid showing false.
+  2. Open a free lesson: module 1 of any series opens. Any other module shows
+     the upgrade screen.
+  3. Buy it at /checkout using the test number 254708374149. Watch Supabase ->
+     payments: a row appears as "pending" then flips to "completed".
+  4. has_paid becomes true, a premium lesson opens, and the access key shows
+     on /account.
+  5. Use "Forgot password" and confirm the email arrives. This is the real
+     test of 2.2.
+
+  SESSIONS
+  6. Apply to teach at /teach (use a second account, or your own - you can
+     have both roles).
+  7. Go to /admin -> Applications. Set the three pay figures and approve.
+     See 6.1 for what the figures mean.
+  8. Sign in as the teacher, go to /teach/dashboard, add an availability
+     window, and save.
+  9. Sign in as a learner, go to /consultants, and book that teacher with the
+     test number. The booking appears in Supabase -> bookings as "confirmed".
+  10. As the teacher, after the session time passes, mark it delivered.
+  11. Go to /admin -> Payouts. The money owed appears.
+
+  REFUNDS
+  12. Book another session. As the learner, cancel it more than 24 hours
+      before it starts. Go to /admin -> Refunds: it should be listed.
+  13. Check Supabase -> bookings: that row should show payout_status "void".
+      That is the important one - it proves a refunded session does not also
+      pay the teacher.
+
+
+===============================================================================
+PART 4 - GOING LIVE
+===============================================================================
+
+  APPLY FOR PRODUCTION M-PESA
+  1. In the Daraja portal, choose "Go Live" from the top menu.
+  2. You need your registered Paybill or Till number and your business
+     details. The BRS registration for Orchestra-Core covers this.
+  3. Approval usually takes a few days. You get production credentials and a
+     production passkey.
+
+  SWAP IN THE PRODUCTION VALUES (on Render)
+       MPESA_ENV               production
+       MPESA_CONSUMER_KEY      (production key)
+       MPESA_CONSUMER_SECRET   (production secret)
+       MPESA_SHORTCODE         (your Paybill number)
+       MPESA_PASSKEY           (production passkey)
+
+  Everything else stays as it is.
+
+  IF YOU USE A TILL (BUY GOODS) RATHER THAN A PAYBILL
+  A Till works differently: the number that owns the passkey and the number
+  that receives money are two different things.
+       MPESA_TRANSACTION_TYPE  CustomerBuyGoodsOnline
+       MPESA_SHORTCODE         your Store / Head Office number
+       MPESA_PARTY_B           your Till number
+  For a Paybill, leave MPESA_PARTY_B unset.
+
+  THE KES 1 TEST
+  Once you are live there is no sandbox, so paying yourself is the standard
+  way to check a live integration. Do this before telling anyone.
+
+  1. Set PRICE_KES=1 on Render and VITE_PRICE_KES=1 on Vercel.
+  2. REDEPLOY THE WEBSITE on Vercel (the value will not change otherwise).
+  3. Buy it with your own phone and your real PIN.
+  4. Check three things: KES 1 arrives in your Paybill/Till, the website
+     unlocks by itself, and the receipt email lands.
+  5. Set both back to 200, and REDEPLOY THE WEBSITE AGAIN.
+  6. Open the homepage in a private window and confirm it says KES 200.
+
+  BEFORE YOU ANNOUNCE IT
+  Add the uptime monitor in PART 5 first. It matters more than it sounds.
+
+
+===============================================================================
+PART 5 - KEEPING IT RUNNING
+===============================================================================
+
+  THE UPTIME MONITOR - DO THIS ONE
+  Render's free tier goes to sleep after 15 minutes with no traffic, and the
+  next visitor waits about 50 seconds for the signup button to respond. Most
+  people leave. This will cost you more sales than any bug.
+
+  1. Sign up free at uptimerobot.com (50 monitors on the free plan).
+  2. Add New Monitor -> type HTTP(s)
+  3. URL:      https://orchestra-core.onrender.com/api/health
+  4. Interval: 5 minutes
+  5. Add your email as the alert contact.
+
+  This does two jobs: it keeps the API awake, and it emails you the moment the
+  site goes down - so you find out before a customer does.
+  cron-job.org works just as well if you prefer it.
+
+  BACK UP THE ONE THING YOU CANNOT REBUILD
+  Supabase's free tier keeps 7 days of backups. Once a month:
+     Table Editor -> users -> Export as CSV
+  Keep it somewhere off the laptop. Lessons live in GitHub; your customer list
+  does not live anywhere else.
+
+  WORTH DOING WHEN YOU CAN
+   - A custom domain (about KES 1,500/year for a .co.ke). Point it at Vercel,
+     then update FRONTEND_URL, CORS_ORIGINS and MPESA_CALLBACK_URL. A
+     vercel.app address on a payment page costs you some trust.
+   - Render's paid tier ($7/month) never sleeps. Worth it once sales cover it.
+   - Keep publishing lessons. Every new one is a page Google can find.
+
+
+===============================================================================
+PART 6 - RUNNING IT DAY TO DAY
+===============================================================================
+
+Everything here happens at https://orchestra-core.vercel.app/admin
+
+-------------------------------------------------------------------------------
+6.1  APPROVING A TEACHER
+-------------------------------------------------------------------------------
+
+  WHAT HAPPENS BEFORE YOU SEE THEM
+  Someone applies at /teach. They are emailed immediately and asked to reply
+  with their national ID, certificates, and school documents. You get an email
+  telling you a new application arrived.
+
+  NOTE: the system stores only the LAST FOUR DIGITS of their ID number, never
+  the full number. Check the document they email against those four digits.
+  Full ID numbers are sensitive data under the Data Protection Act with real
+  consequences if leaked, and there is no reason to hold them.
+
+  APPROVING THEM
+  1. /admin -> Applications
+  2. Read their qualifications. Check their documents against the four digits.
+  3. Set THREE figures. This is the important part:
+
+       Learner pays /hr        what a learner is charged per hour
+       Teacher per session     what this teacher earns for one session
+       Monthly base            their retainer, paid whether or not they teach
+
+     The difference between what the learner pays and what the teacher earns
+     is what Orchestra-Core keeps.
+
+     TEACHERS NEVER SET THEIR OWN RATE. That is the whole reason payment goes
+     through the site - so the same lesson costs the same from everyone. The
+     application form deliberately never asks them what they want to charge.
+
+  4. Press Approve. They get an email with their figures and a link to set
+     their availability.
+
+  A teacher cannot be booked until they add availability themselves at
+  /teach/dashboard. If nobody can book them, that is usually why.
+
+  REJECTING
+  Press Reject. Email them separately to say why - the system does not send a
+  rejection message for you, on purpose.
+
+
+-------------------------------------------------------------------------------
+6.2  PAYING TEACHERS (MONTHLY)
+-------------------------------------------------------------------------------
+
+  Teachers are paid monthly: their monthly base, plus a fee for each session
+  they actually delivered.
+
+  1. /admin -> Payouts
+  2. Each row is one teacher for one month, showing:
+       - how many sessions they delivered
+       - what learners paid in total
+       - what you keep
+       - what you owe them (session fees + monthly base)
+  3. Send that amount by M-Pesa yourself.
+  4. Paste the M-Pesa confirmation code into the box and press Mark paid.
+
+  Entering the code matters. It is what lets you trace a payment back to
+  exactly which sessions it covered, months later, when someone queries it.
+
+  WHAT WILL NOT APPEAR HERE
+  Sessions that were refunded, cancelled by the teacher, or where the teacher
+  did not show up. Those are marked "void" and are correctly excluded - nobody
+  is paid for teaching that did not happen.
+
+  A teacher owed ONLY their monthly base in a month with no sessions will not
+  appear in this list. Pay those from the consultants table in Supabase until
+  that gap is closed.
+
+
+-------------------------------------------------------------------------------
+6.3  REFUNDS
+-------------------------------------------------------------------------------
+
+  THE RULE: if the learner was not taught, they should not be out of pocket,
+  and nobody is paid for it.
+
+  The system decides refunds automatically using this table. You do not have
+  to work it out.
+
+    WHAT HAPPENED                          RESULT
+    -------------------------------------  --------------------------------
+    Teacher does not show up               Full refund, teacher not paid
+    Teacher cancels, any reason            Full refund, teacher not paid
+    Learner cancels 24+ hours before       Full refund, teacher not paid
+    Learner cancels under 24 hours         No refund, teacher IS paid
+    Learner does not show up               No refund, teacher IS paid
+    Our system failed                      Full refund (you do this manually)
+
+  A learner has 48 HOURS after the session time to report that a teacher did
+  not show up. After that the button disappears and they must use the contact
+  form, which comes to you.
+
+  SENDING A REFUND
+  1. /admin -> Refunds. Each row shows the amount, who to, which phone number
+     they paid from, and why.
+  2. Send the money by M-Pesa yourself.
+  3. Paste the confirmation code and press Mark refunded. The learner is
+     emailed automatically.
+
+  Clear these fast. An unpaid refund is the single thing most likely to turn
+  one bad session into a public complaint.
+
+
+-------------------------------------------------------------------------------
+6.4  DISPUTES
+-------------------------------------------------------------------------------
+
+  If the learner says the teacher did not show up AND the teacher says the
+  learner did not, the session is marked "Under review". Nobody is paid and no
+  refund is sent until you decide.
+
+  They appear in /admin -> Needs review, along with any session that finished
+  more than 48 hours ago that nobody has resolved.
+
+  Contact both sides. Then resolve it in Supabase -> bookings by setting the
+  status, and refund_status / payout_status accordingly. A full admin
+  resolution screen is not built yet.
+
+
+-------------------------------------------------------------------------------
+6.5  MESSAGES
+-------------------------------------------------------------------------------
+
+  Anything sent through /contact is saved in the database AND emailed to
+  ADMIN_EMAIL, so it cannot be lost if email fails.
+
+  /admin -> Messages shows everything unhandled. Reply by email, then press
+  Done to clear it from the list.
+
+
+===============================================================================
+PART 7 - ADDING AND EDITING LESSONS
+===============================================================================
+
+  You never touch code to add a lesson.
+
+  1. Write the lesson as a plain text file in Markdown.
+  2. Save it into  src/content/lessons/  named  S<series>M<module>.md
+     For example S4M9.md is Series 4, Module 9.
+  3. Commit and push to GitHub. The website rebuilds and the lesson appears.
+
+  The file starts with a block like this, between two lines of three dashes:
+
+       ---
+       title: "What Money Actually Is"
+       series: 1
+       module: 1
+       seriesTitle: "Money Basics"
+       free: true
+       estMinutes: 25
+       summary: "One sentence shown on the lesson card."
+       ---
+
+       Your lesson text starts here.
+
+  free: true  means readable with a free account. Module 1 of each series is
+  free; everything else should be false.
+
+  Full details are in CONTENT-README.md.
+
+  To EDIT a lesson, change the file and push. To fix a wrong figure, change it
+  and push - it is live within about a minute.
+
+
+===============================================================================
+PART 8 - CHANGING THE PRICE
+===============================================================================
+
+  The price lives in TWO places and they must always match:
+
+       PRICE_KES        on Render    what the customer is actually CHARGED
+       VITE_PRICE_KES   on Vercel    what the website DISPLAYS
+
+  To change it:
+  1. Update PRICE_KES on Render.
+  2. Update VITE_PRICE_KES on Vercel.
+  3. REDEPLOY THE WEBSITE on Vercel. The displayed price will not change
+     without this.
+  4. Check the homepage in a private browser window.
+
+  No price is written into the code anywhere, so this is the only thing you
+  need to do. Session rates are separate and are set per teacher in /admin.
+
+
+===============================================================================
+PART 9 - TROUBLESHOOTING
+===============================================================================
+
+  M-PESA RESULT CODES
+  These appear in Render's logs. Only 0 means money actually moved.
+
+       0            Paid
+       1            Not enough M-Pesa balance
+       1032         Cancelled on the handset (they pressed cancel or ignored)
+       1037         Timed out - phone off or out of coverage
+       2001         Wrong M-Pesa PIN
+       500.001.1001 Still processing - NOT a failure, the prompt is still open
+
+  COMMON PROBLEMS
+
+  "Signup spins then fails to fetch"
+       CORS_ORIGINS does not exactly match the website address, or Render is
+       asleep and still waking up.
+
+  "Payments are temporarily unavailable"
+       One of the five required MPESA_ variables is missing. Render's logs
+       say which.
+
+  Website shows the wrong price
+       VITE_PRICE_KES was changed but the website was not redeployed.
+
+  No M-Pesa prompt arrives
+       In sandbox, real phones never get one - use 254708374149. In
+       production, check the number is Safaricom.
+
+  Payment stuck on pending forever
+       MPESA_CALLBACK_URL is wrong or unreachable. The browser's own polling
+       normally covers this, so also check the browser console.
+
+  Receipt email never arrives
+       GMAIL_APP_PASSWORD has spaces in it, or 2-Step Verification is off.
+
+  First visitor of the morning waits ~50 seconds
+       Render's free tier went to sleep. Add the uptime monitor (PART 5).
+
+  Deploy fails on Render
+       Root Directory is not set to "backend".
+
+  /admin says "Not found"
+       The email you are signed in with is not in ADMIN_EMAILS on Render.
+
+  A teacher is approved but nobody can book them
+       They have not set their availability at /teach/dashboard.
+
+  WHERE TO LOOK
+       Render -> Logs              every API error, including Safaricom's
+                                   raw response. Look here first, always.
+       Supabase -> Table Editor    the truth about accounts, payments,
+                                   bookings and what is owed
+       Browser -> DevTools ->      anything that looks like the website not
+         Network                   reaching the API
+       Daraja portal -> API logs   whether Safaricom ever got your request
+
+
+===============================================================================
+PART 10 - EVERY ENVIRONMENT VARIABLE
+===============================================================================
+
+  ON RENDER (the API)
+
+    NODE_ENV                 production
+    JWT_SECRET               128 hex characters, generated          REQUIRED
+    SUPABASE_URL             https://xxxx.supabase.co               REQUIRED
+    SUPABASE_SERVICE_KEY     the service_role key                   REQUIRED
+    MPESA_ENV                sandbox, then production               REQUIRED
+    MPESA_CONSUMER_KEY       from Daraja                            REQUIRED
+    MPESA_CONSUMER_SECRET    from Daraja                            REQUIRED
+    MPESA_SHORTCODE          174379, then your Paybill              REQUIRED
+    MPESA_PASSKEY            from Daraja                            REQUIRED
+    MPESA_CALLBACK_SECRET    48 hex characters, generated           REQUIRED
+    MPESA_CALLBACK_URL       .../api/payment/callback/<secret>      REQUIRED
+    MPESA_TRANSACTION_TYPE   CustomerPayBillOnline                  default
+    MPESA_PARTY_B            Till number                            Till only
+    PRICE_KES                200                                    default 200
+    GMAIL_USER               your Gmail address                     recommended
+    GMAIL_APP_PASSWORD       16 characters, no spaces               recommended
+    ADMIN_EMAIL              where applications and messages go     recommended
+    ADMIN_EMAILS             who can open /admin (comma separated)  REQUIRED
+    FRONTEND_URL             https://orchestra-core.vercel.app      REQUIRED
+    CORS_ORIGINS             https://orchestra-core.vercel.app      REQUIRED
+    RESEND_API_KEY           unused fallback                        optional
+    EMAIL_FROM               only used with Resend                  optional
+    PORT                     DO NOT SET - Render assigns it
+
+  ON VERCEL (the website)
+
+    VITE_API_URL             https://orchestra-core.onrender.com    REQUIRED
+    VITE_PRICE_KES           200                                    default 200
+
+  DELETE THESE IF THEY STILL EXIST - nothing reads them any more:
+    INTASEND_PUBLISHABLE_KEY, INTASEND_SECRET_KEY,
+    INTASEND_WEBHOOK_SECRET, AT_API_KEY, AT_USERNAME, TESTING_FREE,
+    VITE_TESTING_PHASE, VITE_DOWNLOAD_URL_WIN, VITE_DOWNLOAD_URL_MAC
+
+
+===============================================================================
+PART 11 - RUNNING IT ON YOUR OWN LAPTOP
+===============================================================================
+
+  You need Node.js 20 or newer.
+
+  THE WEBSITE
+       npm install
+       npm run dev
+  Then open http://localhost:8080
+
+  THE API (only needed for signup, login, payments, bookings)
+       cd backend
+       npm install
+       copy .env.example to .env and fill it in
+       npm run dev
+  It runs on http://localhost:3001
+
+  POINT THE WEBSITE AT YOUR LOCAL API
+  Create a file called .env.local in the main folder containing:
+       VITE_API_URL=http://localhost:3001
+       VITE_PRICE_KES=200
+
+  CHECKS BEFORE PUSHING
+       npm run typecheck     checks the code makes sense
+       npm run lint          checks the code style
+       npm run build         builds the real website
+
+  All three must pass. If they do, it is safe to push.
+
+  TESTING M-PESA CALLBACKS LOCALLY
+  Safaricom cannot reach your laptop. Run:
+       npx localtunnel --port 3001
+  and use the https address it prints as the host in MPESA_CALLBACK_URL. Free
+  tunnels change address each time, so update the variable each session.
+
+===============================================================================
+END
+===============================================================================

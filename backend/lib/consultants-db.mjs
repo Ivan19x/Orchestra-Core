@@ -155,3 +155,147 @@ export async function saveContactMessage(fields) {
   if (error) throw error;
   return data;
 }
+
+// ── availability (teacher-managed) ─────────────────────────────────────────
+
+// Replaces a teacher's whole week in one go. Simpler and safer than diffing
+// individual rows: the editor always submits the complete picture, so there is
+// no way to end up with a half-applied schedule.
+export async function replaceAvailability(consultantId, windows) {
+  const { error: delError } = await supabase
+    .from('consultant_availability')
+    .delete()
+    .eq('consultant_id', consultantId);
+  if (delError) throw delError;
+
+  if (!windows.length) return [];
+
+  const { data, error } = await supabase
+    .from('consultant_availability')
+    .insert(windows.map(w => ({
+      consultant_id: consultantId,
+      weekday: w.weekday,
+      start_minute: w.startMinute,
+      end_minute: w.endMinute,
+    })))
+    .select();
+  if (error) throw error;
+  return data;
+}
+
+// ── bookings: lifecycle ────────────────────────────────────────────────────
+
+export async function listBookingsForConsultant(consultantId) {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('ref, starts_at, duration_minutes, mode, location, learner_note, amount_kes, teacher_fee_kes, status, payout_status, payout_month, refund_status, users(email)')
+    .eq('consultant_id', consultantId)
+    .in('status', ['confirmed', 'completed', 'cancelled', 'no_show_teacher', 'no_show_learner', 'disputed'])
+    .order('starts_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+// One write for every lifecycle move, so a refund and a voided payout can never
+// be applied half-way. `expectedStatuses` makes the update a no-op if the
+// booking has already moved on — two people acting at once cannot both win.
+export async function transitionBooking({ ref, expectedStatuses, patch }) {
+  const { data, error } = await supabase
+    .from('bookings')
+    .update(patch)
+    .eq('ref', ref)
+    .in('status', expectedStatuses)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function getBookingWithParties(ref) {
+  const { data } = await supabase
+    .from('bookings')
+    .select('*, users(email), consultants(full_name, slug, user_id)')
+    .eq('ref', ref)
+    .maybeSingle();
+  return data;
+}
+
+// ── admin ──────────────────────────────────────────────────────────────────
+
+export async function listConsultantsForAdmin(status) {
+  let query = supabase
+    .from('consultants')
+    .select('id, slug, full_name, headline, status, hourly_rate_kes, session_fee_kes, monthly_base_kes, tier, qualifications, experience_years, id_last4, documents_received, session_modes, service_area, applied_at, users(email)')
+    .order('applied_at', { ascending: false });
+  if (status) query = query.eq('status', status);
+  const { data, error } = await query;
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function updateConsultant(id, patch) {
+  const { data, error } = await supabase
+    .from('consultants')
+    .update(patch)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function listPayoutsDue() {
+  const { data, error } = await supabase
+    .from('consultant_payouts_due')
+    .select('*');
+  if (error) throw error;
+  return data ?? [];
+}
+
+// Settles a month for one teacher: every delivered, unpaid session in that
+// month is stamped paid with the same M-Pesa reference, so the payment can be
+// traced back to exactly what it covered.
+export async function markPayoutPaid(consultantId, payoutMonth, reference) {
+  const { data, error } = await supabase
+    .from('bookings')
+    .update({
+      payout_status: 'paid',
+      payout_reference: reference ?? null,
+      payout_paid_at: new Date().toISOString(),
+    })
+    .eq('consultant_id', consultantId)
+    .eq('payout_month', payoutMonth)
+    .eq('payout_status', 'unpaid')
+    .in('status', ['completed', 'no_show_learner'])
+    .select('ref');
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function listRefundsDue() {
+  const { data, error } = await supabase.from('refunds_due').select('*');
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function listSessionsNeedingAttention() {
+  const { data, error } = await supabase.from('sessions_needing_attention').select('*');
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function listContactMessages(handled = false) {
+  const { data, error } = await supabase
+    .from('contact_messages')
+    .select('*')
+    .eq('handled', handled)
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function markContactHandled(id) {
+  const { error } = await supabase.from('contact_messages').update({ handled: true }).eq('id', id);
+  if (error) throw error;
+}
