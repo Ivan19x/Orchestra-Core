@@ -126,18 +126,44 @@ function buildIndex() {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig(() => ({
-  server: {
-    host: "::",
-    port: 8080,
-  },
-  plugins: [react(), lessonIndexPlugin()],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+export default defineConfig(({ mode }) => {
+  // `npm run build:demo` produces a backend-free copy of the whole site, for
+  // showing people and for reviewing design and copy. It builds from the SAME
+  // source as the real site — only the API module is swapped — so the demo can
+  // never drift out of step with what is actually deployed.
+  const isDemo = mode === "demo";
+
+  return {
+    server: {
+      host: "::",
+      port: 8080,
     },
-  },
-  define: {
-    __APP_VERSION__: JSON.stringify(pkg.version),
-  },
-}));
+    plugins: [react(), lessonIndexPlugin()],
+
+    // Relative asset paths, so the demo works opened straight from a folder
+    // and not only from a web server.
+    base: isDemo ? "./" : "/",
+
+    build: isDemo ? { outDir: "demo", emptyOutDir: true } : {},
+
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version),
+      // Read by demoData.ts and App.tsx to switch on the fake world.
+      "import.meta.env.VITE_DEMO": JSON.stringify(isDemo ? "true" : "false"),
+    },
+
+    resolve: {
+      // An array, not an object: order matters, and the specific API rule has
+      // to be tried before the general "@" prefix rule.
+      alias: [
+        ...(isDemo
+          ? [{
+              find: /^@\/lib\/api$/,
+              replacement: path.resolve(__dirname, "./src/lib/api.demo.ts"),
+            }]
+          : []),
+        { find: "@", replacement: path.resolve(__dirname, "./src") },
+      ],
+    },
+  };
+});

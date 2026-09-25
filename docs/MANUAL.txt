@@ -732,5 +732,38 @@ PART 11 - RUNNING IT ON YOUR OWN LAPTOP
   tunnels change address each time, so update the variable each session.
 
 ===============================================================================
+PART 12 - THE DEMO COPY (for showing people)
+===============================================================================
+
+  There is a folder called demo/ containing the ENTIRE website with no
+  backend. No database, no M-Pesa, no emails - but every page, button and
+  lesson is there and works.
+
+  TO USE IT
+  Double-click demo/index.html. It opens in your browser and works offline.
+  To show a partner, copy the whole demo folder to their laptop, or zip it and
+  send it. Nothing to install.
+
+  THE BAR AT THE BOTTOM
+  A black-edged bar on every page lets you switch between five people:
+  Visitor, Free account, Full access, Consultant, and Admin. Click a name and
+  you become them, landing on the page that person cares about. This bar does
+  not exist on the real website.
+
+  WHAT IS REAL
+  Every page, every word, every button, and all 80 lessons in full. The rules
+  are real too - who can read what, what gets refunded, how teacher pay is
+  worked out.
+
+  WHAT IS FAKE
+  The people, bookings, messages and money. M-Pesa prompts confirm themselves
+  after about five seconds. Anything you change resets when you reload.
+
+  TO REBUILD IT after a change to the website:
+       npm run build:demo
+
+  See demo/READ-ME-FIRST.txt for a fuller tour.
+
+===============================================================================
 END
 ===============================================================================

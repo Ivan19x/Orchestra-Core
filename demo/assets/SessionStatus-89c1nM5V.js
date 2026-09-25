@@ -1,0 +1,6 @@
+import{c as t,j as n}from"./index-Cyionrvu.js";/**
+ * @license lucide-react v0.462.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const s=t("CircleAlert",[["circle",{cx:"12",cy:"12",r:"10",key:"1mglay"}],["line",{x1:"12",x2:"12",y1:"8",y2:"12",key:"1pkeuh"}],["line",{x1:"12",x2:"12.01",y1:"16",y2:"16",key:"4dfq90"}]]),r={pending_payment:{label:"Awaiting payment",tone:"muted"},confirmed:{label:"Confirmed",tone:"ok"},completed:{label:"Completed",tone:"ok"},cancelled:{label:"Cancelled",tone:"muted"},no_show_teacher:{label:"Consultant missed",tone:"bad"},no_show_learner:{label:"Missed",tone:"warn"},disputed:{label:"Under review",tone:"warn"},failed:{label:"Payment failed",tone:"bad"}},a={ok:"text-[hsl(152_40%_32%)] border-[hsl(152_40%_32%)]/30 bg-[hsl(152_40%_32%)]/10",warn:"text-[hsl(32_70%_34%)] border-[hsl(32_70%_34%)]/30 bg-[hsl(32_70%_34%)]/10",bad:"text-[hsl(0_60%_42%)] border-[hsl(0_60%_42%)]/30 bg-[hsl(0_60%_42%)]/10",muted:"text-faint border-border bg-transparent"};function d({status:e}){const l=r[e]??{label:e,tone:"muted"};return n.jsx("span",{className:`shrink-0 text-[10px] uppercase tracking-wider rounded-full border px-2 py-1 ${a[l.tone]}`,children:l.label})}export{s as C,d as S};

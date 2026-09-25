@@ -1,0 +1,94 @@
+===============================================================================
+ORCHESTRA-CORE - DEMO COPY
+===============================================================================
+
+This is the whole website with NO BACKEND. Nothing here is real: no database,
+no M-Pesa, no emails. Every button works, but it is all pretend.
+
+Use it to look around, to show people, and to decide what you want changed.
+
+
+HOW TO OPEN IT
+-------------------------------------------------------------------------------
+Double-click index.html. It opens in your browser and works offline.
+
+To put it on a laptop or phone for someone else, copy this whole folder and
+they do the same. No installation, no internet needed.
+
+
+THE BAR AT THE BOTTOM
+-------------------------------------------------------------------------------
+There is a black-edged bar along the bottom of every page. That is the demo
+switcher - it does not exist on the real website.
+
+It lets you become five different people:
+
+  Visitor       Signed out. Can browse, cannot read a lesson.
+  Free account  Reads the first lesson of each series, paywall on the rest.
+  Full access   Paid. Every lesson open, and has sessions booked.
+  Consultant    An approved teacher, with availability, sessions and earnings.
+  Admin         You. Approvals, payouts, refunds and the inbox.
+
+Click a name to switch. It takes you to the page that person cares about.
+Press the X to hide the bar for a clean screenshot; the round "Demo" button in
+the corner brings it back.
+
+
+WHAT TO TRY
+-------------------------------------------------------------------------------
+As VISITOR        the homepage, /lessons, /pricing, /consultants
+                  try to open a lesson - you get the sign-up gate
+
+as FREE ACCOUNT   open module 1 of any series - it reads
+                  open module 2 - you hit the paywall
+                  go to /pricing and buy it (the M-Pesa prompt is faked and
+                  confirms itself after about 5 seconds)
+
+as FULL ACCESS    the dashboard with all 80 lessons
+                  book a consultant at /consultants - pick a time, pay
+                  /sessions - cancel one, or report a no-show
+
+as CONSULTANT     /teach/dashboard - your pay, earnings, availability
+                  add an availability window and save it
+                  mark a past session delivered
+
+as ADMIN          /admin - approve a teacher and set their three pay figures
+                  the payouts tab, the refunds tab, the inbox
+
+
+WHAT IS REAL AND WHAT IS NOT
+-------------------------------------------------------------------------------
+REAL   - every page, button, layout and word
+       - all 80 lessons, in full - you can read them
+       - the rules: who can read what, what gets refunded, how pay is worked out
+
+FAKE   - the teachers, learners, bookings, messages and money
+       - the M-Pesa prompts (they confirm themselves after a few seconds)
+       - anything you change resets when you reload the page
+
+
+TELLING ME WHAT TO CHANGE
+-------------------------------------------------------------------------------
+Just say where it is and what is wrong. For example:
+
+  "On the consultants page, 'Book a consultant' should say 'Find a teacher'."
+  "The About page is too empty, add back the bit about being a student."
+  "Make the price bigger on the homepage."
+  "The teacher dashboard should show the learner's phone number."
+
+Page addresses are in the browser bar after the # sign, which makes them easy
+to quote.
+
+Changes get made to the real website, then this demo folder is rebuilt from the
+same code - so the two can never disagree.
+
+
+REBUILDING THIS FOLDER
+-------------------------------------------------------------------------------
+From the main project folder:
+
+    npm run build:demo
+
+That regenerates everything here from the current code.
+
+===============================================================================

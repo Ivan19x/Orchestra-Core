@@ -446,3 +446,37 @@ monthly payout ledger · confirmation and notification emails.
 5. **Cancellations and refunds for sessions** — no flow yet. Terms §5 covers the
    curriculum purchase only, and will need a sessions clause before this is
    promoted heavily.
+
+---
+
+## The demo build (`demo/`)
+
+`npm run build:demo` produces a **backend-free copy of the entire website** in
+`demo/`, for showing partners and for reviewing design and copy. Open
+`demo/index.html` — it works offline, from a folder, with no server.
+
+**It builds from the same source as the real site.** Only one module is
+swapped: `vite.config.ts` aliases `@/lib/api` to `src/lib/api.demo.ts` in demo
+mode. There is no demo-specific branching inside any page, so the demo cannot
+drift out of step with what is actually deployed. Two other differences, both
+in `App.tsx` behind the `DEMO` flag: a `HashRouter` (a normal router cannot
+resolve paths when opened from a folder) and the `DemoBar`.
+
+**Files:** `src/lib/api.demo.ts` (the fake API, mirroring `api.ts` name for
+name), `src/lib/demoData.ts` (the fake world plus the persona switcher),
+`src/components/orchestra-core/DemoBar.tsx`, `demo/READ-ME-FIRST.txt`.
+
+**Five personas** — visitor, free account, full access, consultant, admin —
+switched from the bar at the bottom of every page.
+
+**Rules when changing things:**
+
+- Add a function to `api.ts` and you must add it to `api.demo.ts` too, or the
+  demo build breaks. They are a matched pair.
+- Never import `demoData` or `api.demo` from a page. The swap happens in the
+  build; pages stay ignorant of it.
+- After any design or copy change, re-run `npm run build:demo` so the folder
+  someone is looking at matches the site.
+
+Verified at build time: the demo bundle contains the fake data and **no API
+URL at all**; the production bundle contains **none** of the demo code.

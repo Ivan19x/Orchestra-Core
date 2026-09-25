@@ -1,5 +1,7 @@
 import { Suspense, lazy } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route, Navigate } from "react-router-dom";
+import { DEMO, bootPersona } from "./lib/demoData";
+import { DemoBar } from "./components/orchestra-core/DemoBar";
 import { ScrollToTop } from "./components/orchestra-core/ScrollToTop";
 import { SiteLayout } from "./components/orchestra-core/SiteLayout";
 import Home from "./pages/Home";
@@ -31,8 +33,13 @@ const MySessions = lazy(() => import("./pages/MySessions"));
 const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 
+// The demo is opened straight from a folder, where a normal router cannot
+// resolve paths — so it uses hash URLs instead.
+const Router = DEMO ? HashRouter : BrowserRouter;
+if (DEMO) bootPersona();
+
 const App = () => (
-  <BrowserRouter>
+  <Router>
     <ScrollToTop />
     <Suspense fallback={<div className="min-h-screen bg-background" />}>
       <Routes>
@@ -71,7 +78,8 @@ const App = () => (
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
-  </BrowserRouter>
+    {DEMO && <DemoBar />}
+  </Router>
 );
 
 export default App;
