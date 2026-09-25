@@ -19,7 +19,7 @@ export default function Home() {
       <section className="bg-blush border-b border-border">
         <div className="container-narrow py-24 md:py-32 text-center fade-in">
           <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl text-foreground leading-[1.05] mb-6">
-            Money is a tool.
+            Money as a tool.
           </h1>
           <p className="text-lg text-warm-muted max-w-xl mx-auto mb-10 leading-relaxed">
             Every path needs it — studying, a job, a business, farming. Orchestra-Core is a complete
