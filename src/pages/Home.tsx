@@ -23,8 +23,8 @@ export default function Home() {
             Money is a life skill, not a career.
           </h1>
           <p className="text-lg text-warm-muted max-w-xl mx-auto mb-10 leading-relaxed">
-            Nobody teaches it in school, and every path needs it — studying, a job, a business, farming.
-            Orchestra-Core is a complete curriculum in how money actually works, taught through Kenyan life.
+            Every path needs it — studying, a job, a business, farming. Orchestra-Core is a complete
+            curriculum in how money actually works, taught through Kenyan life.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/signup" className="inline-flex items-center justify-center px-7 py-3 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition">
@@ -43,8 +43,7 @@ export default function Home() {
       {/* Why Orchestra-Core */}
       <section className="container-prose py-24">
         <div className="text-center mb-14">
-          <div className="text-xs uppercase tracking-[0.18em] text-faint mb-3">Why Orchestra-Core</div>
-          <h2 className="font-serif text-4xl md:text-5xl text-foreground">Built to be finished, not scrolled.</h2>
+          <h2 className="font-serif text-4xl md:text-5xl text-foreground">Why Orchestra-Core</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
